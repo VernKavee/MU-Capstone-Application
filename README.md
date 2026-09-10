@@ -4,9 +4,10 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 ## Status
 
-Phases 1 and 2 of the build plan are complete: project skeleton, database foundation,
-sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, and the
-workout setup and guide screens. There is no camera or live session yet.
+Phases 1 to 3 of the build plan are complete: project skeleton, database foundation,
+sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
+setup and guide screens, and the live session screen with the camera, the pose model, and
+a stub engine. Nothing is saved after a set yet; that is Phase 4.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -39,8 +40,20 @@ workout setup and guide screens. There is no camera or live session yet.
 - Home lists the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
   number of sets, and rest seconds (default 60); `/workout/[exercise]/guide` shows the
   guide text, the demonstration video or a placeholder, and the rules the coach checks.
-  The Open camera button is disabled until Phase 3. Thumbnails and guide videos do not
-  exist yet.
+  Thumbnails and guide videos do not exist yet.
+- `/workout/[exercise]/live` is the live session: camera permission with recoverable
+  denied and no-camera states, MediaPipe's pose landmarker running in the browser (full
+  model, lite as a manual fallback), the skeleton drawn over the mirrored video, the
+  placement cues and the ready pose, the three second countdown, the correct rep counter
+  with attempts and the engine state beside it, one warning at a time with the joints it
+  names lit up, a beep per correct rep and the warning spoken with a mute, an End set
+  button, and an attempt cap of twice the target. From the end of the countdown the set
+  is recorded and every frame's 33 landmarks are captured; both are held in memory for
+  Phase 4 to save. One set runs per visit; the rest timer and the next set are Phase 4.
+- The engine seam of ADR-0002 is `lib/engine/types.ts`; `lib/engine/stub.ts` is the stub
+  that Vern's port replaces. It reads the row's `rule_based_logic`, judges placement and
+  the ready pose from the real landmarks, then scripts attempts with random outcomes.
+  `lib/live/session.ts` is the frame loop, outside React.
 
 ## Running it
 
@@ -59,7 +72,9 @@ Copy `.env.example` to `.env.local` and paste the publishable key printed by
 npm run dev
 ```
 
-The app is on http://localhost:3000 and Supabase Studio on http://localhost:54323.
+The app is on http://localhost:3000 and Supabase Studio on http://localhost:54323. The
+camera works on localhost without https; any other origin needs https. The pose model and
+its wasm are fetched from Google's storage and jsdelivr on first use, about 10 MB.
 
 | Command | What it does |
 |---|---|
@@ -69,6 +84,7 @@ The app is on http://localhost:3000 and Supabase Studio on http://localhost:5432
 | `npx tsc --noEmit` | type check |
 | `npm run db:reset` | replay all migrations from scratch on the local stack |
 | `npm run test:db` | run the pgTAP tests in `supabase/tests/` |
+| `npm run test:engine` | run the stub engine test with Node's test runner |
 | `npm run db:types` | regenerate `lib/supabase/database.types.ts` after a migration |
 | `npx supabase migration new <name>` | create a new migration file |
 | `npx supabase stop` | stop the stack, data kept in the Docker volume |

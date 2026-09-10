@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phases 0, 1, and 2 are done. The repo holds the planning documents, the vocabulary, the
+Phases 0 to 3 are done. The repo holds the planning documents, the vocabulary, the
 decision records, and the code so far: scaffolding, the foundation migration, auth,
-consent, profile, the app shell, the exercise catalogue as data, and the workout setup
-and guide screens. Nothing about the camera or the live session exists yet.
+consent, profile, the app shell, the exercise catalogue as data, the workout setup and
+guide screens, and the live session screen with the camera, MediaPipe, and the stub
+engine. Nothing is saved after a set; there are no `workouts` or `sets` tables yet.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -33,6 +34,9 @@ Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
   then `npm run db:types` to regenerate `lib/supabase/database.types.ts`.
 - `npm run test:db`: pgTAP tests in `supabase/tests/`. Every table with row-level
   security gets its isolation proven there.
+- `npm run test:engine`: the stub engine test, Node's own runner with type stripping.
+  Files under `lib/engine/` import each other with `.ts` extensions for this reason.
+- `npx next typegen` before `npx tsc --noEmit` after adding a route.
 - `npx supabase db advisors` after any schema change.
 - No unit or end-to-end tests yet; Phase 6 adds them.
 
@@ -48,6 +52,12 @@ Conventions the code follows, because the docs changed since the plan was writte
 - Supabase's default grants give `anon` and `authenticated` everything on a new public
   table. Every migration revokes those and grants only what the app uses, so a missing
   policy fails with a privilege error rather than silently touching zero rows.
+- The live session: `lib/engine/types.ts` is the seam, `lib/engine/stub.ts` the stub,
+  `lib/live/pose.ts` the MediaPipe adapter, `lib/live/sound.ts` the beep and speech,
+  `lib/live/session.ts` the frame loop outside React, and
+  `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
+  renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
+  the overlay, the recorder, and the keypoint capture.
 
 ## The three-part AI structure
 
@@ -57,7 +67,7 @@ fake data, so one person can replace one file.
 
 | Component | Owner | Lives where |
 |---|---|---|
-| Rule-based form checking plus FSM rep counting | Kavee (Vern) | already built in the research repo, see below |
+| Rule-based form checking plus FSM rep counting | Kavee (Vern) | already built in the research repo, see below; `lib/engine/stub.ts` stands in for it |
 | Motion similarity, six numbers per rep | Punnapat | their own component |
 | LLM coaching plus RAG retrieval | Sujira | their own component |
 
@@ -168,10 +178,36 @@ Decided in Phase 2, recorded in the Phase 2 session log:
 - Data changes to the catalogue are made through the database (psql or Studio), never
   through the API, which is read-only for it.
 
+Decided in Phase 3, recorded in the Phase 3 session log:
+
+- One set per visit to the live screen. The rest timer, the next set, the repair set, and
+  saving belong to Phase 4. The live URL carries reps, sets, and rest.
+- Enum names from the Python are lower case strings; `state` is one of the row's
+  `state_machine.states`.
+- The stub judges placement and the ready pose (T pose, arms out) from the real landmarks
+  and scripts attempts on a clock with random outcomes drawn from the row's rules. Holds
+  are eight frames as in the research repo.
+- Recording is a MediaRecorder Blob (webm where supported, else mp4); the keypoint capture
+  is one object per frame with `t` since the recording started, the engine state, the
+  event, and the keypoints. Both start on the first active frame. The file format on disk
+  is still Phase 4's call.
+- MediaPipe wasm from jsdelivr pinned to the installed version, the model from Google's
+  storage, GPU with CPU fallback; the two URLs are constants in `lib/live/pose.ts`.
+- Lite model: a manual choice on the preflight screen or a "Lagging?" button under fifteen
+  frames per second, remembered in localStorage.
+- The stage is mirrored, the recording is not. Sound is unlocked in the Start camera click.
+- The skeleton highlight follows the held warning list, so lit joints last as long as the
+  text.
+- End of set: target reached, End set, or attempts at twice the target, checked only while
+  active.
+- Design: over video, off-white ink, tape yellow as the only accent, Big Shoulders Display
+  800 (self-hosted, OFL) for the counter and the countdown only, text buttons in pills.
+
 Still open, to be settled in the phase named:
 
-- Keypoint file format, Phase 4.
+- Keypoint file format and saving the capture, Phase 4.
 - The bound on past workouts in the feedback input, Phase 4.
+- A real camera run on a laptop, a phone, and iOS Safari; the browser pane has no camera.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.
