@@ -150,12 +150,122 @@ export type Database = {
         }
         Relationships: []
       }
+      sets: {
+        Row: {
+          attempts: Json
+          created_at: string
+          ended_at: string
+          ended_by: string
+          engine_report: Json
+          engine_version: string
+          id: string
+          keypoints_url: string | null
+          kind: string
+          llm_feedback: string | null
+          repair_declined: boolean
+          set_no: number
+          similarity: Json | null
+          started_at: string
+          totals: Json
+          video_url: string | null
+          workout_id: string
+        }
+        Insert: {
+          attempts: Json
+          created_at?: string
+          ended_at: string
+          ended_by: string
+          engine_report: Json
+          engine_version: string
+          id?: string
+          keypoints_url?: string | null
+          kind: string
+          llm_feedback?: string | null
+          repair_declined?: boolean
+          set_no: number
+          similarity?: Json | null
+          started_at: string
+          totals: Json
+          video_url?: string | null
+          workout_id: string
+        }
+        Update: {
+          attempts?: Json
+          created_at?: string
+          ended_at?: string
+          ended_by?: string
+          engine_report?: Json
+          engine_version?: string
+          id?: string
+          keypoints_url?: string | null
+          kind?: string
+          llm_feedback?: string | null
+          repair_declined?: boolean
+          set_no?: number
+          similarity?: Json | null
+          started_at?: string
+          totals?: Json
+          video_url?: string | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sets_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workouts: {
+        Row: {
+          ended_at: string | null
+          exercise_id: string
+          id: string
+          rest_seconds: number
+          started_at: string
+          target_reps: number
+          target_sets: number
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          exercise_id: string
+          id?: string
+          rest_seconds: number
+          started_at?: string
+          target_reps: number
+          target_sets: number
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          exercise_id?: string
+          id?: string
+          rest_seconds?: number
+          started_at?: string
+          target_reps?: number
+          target_sets?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       exercise_logic_valid: { Args: { logic: Json }; Returns: boolean }
+      owns_workout: { Args: { workout: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
