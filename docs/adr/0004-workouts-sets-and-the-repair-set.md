@@ -28,3 +28,13 @@ The report's setup screen collects reps per set and a number of sets, but its da
 - Group sets by time window: rejected, it turns a fact into a guess.
 - A session is the whole workout with set boundaries inside the per-rep detail: rejected, it breaks the report's payload shape and the per-set repair rule.
 - Drop multi-set from v1: rejected by the user; the setup screen keeps both numbers.
+
+## As built in Phase 4
+
+- `keypoints_url` and `video_url` hold object paths in the private `sets` bucket, `<user_id>/<set_id>/...`, not URLs. A reader signs a download URL when it needs one. Both stay null when an upload failed.
+- `sets` also has `created_at`, which orders a workout's sets for the feedback context.
+- `repair_declined` is recorded on the set whose repair set was skipped. A repair set is offered only after an initial set, never after a repair set, and the unique constraint allows one per set number.
+- The repair set starts at once, without rest. After it, or after a skip, the rest timer runs before the next set.
+- The rest timer counts down on the set-complete screen and starts the next set on its own at zero, back through the placement guide and the ready gate. Start now skips the wait. A rest of zero starts the next set at once, so that set's feedback is first read on the finished summary.
+- `ended_at` on the workout is written when the user presses Finish workout after the last set. A workout left part way keeps a null `ended_at` and its saved sets.
+- Column grants limit what the API may update: `ended_at` on a workout, and `repair_declined`, the two file paths, `similarity`, `llm_feedback`, and `attempts` on a set. Nothing is deleted.

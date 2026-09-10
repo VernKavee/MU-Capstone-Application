@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phases 0 to 3 are done. The repo holds the planning documents, the vocabulary, the
+Phases 0 to 4 are done. The repo holds the planning documents, the vocabulary, the
 decision records, and the code so far: scaffolding, the foundation migration, auth,
 consent, profile, the app shell, the exercise catalogue as data, the workout setup and
-guide screens, and the live session screen with the camera, MediaPipe, and the stub
-engine. Nothing is saved after a set; there are no `workouts` or `sets` tables yet.
+guide screens, the live session screen with the camera, MediaPipe, and the stub engine,
+and the completion flow: every set saved with its attempt records, engine report, video,
+and keypoint file, similarity and feedback from stubs, the repair set, the rest timer,
+and the finished summary. History is Phase 5.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -34,11 +36,11 @@ Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
   then `npm run db:types` to regenerate `lib/supabase/database.types.ts`.
 - `npm run test:db`: pgTAP tests in `supabase/tests/`. Every table with row-level
   security gets its isolation proven there.
-- `npm run test:engine`: the stub engine test, Node's own runner with type stripping.
-  Files under `lib/engine/` import each other with `.ts` extensions for this reason.
+- `npm run test:unit`: every `lib/**/*.test.ts`, Node's own runner with type stripping.
+  Files those tests reach import each other with `.ts` extensions for this reason.
 - `npx next typegen` before `npx tsc --noEmit` after adding a route.
 - `npx supabase db advisors` after any schema change.
-- No unit or end-to-end tests yet; Phase 6 adds them.
+- No end-to-end tests yet; Phase 6 adds them.
 
 Conventions the code follows, because the docs changed since the plan was written:
 
@@ -46,7 +48,9 @@ Conventions the code follows, because the docs changed since the plan was writte
   `next typegen` (`PageProps<"/path">`, `LayoutProps<"/">`). Search params are a Promise.
 - Sessions are checked with `supabase.auth.getClaims()`, never `getSession()`.
 - Server actions in `actions.ts` files next to the pages; errors travel back as an
-  `?error=` query string, no client state.
+  `?error=` query string, no client state. The completion flow's actions are called from
+  the live screen, not from forms, and return errors as values.
+- A "use server" file may export only async functions; constants live in `lib/`.
 - `lib/supabase/server.ts` for server components and actions, `lib/supabase/client.ts`
   for the browser. Both are typed with the generated `Database`.
 - Supabase's default grants give `anon` and `authenticated` everything on a new public
@@ -58,6 +62,13 @@ Conventions the code follows, because the docs changed since the plan was writte
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
   renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
   the overlay, the recorder, and the keypoint capture.
+- The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
+  client passed in, `live/actions.ts` wraps it as server actions, `live/pipeline.ts` runs
+  save, uploads, and analyse for one set in the browser, and `live/set-complete.tsx`
+  renders it. `lib/set.ts` builds the attempt records and the keypoint file. The
+  similarity and feedback stubs are `lib/analysis/similarity.ts` and
+  `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each owner replaces one
+  file.
 
 ## The three-part AI structure
 
@@ -180,8 +191,8 @@ Decided in Phase 2, recorded in the Phase 2 session log:
 
 Decided in Phase 3, recorded in the Phase 3 session log:
 
-- One set per visit to the live screen. The rest timer, the next set, the repair set, and
-  saving belong to Phase 4. The live URL carries reps, sets, and rest.
+- The live URL carries reps, sets, and rest. Since Phase 4 one visit runs the whole
+  workout.
 - Enum names from the Python are lower case strings; `state` is one of the row's
   `state_machine.states`.
 - The stub judges placement and the ready pose (T pose, arms out) from the real landmarks
@@ -189,8 +200,8 @@ Decided in Phase 3, recorded in the Phase 3 session log:
   are eight frames as in the research repo.
 - Recording is a MediaRecorder Blob (webm where supported, else mp4); the keypoint capture
   is one object per frame with `t` since the recording started, the engine state, the
-  event, and the keypoints. Both start on the first active frame. The file format on disk
-  is still Phase 4's call.
+  event, and the keypoints. Both start on the first active frame. Phase 4 added the rules
+  violated on each frame and decided the file format below.
 - MediaPipe wasm from jsdelivr pinned to the installed version, the model from Google's
   storage, GPU with CPU fallback; the two URLs are constants in `lib/live/pose.ts`.
 - Lite model: a manual choice on the preflight screen or a "Lagging?" button under fifteen
@@ -203,10 +214,33 @@ Decided in Phase 3, recorded in the Phase 3 session log:
 - Design: over video, off-white ink, tape yellow as the only accent, Big Shoulders Display
   800 (self-hosted, OFL) for the counter and the countdown only, text buttons in pills.
 
+Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 session log:
+
+- Keypoint file: JSON, gzipped in the browser, `<user_id>/<set_id>/keypoints.json.gz` in
+  the private `sets` bucket beside `video.webm` or `video.mp4`: `joints`, `fields`, `fps`,
+  and per frame `t`, `state`, `event`, and one flat row of 231 numbers.
+- `keypoints_url` and `video_url` hold object paths, not URLs; null when an upload failed.
+- Feedback context: the workout's earlier sets plus the last five other workouts of the
+  exercise (`HISTORY_WORKOUTS`), as set summaries without attempt records.
+- After a set: save the row, upload both files, then analyse. A retry redoes only what is
+  missing. Each set's save waits for the previous one so all sets share one workout row.
+- The repair set follows an initial set with any violation, abandoned attempts included,
+  starts without rest, and keeps the set number. Skipping writes `repair_declined` on the
+  initial set, even when the skip comes before the save lands.
+- The rest timer starts the next set on its own at zero; Start now skips it.
+- Finish workout writes `ended_at` and opens the finished summary, which reads from the
+  database and has no retry; the retry lives on the set-complete screen.
+- Column grants limit API updates to `workouts.ended_at` and, on `sets`, the decline, the
+  file paths, similarity, feedback, and attempts. Nothing is deleted.
+- Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
+  object; `value` is `rep_stats[rule name]` or null.
+
 Still open, to be settled in the phase named:
 
-- Keypoint file format and saving the capture, Phase 4.
-- The bound on past workouts in the feedback input, Phase 4.
+- A browser run of the completion flow. The session could not sign in to the pane.
+- The keypoint file's real size, measured on the first real camera run.
+- A failed first save, or a reload mid-workout, gives the next set a new workout row.
+- Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - A real camera run on a laptop, a phone, and iOS Safari; the browser pane has no camera.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted

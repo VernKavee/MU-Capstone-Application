@@ -4,10 +4,11 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 ## Status
 
-Phases 1 to 3 of the build plan are complete: project skeleton, database foundation,
+Phases 1 to 4 of the build plan are complete: project skeleton, database foundation,
 sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
-setup and guide screens, and the live session screen with the camera, the pose model, and
-a stub engine. Nothing is saved after a set yet; that is Phase 4.
+setup and guide screens, the live session screen with the camera, the pose model, and a
+stub engine, and the completion flow that saves every set with its video and keypoint
+file, then writes similarity and feedback from stubs. History is Phase 5.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -21,8 +22,10 @@ a stub engine. Nothing is saved after a set yet; that is Phase 4.
 - Next.js 16 App Router with TypeScript and Tailwind, talking to Supabase through
   `@supabase/ssr`. The session is refreshed in `proxy.ts`; signed-out users go to `/login`.
 - `supabase/migrations/`: pgvector, `profiles`, `consents`, `exercises`, `expert_motions`,
-  row-level security, and least-privilege grants. `supabase/tests/` proves per-user
-  isolation and that the catalogue is read-only through the API.
+  `workouts`, `sets`, the private `sets` storage bucket, row-level security, and
+  least-privilege grants down to the column. `supabase/tests/` proves per-user isolation,
+  that the catalogue is read-only through the API, and that each user's files sit in
+  their own folder.
 - `exercises` holds the four exercises as rows: guide text, media URLs (null until the
   media exists), the research repo's engine key, and `rule_based_logic` with the state
   machine thresholds and one entry per rule (check name, threshold, priority, scope,
@@ -48,12 +51,24 @@ a stub engine. Nothing is saved after a set yet; that is Phase 4.
   with attempts and the engine state beside it, one warning at a time with the joints it
   names lit up, a beep per correct rep and the warning spoken with a mute, an End set
   button, and an attempt cap of twice the target. From the end of the countdown the set
-  is recorded and every frame's 33 landmarks are captured; both are held in memory for
-  Phase 4 to save. One set runs per visit; the rest timer and the next set are Phase 4.
+  is recorded and every frame's 33 landmarks are captured. One visit runs the whole
+  workout: every set, the repair sets, and the rest between them.
 - The engine seam of ADR-0002 is `lib/engine/types.ts`; `lib/engine/stub.ts` is the stub
   that Vern's port replaces. It reads the row's `rule_based_logic`, judges placement and
   the ready pose from the real landmarks, then scripts attempts with random outcomes.
   `lib/live/session.ts` is the frame loop, outside React.
+- When a set ends it is saved at once: a `workouts` row with the first set, then a `sets`
+  row with the totals, one record per attempt (ADR-0003), and the engine's report
+  verbatim. The video and the gzipped keypoint file (ADR-0005) go from the browser
+  straight to the private `sets` bucket through signed upload URLs. Then similarity and
+  feedback are written to the set by the stubs in `lib/analysis/`, behind the contracts of
+  ADR-0007; the feedback stub quotes the medical history back. The server side is
+  `lib/save-and-analyse.ts`.
+- The set-complete screen shows the counts and the violations, then similarity and
+  feedback as they arrive, with a retry. It then offers one repair set after any
+  violation (a skip is recorded), runs the rest timer, or finishes the workout.
+- `/workout/[exercise]/done/[workout]` is the finished summary, read back from the
+  database: each set with its counts, similarity, and feedback.
 
 ## Running it
 
@@ -84,7 +99,7 @@ its wasm are fetched from Google's storage and jsdelivr on first use, about 10 M
 | `npx tsc --noEmit` | type check |
 | `npm run db:reset` | replay all migrations from scratch on the local stack |
 | `npm run test:db` | run the pgTAP tests in `supabase/tests/` |
-| `npm run test:engine` | run the stub engine test with Node's test runner |
+| `npm run test:unit` | run the unit tests under `lib/` with Node's test runner |
 | `npm run db:types` | regenerate `lib/supabase/database.types.ts` after a migration |
 | `npx supabase migration new <name>` | create a new migration file |
 | `npx supabase stop` | stop the stack, data kept in the Docker volume |

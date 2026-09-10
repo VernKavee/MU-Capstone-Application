@@ -43,3 +43,15 @@ The report's `reps_detail` and the research repo's schema version 4 report descr
 | errors[].action | none | dropped, implied by outcome |
 | aborted_reps | total_attempts_abandoned | totals.abandoned_attempts on the set |
 | completed_reps | total_reps_completed | totals.completed_reps, plus totals.correct_reps, the counter |
+
+## As built in Phase 4
+
+`lib/set.ts` builds the records in the browser from the engine's report and the captured frames. Nothing is judged there: outcomes, counts, and violations are the engine's.
+
+- Every record carries `schema_version` 1. The engine's report keeps its own `schema_version` 4 in `engine_report`.
+- `threshold` is the rule's threshold object copied from the exercise row, for example `{ "depth_target": 100 }`, not a string such as `"<= 100"`. The direction of the comparison belongs to the check, and the record does not carry code.
+- `value` is the `rep_stats` entry named after the rule, and null when there is none. The stub keys its invented `rep_stats` by rule name. The port must do the same, or the export script must map statistic names to rule names, for `value` to fill.
+- `state` is the engine state, lower case, of the first frame in the attempt whose violations list the rule. A rep scope rule appears on the completion frame, so its state is usually `idle`. It is null when the rule never appears on a frame.
+- `state_durations_s` is keyed by the row's state names in lower case and sums the frame gaps from `rep_started` to the closing event.
+- A report record whose event the frames never showed keeps its place with a null frame range, so every attempt still has a record.
+- `similarity` is written into each record by the analyse step of ADR-0007, at the same time as the set's own `similarity`.
