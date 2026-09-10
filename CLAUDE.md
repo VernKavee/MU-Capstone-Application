@@ -177,3 +177,6 @@ Relevant for cross-checking behaviour:
   opening a PR.
 - Write a session log to `docs/sessions/YYYY-MM-DD.md` at the end of each phase.
 - Keep `README.md` current with what actually exists.
+- Vern starts `npm run dev` and `npx supabase start` himself. Only start them when he says
+  so, or when a change needs browser verification, and stop both (`npx supabase stop`)
+  before the final report. Never leave either running at the end of a turn.
