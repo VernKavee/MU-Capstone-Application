@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { TabBar } from "./tab-bar";
 import { gateState } from "@/lib/gate";
 import { createClient } from "@/lib/supabase/server";
 
@@ -8,5 +9,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { consented, hasProfile } = await gateState(supabase);
   if (!consented) redirect("/consent");
   if (!hasProfile) redirect("/profile/setup");
-  return <>{children}</>;
+  return (
+    <>
+      <div className="mx-auto w-full max-w-lg flex-1 pb-16">{children}</div>
+      <TabBar />
+    </>
+  );
 }

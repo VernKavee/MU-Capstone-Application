@@ -8,7 +8,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const { error, saved } = await searchParams;
 
   return (
-    <main className="mx-auto w-full max-w-lg p-6 space-y-6">
+    <main className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Settings</h1>
       {saved && <p role="status" className="rounded border border-green-300 bg-green-50 p-2 text-sm text-green-800">Profile saved.</p>}
       <ProfileForm mode="settings" profile={profile} error={typeof error === "string" ? error : undefined} />
