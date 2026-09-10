@@ -6,16 +6,16 @@ const format = (date: string, options: Intl.DateTimeFormatOptions) =>
 
 const BAR_REM = 8.5; // a column at 100; the value label sits in the 1.5rem above it
 
-// Level 1 (REQUIREMENTS section 5): Monday to Sunday of this week, each day's mean
-// similarity over its sets on a fixed 0 to 100 scale. Every column carries its value and
-// its set count, so there is no axis and no tooltip. A day without sets has no column.
-export function WeeklySummary({ days, today }: { days: Day[]; today: string }) {
+// Level 1 (REQUIREMENTS section 5): the last seven days, today on the right, each day's
+// mean similarity over its sets on a fixed 0 to 100 scale. Every column carries its value
+// and its set count, so there is no axis and no tooltip. A day without sets has no column.
+export function WeeklySummary({ days }: { days: Day[] }) {
   const empty = days.every((d) => d.sets === 0);
   return (
     <section aria-labelledby="week-title" className="rounded-2xl bg-tape-ink px-5 pb-4 pt-5 text-ink dark:ring-1 dark:ring-ink/15">
       <div className="flex items-baseline justify-between gap-4">
         <h2 id="week-title" className="text-lg font-semibold">
-          This week
+          Last 7 days
         </h2>
         <p className="text-sm text-ink/60">
           {format(days[0].date, { day: "numeric", month: "short" })} to {format(days[6].date, { day: "numeric", month: "short" })}
@@ -28,7 +28,7 @@ export function WeeklySummary({ days, today }: { days: Day[]; today: string }) {
         <div aria-hidden className="absolute inset-x-0 top-6 border-t border-ink/15" />
         <ol className="relative grid grid-cols-7">
           {days.map((day, i) => {
-            const isToday = day.date === today;
+            const isToday = i === days.length - 1;
             return (
               <li key={day.date} className="flex flex-col items-center">
                 <span className="sr-only">{describe(day, isToday)}</span>
@@ -41,8 +41,8 @@ export function WeeklySummary({ days, today }: { days: Day[]; today: string }) {
                     />
                   )}
                 </div>
-                <span aria-hidden className={`mt-2 text-xs ${isToday ? "font-semibold text-ink" : day.date > today ? "text-ink/50" : "text-ink/60"}`}>
-                  {format(day.date, { weekday: "short" })}
+                <span aria-hidden className={`mt-2 text-xs ${isToday ? "font-semibold text-ink" : "text-ink/60"}`}>
+                  {isToday ? "Today" : format(day.date, { weekday: "short" })}
                 </span>
                 <span aria-hidden className="h-4 text-[11px] leading-4 text-ink/60">
                   {day.sets > 0 && `${day.sets} ${day.sets === 1 ? "set" : "sets"}`}
@@ -52,7 +52,7 @@ export function WeeklySummary({ days, today }: { days: Day[]; today: string }) {
           })}
         </ol>
       </div>
-      {empty && <p className="mt-3 text-sm text-ink/70">No sets yet this week. Pick an exercise below to start one.</p>}
+      {empty && <p className="mt-3 text-sm text-ink/70">No sets in the last 7 days. Pick an exercise below to start one.</p>}
     </section>
   );
 }

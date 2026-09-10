@@ -150,11 +150,11 @@ The exercise-scoped text chunks with embeddings that feedback retrieves from. Ow
 _Avoid_: RAG store, documents
 
 **Weekly summary**:
-The Home chart: the last seven days, Monday to Sunday, mean similarity over each day's sets.
+The Home chart: the last seven days ending today in the browser's time zone, mean similarity over each day's sets.
 _Avoid_: daily tracking, dashboard
 
 **Active day**:
-A day on which the user finished at least one workout of a given exercise. History level 2 counts them per week.
+A day on which the user finished at least one workout of a given exercise, dated by the workout's start. History level 2 counts them over the last seven days. A workout left part way makes no active day.
 
 **Consent**:
 The user's recorded agreement, with version and time, to camera use, to storing video and landmarks, and to storing the profile.

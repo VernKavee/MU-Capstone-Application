@@ -144,8 +144,9 @@ Smaller decisions without an ADR, so no phase re-decides them:
 - Live screen: a beep per correct rep and the warning spoken through the browser speech
   API, with a mute toggle.
 - The profile must be complete before the first workout; medical history may be "none".
-- Weekly chart: mean similarity per day over that day's sets; week starts Monday in the
-  browser's time zone. History level 3 lists workouts, not sets.
+- Weekly chart: mean similarity per day over that day's sets; the last seven days ending
+  today in the browser's time zone (Phase 5 replaced Monday to Sunday at Vern's request).
+  History level 3 lists workouts, not sets.
 - English UI; every user-facing message in exercise data is keyed by locale.
 - Laptops and phones are both first-class.
 - Skills: adopt `supabase/agent-skills@supabase` and

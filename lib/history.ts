@@ -1,12 +1,13 @@
 // History (REQUIREMENTS section 5), the plain-data part: which local day a set or workout
-// falls on, the week the charts cover, and the mean similarity over sets. A day is the
-// user's day: weeks run Monday to Sunday in the browser's time zone (Phase 0), which
-// reaches the server in the tz cookie. Node-testable, so imports carry .ts extensions.
+// falls on, the seven days the charts cover, and the mean similarity over sets. A day is
+// the user's day in the browser's time zone, which reaches the server in the tz cookie.
+// Node-testable, so imports carry .ts extensions.
 import type { Similarity } from "./set.ts";
 
 export const TZ_COOKIE = "tz";
 const DAY_MS = 86_400_000;
-// A week plus a day: covers local Monday from any zone, across a DST change too.
+// A week plus a day: reaches local midnight six days ago from any zone, across a DST
+// change too.
 export const WEEK_FETCH_MS = 8 * DAY_MS;
 
 // The cookie's zone when it names a real one, else the server's own until the browser
@@ -29,12 +30,11 @@ export function localDate(at: string | Date, tz: string): string {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-// Monday to Sunday of the local week holding `now`. The arithmetic runs on the local date
-// alone, so no DST offset gets in the way.
-export function weekDays(now: Date, tz: string): string[] {
+// The last seven local days, oldest first, today last (Phase 5: today is the rightmost
+// column). The arithmetic runs on the local date alone, so no DST offset gets in the way.
+export function lastSevenDays(now: Date, tz: string): string[] {
   const today = Date.parse(`${localDate(now, tz)}T00:00:00Z`);
-  const monday = today - ((new Date(today).getUTCDay() + 6) % 7) * DAY_MS;
-  return Array.from({ length: 7 }, (_, i) => new Date(monday + i * DAY_MS).toISOString().slice(0, 10));
+  return Array.from({ length: 7 }, (_, i) => new Date(today - (6 - i) * DAY_MS).toISOString().slice(0, 10));
 }
 
 // The mean of the sets' overall similarity, initial and repair alike (ADR-0004), over the
@@ -46,7 +46,7 @@ export function meanSimilarity(similarities: (Similarity | null)[]): number | nu
 
 export type Day = { date: string; mean: number | null; sets: number };
 
-// Level 1: each day of the week with the mean similarity over that day's sets.
+// Level 1: each of the days with the mean similarity over that day's sets.
 export function weeklySummary(days: string[], sets: { started_at: string; similarity: Similarity | null }[], tz: string): Day[] {
   const dated = sets.map((s) => ({ date: localDate(s.started_at, tz), similarity: s.similarity }));
   return days.map((date) => {
@@ -55,7 +55,7 @@ export function weeklySummary(days: string[], sets: { started_at: string; simila
   });
 }
 
-// Level 2: per exercise, the days of the week with a finished workout, dated by its start.
+// Level 2: per exercise, which of the days have a finished workout, dated by its start.
 // The caller passes finished workouts only (Phase 5: a workout left part way is no active day).
 export function activeDays(days: string[], workouts: { exercise_id: string; started_at: string }[], tz: string): Map<string, Set<string>> {
   const week = new Set(days);
