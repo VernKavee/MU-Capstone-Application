@@ -259,7 +259,8 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   set.
 - Replay: the browser fetches the two files on Play; the video is not mirrored; timing
   comes from the keypoint file's `t`, never the video's duration; an attempt's violations
-  light their joints for the whole attempt; a set missing a file is not replayed.
+  light their joints for the whole attempt; a set missing a file, or whose keypoint file
+  holds fewer than two frames, is not replayed.
 - The chart sits on the live screen's dark ground because tape yellow on white fails
   contrast. Big Shoulders also sets the deep-dive's similarity number.
 - The deep-dive widens the (app) column through `data-wide`; other pages keep the phone

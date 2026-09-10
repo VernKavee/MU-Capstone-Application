@@ -6,7 +6,7 @@ import { drawSkeleton } from "@/lib/live/skeleton";
 import { SETS_BUCKET, type Attempt, type KeypointFile, type Violation } from "@/lib/set";
 import { createClient } from "@/lib/supabase/client";
 
-type State = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; src: string; file: KeypointFile };
+type State = { kind: "idle" } | { kind: "loading" } | { kind: "empty" } | { kind: "error"; message: string } | { kind: "ready"; src: string; file: KeypointFile };
 
 const OUTCOME = { correct: "Correct", incorrect: "Incorrect", abandoned: "Abandoned" } as const;
 // Tape yellow means a rule fired, as on the live screen: on the black stage's strip and on
@@ -47,7 +47,7 @@ export function Replay({
   const pending = useRef(0); // the frame to start from once the files are in
   const file = state.kind === "ready" ? state.file : null;
   const end = file ? file.frames[file.frames.length - 1].t : 0;
-  const canPlay = Boolean(video && keypoints);
+  const canPlay = Boolean(video && keypoints) && state.kind !== "empty";
 
   async function load() {
     if (!video || !keypoints || state.kind === "loading") return;
@@ -59,7 +59,8 @@ export function Replay({
       if (download.error) throw download.error;
       const body = download.data.stream();
       const file = (await new Response(keypoints.endsWith(".gz") ? body.pipeThrough(new DecompressionStream("gzip")) : body).json()) as KeypointFile;
-      setState({ kind: "ready", src: signed.data.signedUrl, file });
+      // Fewer than two frames give nothing to time the strip by or draw.
+      setState(file.frames.length < 2 ? { kind: "empty" } : { kind: "ready", src: signed.data.signedUrl, file });
     } catch (e) {
       setState({ kind: "error", message: `The recording could not be loaded: ${e instanceof Error ? e.message : String(e)}` });
     }
@@ -153,6 +154,8 @@ export function Replay({
                   alone, or play the video alone, if failed uploads turn out to be common. */}
               {!video && !keypoints ? (
                 <p className="text-sm text-ink/70">No recording for this set.</p>
+              ) : state.kind === "empty" ? (
+                <p className="text-sm text-ink/70">The keypoint file holds no frames, so this set cannot be replayed.</p>
               ) : !canPlay ? (
                 <p className="text-sm text-ink/70">{video ? "The keypoint file" : "The video"} did not upload, so this set cannot be replayed.</p>
               ) : state.kind === "loading" ? (
