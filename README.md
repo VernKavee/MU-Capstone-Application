@@ -4,8 +4,9 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 ## Status
 
-Phase 1 of the build plan is complete: project skeleton, database foundation, sign-in,
-PDPA consent, profile, and the app shell. There is no exercise functionality yet.
+Phases 1 and 2 of the build plan are complete: project skeleton, database foundation,
+sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, and the
+workout setup and guide screens. There is no camera or live session yet.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -18,13 +19,28 @@ PDPA consent, profile, and the app shell. There is no exercise functionality yet
 
 - Next.js 16 App Router with TypeScript and Tailwind, talking to Supabase through
   `@supabase/ssr`. The session is refreshed in `proxy.ts`; signed-out users go to `/login`.
-- `supabase/migrations/`: pgvector, `profiles`, `consents`, row-level security, and
-  least-privilege grants. `supabase/tests/rls.test.sql` proves per-user isolation.
+- `supabase/migrations/`: pgvector, `profiles`, `consents`, `exercises`, `expert_motions`,
+  row-level security, and least-privilege grants. `supabase/tests/` proves per-user
+  isolation and that the catalogue is read-only through the API.
+- `exercises` holds the four exercises as rows: guide text, media URLs (null until the
+  media exists), the research repo's engine key, and `rule_based_logic` with the state
+  machine thresholds and one entry per rule (check name, threshold, priority, scope,
+  debounce, message per locale, highlight joints). A check constraint enforces the shape.
+  Adding an exercise built from existing checks is an insert; see ADR-0006. The seeded
+  numbers were typed by hand from the research repo and are marked as such in the
+  migration.
+- `expert_motions` is empty, 1:1 with exercises, and unreachable through the API; it is
+  filled by the similarity component over a direct database connection.
 - Register, sign in, sign out. Email confirmation is off; there is no password reset
   (ADR-0001). A tester who forgets a password asks the team.
 - PDPA consent in three parts, each recorded with version and time (`lib/consent.ts`).
 - Profile setup before the first workout and editing in Settings.
 - App shell: Home, History, Settings tabs. History is an empty placeholder until Phase 5.
+- Home lists the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
+  number of sets, and rest seconds (default 60); `/workout/[exercise]/guide` shows the
+  guide text, the demonstration video or a placeholder, and the rules the coach checks.
+  The Open camera button is disabled until Phase 3. Thumbnails and guide videos do not
+  exist yet.
 
 ## Running it
 

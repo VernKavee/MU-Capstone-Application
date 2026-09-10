@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phase 0 and Phase 1 are done. The repo holds the planning documents, the vocabulary, the
-decision records, and the Phase 1 code: scaffolding, the foundation migration, auth,
-consent, profile, and the app shell. Nothing about exercise exists yet.
+Phases 0, 1, and 2 are done. The repo holds the planning documents, the vocabulary, the
+decision records, and the code so far: scaffolding, the foundation migration, auth,
+consent, profile, the app shell, the exercise catalogue as data, and the workout setup
+and guide screens. Nothing about the camera or the live session exists yet.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -143,6 +144,30 @@ Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
 - Gate order after sign-in: consent, then profile, then Home. Enforced in
   `app/(app)/layout.tsx`; every gated page lives under `app/(app)/`.
 
+Decided in Phase 2, recorded in the Phase 2 session log:
+
+- `exercises.id` is the URL slug (`squat`, `push-up`, `lunge`, `bicep-curl`), a text
+  primary key. `engine_key` is the research repo's registry name.
+- `rule_based_logic` shape, enforced by the `exercise_logic_valid()` check constraint:
+  `source`, `state_machine` (`states`, `thresholds` keyed by the Python FSM attribute
+  names, `arming` or null), and `rules[]` each with `name`, `check`, `priority`, `scope`
+  (`frame` or `rep`), `debounce_frames`, `threshold` (keys named per check), `messages`
+  keyed by locale, `highlight_joints`. `lib/exercise.ts` holds the TypeScript type.
+- Rule name and check name are separate fields, so a new exercise can reuse a check under
+  its own rule name. Reads of the catalogue never branch on the exercise name.
+- The seed is typed by hand from the research repo at c5fc57c and marked as such in the
+  migration; the export script of ADR-0002 replaces it. Messages are verbatim from the
+  Python. Guide text is a draft, not yet reviewed by the physiotherapy experts.
+- `name` and `guide_text` are plain text; only rule messages are keyed by locale.
+- Setup defaults 10 reps, 3 sets, 60 s rest; limits 1 to 100, 1 to 10, 0 to 600. The
+  three numbers travel in the query string; a workout row exists only once its first set
+  is saved (ADR-0004).
+- `thumbnail_url` and `guide_video_url` are null until the media exists; the UI shows a
+  labelled placeholder for null.
+- `expert_motions`: no app role has any privilege; Punnapat's component writes it directly.
+- Data changes to the catalogue are made through the database (psql or Studio), never
+  through the API, which is read-only for it.
+
 Still open, to be settled in the phase named:
 
 - Keypoint file format, Phase 4.
@@ -150,7 +175,9 @@ Still open, to be settled in the phase named:
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.
-- Guide videos and thumbnails for the four exercises do not exist yet.
+- Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
+  is a draft awaiting review.
+- Whether `exercises.name` and `guide_text` should be locale-keyed like rule messages.
 
 Vocabulary is in `CONTEXT.md`. In particular: attempt, completed rep, correct rep,
 abandoned attempt, workout, set, repair set, and the engine state names Idle, Concentric,
