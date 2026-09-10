@@ -46,3 +46,10 @@ JSON, gzipped in the browser with `CompressionStream` before upload, stored as `
 - Numbers are rounded to four decimals.
 
 JSON rather than a binary format because the similarity contract of ADR-0007 already takes this object as `landmarks`, Python and TypeScript both read it without a decoder, and gzip closes most of the size gap. The table above assumed about 1 MB gzipped for two minutes; the real size is measured on the first real camera run. Written by `toKeypointFile` in `lib/set.ts`.
+
+## Measured and replayed in Phase 5
+
+- Vern's first real workout, on a Mac in Chrome: sets of 31 to 43 s gave keypoint files of 0.97 to 1.24 MB gzipped and videos of 38 to 53 MB. The landmarker ran at 60 frames per second, so the file is about 1.7 MB per minute, three times the estimate above; `fps` in the file is the real rate and readers use it. The video came out at about 10 Mbit/s, about 75 MB per minute, four times the estimate, so the storage table above is low by the same factor. Setting `videoBitsPerSecond` on the recorder is open.
+- History level 4 replays a set in the browser: it signs a download URL for the video and downloads the keypoint file, only when Play is pressed. The video plays as recorded, not mirrored, and the skeleton is drawn over it frame by frame from the keypoint file by `lib/live/skeleton.ts`, the drawing the live screen uses.
+- The recorded webm reports no duration. The replay times everything by the keypoint file's `t`, and Chromium seeks to any time in the video.
+- The file holds no violations per frame, so replay lights an attempt's violated rules for the whole attempt, found through the attempt records' frame ranges (ADR-0003). The format is unchanged.

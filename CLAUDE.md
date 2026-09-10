@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phases 0 to 4 are done. The repo holds the planning documents, the vocabulary, the
+Phases 0 to 5 are done. The repo holds the planning documents, the vocabulary, the
 decision records, and the code so far: scaffolding, the foundation migration, auth,
 consent, profile, the app shell, the exercise catalogue as data, the workout setup and
 guide screens, the live session screen with the camera, MediaPipe, and the stub engine,
-and the completion flow: every set saved with its attempt records, engine report, video,
+the completion flow: every set saved with its attempt records, engine report, video,
 and keypoint file, similarity and feedback from stubs, the repair set, the rest timer,
-and the finished summary. History is Phase 5.
+and the finished summary, and History: the weekly chart on Home, active days, each
+exercise's workouts, and the workout deep-dive with the replay. Phase 6 is hardening and
+handover.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -69,6 +71,14 @@ Conventions the code follows, because the docs changed since the plan was writte
   similarity and feedback stubs are `lib/analysis/similarity.ts` and
   `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each owner replaces one
   file.
+- History: `lib/history.ts` is the plain-data part (local days, the seven days, means,
+  frame lookup), Node-tested. The browser's time zone arrives in the `tz` cookie from
+  `app/(app)/time-zone.tsx` and `lib/time-zone.ts` reads it; every date rendered on the
+  server passes that zone. `lib/live/skeleton.ts` draws the skeleton for live and replay.
+  The replay, `history/[exercise]/[workout]/replay.tsx`, fetches the video and the
+  keypoint file from storage in the browser when Play is pressed.
+- JSX built in a server component and passed as a prop to a client component that renders
+  it beside its own children gets a `key`.
 
 ## The three-part AI structure
 
@@ -236,15 +246,39 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
 - Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
   object; `value` is `rep_stats[rule name]` or null.
 
+Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
+
+- The Home chart covers the last seven days ending today in the browser's time zone, today
+  on the right, at Vern's request; each day is the mean over all its sets, workouts left
+  part way included.
+- An active day needs a finished workout, dated by its start, over the same seven days.
+  Level 3 lists finished workouts only, so a workout left part way shows on the chart and
+  nowhere else in History.
+- Level 4 lists every set of the workout and shows the one in `?set=` in full; only that
+  set's attempts, feedback, and file paths are fetched. The feedback detail screen is per
+  set.
+- Replay: the browser fetches the two files on Play; the video is not mirrored; timing
+  comes from the keypoint file's `t`, never the video's duration; an attempt's violations
+  light their joints for the whole attempt; a set missing a file is not replayed.
+- The chart sits on the live screen's dark ground because tape yellow on white fails
+  contrast. Big Shoulders also sets the deep-dive's similarity number.
+- The deep-dive widens the (app) column through `data-wide`; other pages keep the phone
+  column until Phase 6.
+- No migration: the Phase 4 policies cover every read.
+
 Still open, to be settled in the phase named:
 
-- A browser run of the completion flow. The session could not sign in to the pane.
-- The keypoint file's real size, measured on the first real camera run.
+- Video comes out at about 75 MB per minute (10 Mbit/s in Chrome); `videoBitsPerSecond` on
+  the recorder would cut it. The keypoint file follows the device's frame rate, 60 fps on
+  Vern's Mac, about 1.7 MB per minute.
+- A workout left part way cannot be opened in History; Level 3 has no paging; a set
+  missing one file is not replayed.
 - A failed first save, or a reload mid-workout, gives the next set a new workout row.
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
-- A real camera run on a laptop, a phone, and iOS Safari; the browser pane has no camera.
+- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5), and a
+  look at the live overlay since its drawing moved to `lib/live/skeleton.ts`.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.

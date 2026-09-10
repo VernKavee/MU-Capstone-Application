@@ -38,3 +38,10 @@ The report's setup screen collects reps per set and a number of sets, but its da
 - The rest timer counts down on the set-complete screen and starts the next set on its own at zero, back through the placement guide and the ready gate. Start now skips the wait. A rest of zero starts the next set at once, so that set's feedback is first read on the finished summary.
 - `ended_at` on the workout is written when the user presses Finish workout after the last set. A workout left part way keeps a null `ended_at` and its saved sets.
 - Column grants limit what the API may update: `ended_at` on a workout, and `repair_declined`, the two file paths, `similarity`, `llm_feedback`, and `attempts` on a set. Nothing is deleted.
+
+## As built in Phase 5
+
+- History only reads. Level 3 lists finished workouts, those with `ended_at`, newest first, each with the mean similarity over all its sets, initial and repair.
+- The weekly chart covers the last seven days ending today, not Monday to Sunday, at Vern's request. It stays set based, so the sets of a workout left part way count there and nowhere else in History.
+- An active day is a day with a finished workout of the exercise, dated by the workout's start in the browser's time zone.
+- Level 4 lists every set of the workout, each repair set after the set it repairs, and shows the chosen one in full.

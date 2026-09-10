@@ -4,11 +4,12 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 ## Status
 
-Phases 1 to 4 of the build plan are complete: project skeleton, database foundation,
+Phases 1 to 5 of the build plan are complete: project skeleton, database foundation,
 sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
 setup and guide screens, the live session screen with the camera, the pose model, and a
-stub engine, and the completion flow that saves every set with its video and keypoint
-file, then writes similarity and feedback from stubs. History is Phase 5.
+stub engine, the completion flow that saves every set with its video and keypoint file,
+then writes similarity and feedback from stubs, and History with the replay of every set.
+Phase 6 is hardening and handover.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -39,8 +40,9 @@ file, then writes similarity and feedback from stubs. History is Phase 5.
   (ADR-0001). A tester who forgets a password asks the team.
 - PDPA consent in three parts, each recorded with version and time (`lib/consent.ts`).
 - Profile setup before the first workout and editing in Settings.
-- App shell: Home, History, Settings tabs. History is an empty placeholder until Phase 5.
-- Home lists the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
+- App shell: Home, History, Settings tabs.
+- Home shows the last seven days as a chart of mean similarity per day, today on the
+  right, then the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
   number of sets, and rest seconds (default 60); `/workout/[exercise]/guide` shows the
   guide text, the demonstration video or a placeholder, and the rules the coach checks.
   Thumbnails and guide videos do not exist yet.
@@ -68,7 +70,15 @@ file, then writes similarity and feedback from stubs. History is Phase 5.
   feedback as they arrive, with a retry. It then offers one repair set after any
   violation (a skip is recorded), runs the rest timer, or finishes the workout.
 - `/workout/[exercise]/done/[workout]` is the finished summary, read back from the
-  database: each set with its counts, similarity, and feedback.
+  database: each set with its counts, similarity, and feedback, and a link to its replay.
+- History drills down in four levels, each fetching only what it shows. `/history`: active
+  days per exercise over the last seven days. `/history/[exercise]`: that exercise's
+  finished workouts, newest first, with date and mean similarity.
+  `/history/[exercise]/[workout]`: every set of one workout and the chosen set in full,
+  its video replayed with the skeleton drawn from its keypoint file, an attempt strip to
+  jump to any attempt, similarity per region, every violation, and the start of the
+  feedback; `feedback?set=` shows the whole text. Days and dates are the browser's, sent
+  to the server in a `tz` cookie. The plain-data part is `lib/history.ts`.
 
 ## Running it
 
