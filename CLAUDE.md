@@ -9,7 +9,6 @@ There is no application code yet. The repo holds planning documents only.
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
 
-Both files are currently untracked; only `.gitignore` and `README.md` are committed.
 
 The project is a web app for checking exercise posture with AI, covering exactly four
 bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
@@ -31,7 +30,7 @@ fake data, so one person can replace one file.
 
 | Component | Owner | Lives where |
 |---|---|---|
-| Rule-based form checking plus FSM rep counting | owner not named in the planning docs | the research repo, see below |
+| Rule-based form checking plus FSM rep counting | Kavee (Vern) | already built in the research repo, see below |
 | Motion similarity, six numbers per rep | Punnapat | their own component |
 | LLM coaching plus RAG retrieval | Sujira | their own component |
 
