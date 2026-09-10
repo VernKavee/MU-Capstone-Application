@@ -21,7 +21,8 @@ Row-level security gives NFR2 at the database layer, signed upload URLs give NFR
 ## Consequences
 
 - The team machine must stay awake and the tunnel up for the whole evaluation. Whether the evaluation is supervised sessions or unsupervised use over days is not yet known; if unsupervised, the Pro plan for those months is the fallback and needs no code change.
-- The tunnel is chosen in Phase 1. Cloudflare Tunnel needs a domain; Tailscale Funnel does not.
+- Tunnel, decided in Phase 1: Tailscale Funnel, because it needs no domain. Funnel exposes ports 443, 8443, and 10000, so Next.js is served on 443 and the Supabase API gateway on 8443. The browser talks to Supabase directly on 8443, so uploads never pass through Next.js (NFR3). Cloudflare Tunnel was rejected for needing a domain.
+- Both local development and the evaluation machine run `npx supabase start`, the CLI's Docker stack of Supabase's own images, with the CLI pinned as a devDependency. The separate self-hosted Docker Compose distribution is not used, so its August 2026 switch from Kong to Envoy does not affect this project.
 - No SMTP server: email confirmation is off and there is no self-service password reset. A tester who forgets a password asks the team, who resets it in Supabase Studio.
 - Backups of the database and of the video and keypoint files are the team's job.
 - For the evaluation the team reads everyone's data directly: the service role in the database, the files on disk. There is no admin screen and no export feature.

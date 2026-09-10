@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phase 0 is done: the decisions exist, the code does not. The repo holds planning
-documents, the vocabulary, and the decision records.
+Phase 0 and Phase 1 are done. The repo holds the planning documents, the vocabulary, the
+decision records, and the Phase 1 code: scaffolding, the foundation migration, auth,
+consent, profile, and the app shell. Nothing about exercise exists yet.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -21,10 +22,31 @@ Supabase API, run from Supabase's Docker stack on a team machine for the evaluat
 
 ## Build, lint, and test commands
 
-None exist. There is no `package.json`, test runner, or lint config. Phase 1 lands the
-scaffolding; fill this section in then. Tooling decided for Phase 1: Supabase CLI SQL
-migrations, `supabase-js`, no ORM, the Supabase Docker stack for local and evaluation
-runs.
+Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
+
+- `npm run dev`, `npm run build`, `npm run lint`, `npx tsc --noEmit`
+- `npx supabase start` / `npx supabase stop`: the local stack (Postgres 17, Auth, Storage,
+  Studio on 54323, API on 54321). `.env.local` comes from `.env.example` plus the
+  publishable key from `npx supabase status -o env`.
+- `npx supabase migration new <name>`, then `npm run db:reset` to replay every migration,
+  then `npm run db:types` to regenerate `lib/supabase/database.types.ts`.
+- `npm run test:db`: pgTAP tests in `supabase/tests/`. Every table with row-level
+  security gets its isolation proven there.
+- `npx supabase db advisors` after any schema change.
+- No unit or end-to-end tests yet; Phase 6 adds them.
+
+Conventions the code follows, because the docs changed since the plan was written:
+
+- Next.js 16: the request hook is `proxy.ts`, not `middleware.ts`. Route types come from
+  `next typegen` (`PageProps<"/path">`, `LayoutProps<"/">`). Search params are a Promise.
+- Sessions are checked with `supabase.auth.getClaims()`, never `getSession()`.
+- Server actions in `actions.ts` files next to the pages; errors travel back as an
+  `?error=` query string, no client state.
+- `lib/supabase/server.ts` for server components and actions, `lib/supabase/client.ts`
+  for the browser. Both are typed with the generated `Database`.
+- Supabase's default grants give `anon` and `authenticated` everything on a new public
+  table. Every migration revokes those and grants only what the app uses, so a missing
+  policy fails with a privilege error rather than silently touching zero rows.
 
 ## The three-part AI structure
 
@@ -108,9 +130,21 @@ Smaller decisions without an ADR, so no phase re-decides them:
   `supabase/agent-skills@supabase-postgres-best-practices` at the start of Phase 1 and a
   Playwright skill at Phase 6. Nothing else in the ecosystem was worth adopting.
 
+Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
+
+- Tunnel: Tailscale Funnel. App on 443, Supabase API on 8443, no domain needed.
+- Local and evaluation stack are both `npx supabase start`; the separate self-hosted
+  compose file is not used.
+- The profile row is created when the user submits the profile form, not by a trigger at
+  signup, so every profile column is NOT NULL and "row exists" means "profile complete".
+- Consent is one screen, three checkboxes, all required; declining signs out. Each is a
+  row in `consents` with kind, version, and time. `CONSENT_VERSION` in `lib/consent.ts`
+  is bumped when any text changes, which forces re-consent.
+- Gate order after sign-in: consent, then profile, then Home. Enforced in
+  `app/(app)/layout.tsx`; every gated page lives under `app/(app)/`.
+
 Still open, to be settled in the phase named:
 
-- Tunnel choice, Phase 1.
 - Keypoint file format, Phase 4.
 - The bound on past workouts in the feedback input, Phase 4.
 - Embedding model and column dimension, at integration with Sujira's component.
