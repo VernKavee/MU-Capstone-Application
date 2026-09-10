@@ -221,8 +221,8 @@ export function LiveScreen({ exercise, setup }: Props) {
             )}
           </header>
 
-          {/* The centre text and the bottom HUD cover the stage but take no clicks, so the
-              header under them stays usable in every phase. */}
+          {/* The centre text covers the whole stage and the HUD its bottom. Neither takes
+              clicks, so the header and the Lagging button stay usable in every phase. */}
           {centre && (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
               {phase === "countdown" ? (
