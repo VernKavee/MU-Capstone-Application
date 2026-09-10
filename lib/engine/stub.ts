@@ -317,3 +317,7 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
 
   return { process, getSessionReport, reset };
 }
+
+// Stored on every set as engine_version, so a report can be traced to the code that wrote
+// it. The port exports its own.
+export const ENGINE_VERSION = "stub-1";

@@ -5,6 +5,9 @@ import type { Rule } from "./exercise";
 import type { KeypointFrame } from "./live/session.ts";
 
 export const ATTEMPT_SCHEMA_VERSION = 1;
+// The private bucket for a set's two files, <user_id>/<set_id>/video.<ext> and
+// <user_id>/<set_id>/keypoints.json.gz (ADR-0005).
+export const SETS_BUCKET = "sets";
 export const REGIONS = ["head_neck", "back_core", "hips_pelvis", "knees", "ankles_feet"] as const;
 export type Region = (typeof REGIONS)[number];
 
@@ -25,6 +28,7 @@ export type Violation = {
 
 // ADR-0003. frame_start and frame_end index the keypoint file and, through t, the video.
 export type Attempt = {
+  schema_version: typeof ATTEMPT_SCHEMA_VERSION; // this record's version; the engine report carries its own
   attempt_no: number;
   outcome: Outcome;
   rep_number: number | null;
@@ -79,6 +83,7 @@ export function buildAttempts(frames: KeypointFrame[], report: SessionReport, ru
       };
     });
     attempts.push({
+      schema_version: ATTEMPT_SCHEMA_VERSION,
       attempt_no: attempts.length + 1,
       outcome,
       rep_number: repNumber,

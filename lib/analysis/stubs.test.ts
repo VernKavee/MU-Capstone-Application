@@ -9,7 +9,7 @@ import { writeFeedback } from "./feedback.ts";
 import { scoreSimilarity } from "./similarity.ts";
 
 const attempt = (attempt_no: number, outcome: Attempt["outcome"], violations: string[] = []): Attempt => ({
-  attempt_no, outcome, rep_number: null, frame_start: 0, frame_end: 1, state_durations_s: {},
+  schema_version: 1, attempt_no, outcome, rep_number: null, frame_start: 0, frame_end: 1, state_durations_s: {},
   violations: violations.map((rule) => ({ rule, message: rule, priority: 1, scope: "rep", state: null, value: null, threshold: {} })),
   rep_stats: {}, similarity: null,
 });
