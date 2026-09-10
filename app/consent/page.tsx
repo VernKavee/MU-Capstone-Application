@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { signOut } from "../(auth)/actions";
 import { grantConsents } from "./actions";
+import { TickAll } from "./tick-all";
 import { CONSENT_KINDS, CONSENT_VERSION } from "@/lib/consent";
 import { gateState } from "@/lib/gate";
 import { createClient } from "@/lib/supabase/server";
@@ -32,9 +33,11 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
           </label>
         ))}
         <p className="text-xs opacity-70">Consent version {CONSENT_VERSION}. Your agreement is recorded with the time.</p>
-        <div className="flex gap-3">
+        <p className="text-sm">Tick all three boxes, then press Continue.</p>
+        <div className="flex flex-wrap gap-3">
+          <TickAll />
           <button formAction={grantConsents} className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
-            I agree to all three
+            Continue
           </button>
           <button formAction={signOut} formNoValidate className="rounded border px-4 py-2">
             Decline and sign out
