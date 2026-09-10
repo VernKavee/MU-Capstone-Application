@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { meanSimilarity } from "@/lib/history";
 import type { Similarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,8 +27,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
   const sets = [...workout.sets].sort((a, b) => a.set_no - b.set_no || Number(a.kind === "repair") - Number(b.kind === "repair"));
   const totals = sets.map((s) => s.totals as Totals);
   const sum = (key: keyof Totals) => totals.reduce((n, t) => n + t[key], 0);
-  const scored = sets.map((s) => (s.similarity as Similarity | null)?.overall).filter((v): v is number => typeof v === "number");
-  const mean = scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null;
+  const mean = meanSimilarity(sets.map((s) => s.similarity as Similarity | null));
   const name = workout.exercises.name;
 
   return (
