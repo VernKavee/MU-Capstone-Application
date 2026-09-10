@@ -82,10 +82,9 @@ What each one is for here:
 >
 > - `CONTEXT.md`, the domain model and the vocabulary we are agreeing to use
 > - `docs/adr/` with one ADR per real decision, including the five above
-> - `CLAUDE.md` for this repo, carrying: the three-part AI structure and who owns what,
->   the rule that no AI logic goes in this repo yet, no em dashes in output, small team
->   of three working directly on main, never create branches, never suggest PRs, session
->   logs under `ref_doc/sessions/YYYY-MM-DD.md`, and keep README.md current
+> - `CLAUDE.md` **already exists** from a `/init` pass and already carries the invariants,
+>   the three-part AI structure, the open decisions, and the working rules. **Update it
+>   with what this session decides. Do not rewrite it from scratch.**
 >
 > Ask me questions rather than assuming. Pause and report before you write each file.
 
