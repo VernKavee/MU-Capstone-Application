@@ -221,8 +221,10 @@ export function LiveScreen({ exercise, setup }: Props) {
             )}
           </header>
 
+          {/* The centre text and the bottom HUD cover the stage but take no clicks, so the
+              header under them stays usable in every phase. */}
           {centre && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
               {phase === "countdown" ? (
                 <p className="font-display text-[min(45vh,45vw)] leading-none tabular-nums" aria-live="assertive">
                   {centre}
@@ -233,14 +235,14 @@ export function LiveScreen({ exercise, setup }: Props) {
                 </p>
               )}
               {phase !== "countdown" && phase !== "active" && (snap?.fps ?? LAG_FPS) < LAG_FPS && model === "full" && snap?.status === "running" && (
-                <button type="button" onClick={() => chooseModel("lite")} className={pill}>
+                <button type="button" onClick={() => chooseModel("lite")} className={`${pill} pointer-events-auto`}>
                   Lagging? Use the lighter model
                 </button>
               )}
             </div>
           )}
 
-          <div className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-3 p-4 pb-6">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-3 p-4 pb-6">
             <p role="status" aria-live="assertive" className={`min-h-12 max-w-md rounded-md px-4 py-2.5 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}>
               {warning ?? " "}
             </p>
