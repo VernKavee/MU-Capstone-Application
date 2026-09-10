@@ -47,10 +47,12 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
         <p className="text-xs opacity-60">A rep only counts when none of these fire.</p>
       </section>
 
-      <button type="button" disabled className="rounded bg-black px-4 py-2 text-white opacity-50 dark:bg-white dark:text-black">
+      <Link
+        href={`/workout/${exercise.id}/live?reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}`}
+        className="inline-block rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black"
+      >
         Open camera
-      </button>
-      <p className="text-xs opacity-60">The camera screen arrives in Phase 3.</p>
+      </Link>
     </main>
   );
 }

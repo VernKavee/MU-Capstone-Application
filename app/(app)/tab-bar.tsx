@@ -11,6 +11,7 @@ const TABS = [
 
 export function TabBar() {
   const pathname = usePathname();
+  if (pathname.endsWith("/live")) return null; // the camera stage takes the whole screen
   return (
     <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 border-t bg-background">
       <ul className="mx-auto flex max-w-lg">

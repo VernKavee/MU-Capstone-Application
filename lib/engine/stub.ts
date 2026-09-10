@@ -52,6 +52,9 @@ const STATE_MS = [500, 800, 400, 800];
 const ABANDON_AT_MS = 600; // an abandoned attempt turns back mid-concentric
 const FRAME_RULE_WINDOW_MS: [number, number] = [250, 800]; // when a frame-scope violation shows
 const ODDS = { abandoned: 0.12, incorrect: 0.2 };
+// ponytail: a body under this share of the frame height reads as too far; the real
+// guide judges distance from the research repo's calibrated bounding box thresholds.
+const TOO_FAR_HEIGHT = 0.3;
 
 type Plan = { outcome: "correct" | "incorrect" | "abandoned"; frameRules: Rule[]; repRules: Rule[] };
 
@@ -67,9 +70,9 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
   const guardJoints = logic.state_machine.arming?.joints ?? ["shoulder", "elbow", "wrist"];
 
   let placementPhase: PlacementPhase;
-  let placedStreak: number;
+  let placedStreak: number; // consecutive frames with every placement check ok
   let readyPhase: ReadyPhase;
-  let readyStreak: number;
+  let readyStreak: number; // consecutive frames with the ready pose held
   let countdownEndMs: number | null;
   let stateIdx: number;
   let elapsedMs: number; // time in the current state, paused while low confidence
@@ -116,7 +119,7 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
     const cues: string[] = [];
     if (hips && !seen(kp, "nose")) cues.push(CUE.head_cut);
     if (hips && !seen(kp, "left_ankle") && !seen(kp, "right_ankle")) cues.push(CUE.feet_cut);
-    const distance: DistanceState = height < 0.45 ? "too_far" : "ok";
+    const distance: DistanceState = height < TOO_FAR_HEIGHT ? "too_far" : "ok";
     if (distance === "too_far") cues.push(CUE.too_far);
     // The cue is in the user's own frame: a body on the left of the image is on the
     // user's right, so they move to their left.
@@ -180,51 +183,55 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
     return now <= heldUntilMs ? held : [];
   }
 
-  // Advances the scripted attempt by dt and returns the frame's event and violations.
+  // Advances the scripted attempt by dt and returns the frame's event and violations. Time
+  // left over after a transition carries into the next state, so a slow frame rate does
+  // not stretch the script; at most one event is emitted per frame.
   function step(dt: number): { event: RepEvent; violated: Rule[] } {
     elapsedMs += dt;
-    if (stateIdx === 0) {
-      if (elapsedMs < STATE_MS[0]) return { event: "none", violated: [] };
-      plan = drawPlan();
-      stateIdx = 1;
-      elapsedMs = 0;
-      return { event: "rep_started", violated: [] };
-    }
-    const current = plan!;
-    if (stateIdx === 1 && current.outcome === "abandoned" && elapsedMs >= ABANDON_AT_MS) {
-      attemptCount += 1;
-      abandonedCount += 1;
-      abandoned.push({
-        attempt_number: abandonedCount,
-        counted: false,
-        warnings: byPriority(current.repRules).map((r) => r.messages.en),
-        violations: byPriority(current.repRules).map((r) => r.name),
-        rep_stats: fakeStats(current.repRules),
-      });
+    for (;;) {
+      if (stateIdx === 0) {
+        if (elapsedMs < STATE_MS[0]) return { event: "none", violated: [] };
+        elapsedMs -= STATE_MS[0];
+        plan = drawPlan();
+        stateIdx = 1;
+        return { event: "rep_started", violated: [] };
+      }
+      const current = plan!;
+      if (stateIdx === 1 && current.outcome === "abandoned" && elapsedMs >= ABANDON_AT_MS) {
+        elapsedMs -= ABANDON_AT_MS;
+        attemptCount += 1;
+        abandonedCount += 1;
+        abandoned.push({
+          attempt_number: abandonedCount,
+          counted: false,
+          warnings: byPriority(current.repRules).map((r) => r.messages.en),
+          violations: byPriority(current.repRules).map((r) => r.name),
+          rep_stats: fakeStats(current.repRules),
+        });
+        stateIdx = 0;
+        return { event: "rep_abandoned", violated: current.repRules };
+      }
+      if (elapsedMs < STATE_MS[stateIdx]) {
+        const inWindow = stateIdx === 1 && elapsedMs >= FRAME_RULE_WINDOW_MS[0] && elapsedMs <= FRAME_RULE_WINDOW_MS[1];
+        return { event: "none", violated: inWindow ? current.frameRules : [] };
+      }
+      elapsedMs -= STATE_MS[stateIdx];
+      stateIdx += 1;
+      if (stateIdx < states.length) continue;
+      // Back to idle: the rep completed.
       stateIdx = 0;
-      elapsedMs = 0;
-      return { event: "rep_abandoned", violated: current.repRules };
+      const all = byPriority([...current.frameRules, ...current.repRules]);
+      repCount += 1;
+      attemptCount += 1;
+      reps.push({
+        rep_number: repCount,
+        correct: all.length === 0,
+        warnings: all.map((r) => r.messages.en),
+        violations: all.map((r) => r.name),
+        rep_stats: fakeStats(all),
+      });
+      return { event: "rep_completed", violated: current.repRules };
     }
-    if (elapsedMs < STATE_MS[stateIdx]) {
-      const inWindow = stateIdx === 1 && elapsedMs >= FRAME_RULE_WINDOW_MS[0] && elapsedMs <= FRAME_RULE_WINDOW_MS[1];
-      return { event: "none", violated: inWindow ? current.frameRules : [] };
-    }
-    stateIdx += 1;
-    elapsedMs = 0;
-    if (stateIdx < states.length) return { event: "none", violated: [] };
-    // Back to idle: the rep completed.
-    stateIdx = 0;
-    const all = byPriority([...current.frameRules, ...current.repRules]);
-    repCount += 1;
-    attemptCount += 1;
-    reps.push({
-      rep_number: repCount,
-      correct: all.length === 0,
-      warnings: all.map((r) => r.messages.en),
-      violations: all.map((r) => r.name),
-      rep_stats: fakeStats(all),
-    });
-    return { event: "rep_completed", violated: current.repRules };
   }
 
   function process(keypoints: Keypoints, timestampMs: number): FrameResult {
