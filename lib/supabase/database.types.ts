@@ -55,6 +55,65 @@ export type Database = {
         }
         Relationships: []
       }
+      exercises: {
+        Row: {
+          engine_key: string
+          guide_text: string
+          guide_video_url: string | null
+          id: string
+          name: string
+          rule_based_logic: Json
+          sort_order: number
+          thumbnail_url: string | null
+        }
+        Insert: {
+          engine_key: string
+          guide_text: string
+          guide_video_url?: string | null
+          id: string
+          name: string
+          rule_based_logic: Json
+          sort_order: number
+          thumbnail_url?: string | null
+        }
+        Update: {
+          engine_key?: string
+          guide_text?: string
+          guide_video_url?: string | null
+          id?: string
+          name?: string
+          rule_based_logic?: Json
+          sort_order?: number
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
+      expert_motions: {
+        Row: {
+          exercise_id: string
+          motion_data: string
+          updated_at: string
+        }
+        Insert: {
+          exercise_id: string
+          motion_data: string
+          updated_at?: string
+        }
+        Update: {
+          exercise_id?: string
+          motion_data?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_motions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: true
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number
@@ -96,7 +155,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      exercise_logic_valid: { Args: { logic: Json }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
