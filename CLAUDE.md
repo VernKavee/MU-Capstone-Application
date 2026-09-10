@@ -241,6 +241,8 @@ Still open, to be settled in the phase named:
 - The keypoint file's real size, measured on the first real camera run.
 - A failed first save, or a reload mid-workout, gives the next set a new workout row.
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
+- `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
+  so a user can rewrite their own attempt records. Narrowing it needs a database function.
 - A real camera run on a laptop, a phone, and iOS Safari; the browser pane has no camera.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
