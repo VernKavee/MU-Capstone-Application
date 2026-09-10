@@ -11,9 +11,10 @@ import { sound } from "./sound";
 export type EndedBy = "target_reached" | "user_ended" | "attempt_cap";
 
 // One captured frame. t is milliseconds since the recording started, so it indexes the
-// video as well; state and event let Phase 4 derive attempt frame ranges and the state
-// durations of ADR-0003 without re-deriving anything.
-export type KeypointFrame = { t: number; state: string; event: FrameResult["event"]; keypoints: Keypoints };
+// video as well; state, event, and the rules violated on the frame let lib/set.ts build
+// the attempt records of ADR-0003 (frame ranges, state durations, the state a violation
+// fired in) without re-deriving anything.
+export type KeypointFrame = { t: number; state: string; event: FrameResult["event"]; violations: string[]; keypoints: Keypoints };
 
 // What the set leaves behind, held in memory for Phase 4 to save and upload (ADR-0005).
 export type SetCapture = {
@@ -203,7 +204,13 @@ export class LiveSession {
       this.t0 = now;
       this.startRecorder();
     }
-    this.frames.push({ t: now - this.t0, state: frame.state, event: frame.event, keypoints: frame.keypoints });
+    this.frames.push({
+      t: now - this.t0,
+      state: frame.state,
+      event: frame.event,
+      violations: frame.warnings_all.map((r) => r.name),
+      keypoints: frame.keypoints,
+    });
   }
 
   private startRecorder() {

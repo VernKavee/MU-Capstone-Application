@@ -1,4 +1,4 @@
-// Run with `npm run test:engine`. The one check that fails if the stub stops honouring the
+// Run with `npm run test:unit`. The one check that fails if the stub stops honouring the
 // seam: the phases run in order, the counter only moves on a correct rep, warnings come
 // from the row's rules, and the report totals add up.
 import assert from "node:assert/strict";

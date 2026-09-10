@@ -8,9 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:db": "supabase test db",
-    "test:engine": "node --no-warnings --experimental-strip-types --test \"lib/engine/*.test.ts\"",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
+    "test:unit": "node --no-warnings --experimental-strip-types --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",
