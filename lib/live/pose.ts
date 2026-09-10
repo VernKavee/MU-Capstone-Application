@@ -51,5 +51,3 @@ export function toKeypoints(result: PoseLandmarkerResult): Keypoints {
     ]),
   ) as Keypoints;
 }
-
-export const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS;

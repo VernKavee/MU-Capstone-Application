@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { meanSimilarity } from "@/lib/history";
+import { ENDED_BY, meanSimilarity, setOrder } from "@/lib/history";
 import type { Similarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
-
-const ENDED_BY: Record<string, string> = {
-  target_reached: "target reached",
-  user_ended: "ended by you",
-  attempt_cap: "stopped at the attempt cap",
-};
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
@@ -24,7 +18,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
     .maybeSingle();
   if (!workout) notFound();
 
-  const sets = [...workout.sets].sort((a, b) => a.set_no - b.set_no || Number(a.kind === "repair") - Number(b.kind === "repair"));
+  const sets = [...workout.sets].sort(setOrder);
   const totals = sets.map((s) => s.totals as Totals);
   const sum = (key: keyof Totals) => totals.reduce((n, t) => n + t[key], 0);
   const mean = meanSimilarity(sets.map((s) => s.similarity as Similarity | null));
@@ -66,6 +60,9 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
       <div className="flex flex-wrap items-center gap-4">
         <Link href="/" className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
           Home
+        </Link>
+        <Link href={`/history/${exercise}/${id}`} className="text-sm underline">
+          Replay it in History
         </Link>
         <Link href={`/workout/${exercise}/setup`} className="text-sm underline">
           Another {name.toLowerCase()} workout

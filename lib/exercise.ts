@@ -25,7 +25,7 @@ export type RuleBasedLogic = {
   rules: Rule[];
 };
 
-export const ruleBasedLogic = (exercise: Exercise) =>
+export const ruleBasedLogic = (exercise: Pick<Exercise, "rule_based_logic">) =>
   exercise.rule_based_logic as unknown as RuleBasedLogic;
 
 // The setup screen's three numbers, carried to the guide screen in the query string.

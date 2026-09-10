@@ -15,7 +15,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <TimeZone current={(await cookies()).get(TZ_COOKIE)?.value} />
-      <div className="mx-auto w-full max-w-lg flex-1 pb-16">{children}</div>
+      {/* A page marked data-wide (the history deep-dive) gets two columns' room on a laptop. */}
+      <div className="mx-auto w-full max-w-lg flex-1 pb-16 has-[[data-wide]]:max-w-5xl">{children}</div>
       <TabBar />
     </>
   );

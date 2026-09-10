@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { meanSimilarity } from "@/lib/history";
+import { formatWhen, meanSimilarity } from "@/lib/history";
 import type { Similarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
@@ -24,7 +24,6 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
   ]);
   if (!exercise) notFound();
   const list = workouts ?? [];
-  const thisYear = new Date().toLocaleDateString("en-GB", { year: "numeric", timeZone: tz });
 
   return (
     <main className="space-y-6 p-6">
@@ -41,19 +40,13 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
       {list.length ? (
         <ol className="divide-y border-y">
           {list.map((workout) => {
-            const at = new Date(workout.started_at);
-            const year = at.toLocaleDateString("en-GB", { year: "numeric", timeZone: tz });
-            const date = at.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", ...(year === thisYear ? {} : { year: "numeric" }), timeZone: tz });
-            const time = at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz });
             const repairs = workout.sets.filter((s) => s.kind === "repair").length;
             const mean = meanSimilarity(workout.sets.map((s) => s.similarity as Similarity | null));
             return (
               <li key={workout.id}>
                 <Link href={`/history/${exercise.id}/${workout.id}`} className="flex items-center justify-between gap-4 px-1 py-3 hover:bg-foreground/5">
                   <span>
-                    <span className="block font-medium">
-                      {date}, {time}
-                    </span>
+                    <span className="block font-medium">{formatWhen(workout.started_at, tz)}</span>
                     <span className="block text-sm opacity-70">
                       {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
                       {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}

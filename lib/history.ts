@@ -55,6 +55,40 @@ export function weeklySummary(days: string[], sets: { started_at: string; simila
   });
 }
 
+export const ENDED_BY: Record<string, string> = {
+  target_reached: "target reached",
+  user_ended: "ended by you",
+  attempt_cap: "stopped at the attempt cap",
+};
+
+// Sets in the order they happened: by set number, each repair set after its initial set.
+export const setOrder = (a: { set_no: number; kind: string }, b: { set_no: number; kind: string }) =>
+  a.set_no - b.set_no || Number(a.kind === "repair") - Number(b.kind === "repair");
+
+// "Thu 10 Sep, 21:35" in the zone, with the year when it is not the current one there.
+export function formatWhen(at: string, tz: string, now = new Date()): string {
+  const d = new Date(at);
+  const year = (x: Date) => x.toLocaleDateString("en-GB", { year: "numeric", timeZone: tz });
+  const date = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", ...(year(d) === year(now) ? {} : { year: "numeric" }), timeZone: tz });
+  return `${date}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz })}`;
+}
+
+// Replay (level 4): the last keypoint frame at or before ms. Frames are in t order.
+export function frameAt(frames: { t: number }[], ms: number): number {
+  let lo = 0;
+  let hi = frames.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (frames[mid].t <= ms) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+// The attempt whose frame range holds frame i, if any (the ADR-0003 frame indices).
+export const attemptAt = <A extends { frame_start: number | null; frame_end: number | null }>(attempts: A[], i: number) =>
+  attempts.find((a) => a.frame_start !== null && a.frame_end !== null && a.frame_start <= i && i <= a.frame_end);
+
 // Level 2: per exercise, which of the days have a finished workout, dated by its start.
 // The caller passes finished workouts only (Phase 5: a workout left part way is no active day).
 export function activeDays(days: string[], workouts: { exercise_id: string; started_at: string }[], tz: string): Map<string, Set<string>> {

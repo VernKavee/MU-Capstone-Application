@@ -2,7 +2,7 @@
 // days stop ending today, or the mean starts counting unscored sets.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeDays, lastSevenDays, localDate, meanSimilarity, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
+import { activeDays, attemptAt, formatWhen, frameAt, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
 import type { Similarity } from "./set.ts";
 
 const BKK = "Asia/Bangkok";
@@ -51,6 +51,21 @@ test("active days count each local day once per exercise", () => {
   ], BKK);
   assert.deepEqual([...(active.get("squat") ?? [])], ["2026-09-07", "2026-09-09"]);
   assert.equal(active.has("lunge"), false);
+});
+
+test("replay finds the frame for a video time and the attempt it belongs to", () => {
+  const frames = [0, 33, 67, 100, 133].map((t) => ({ t }));
+  assert.deepEqual([frameAt(frames, -5), frameAt(frames, 0), frameAt(frames, 66), frameAt(frames, 67), frameAt(frames, 9999)], [0, 0, 1, 2, 4]);
+  const attempts = [{ attempt_no: 1, frame_start: 1, frame_end: 2 }, { attempt_no: 2, frame_start: null, frame_end: null }, { attempt_no: 3, frame_start: 4, frame_end: 4 }];
+  assert.deepEqual([0, 1, 2, 3, 4].map((i) => attemptAt(attempts, i)?.attempt_no ?? null), [null, 1, 1, null, 3]);
+  const sets = [{ set_no: 2, kind: "initial" }, { set_no: 1, kind: "repair" }, { set_no: 1, kind: "initial" }];
+  assert.deepEqual([...sets].sort(setOrder).map((s) => `${s.kind} ${s.set_no}`), ["initial 1", "repair 1", "initial 2"]);
+});
+
+test("dates show the local time, and the year only when it is another one there", () => {
+  assert.match(formatWhen("2026-09-10T14:35:13Z", BKK, THURSDAY), /21:35$/);
+  assert.ok(!formatWhen("2025-12-31T20:00:00Z", BKK, THURSDAY).includes("202"), "1 January 2026 in Bangkok is this year");
+  assert.ok(formatWhen("2025-06-01T00:00:00Z", BKK, THURSDAY).includes("2025"));
 });
 
 test("an unknown zone in the cookie falls back to the server's", () => {

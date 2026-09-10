@@ -5,7 +5,8 @@
 // Everything here runs on the user's device (NFR1). Nothing is sent per frame.
 import type { Rule } from "@/lib/exercise";
 import { LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "@/lib/engine/types";
-import { loadPoseLandmarker, POSE_CONNECTIONS, toKeypoints, type PoseModel } from "./pose";
+import { loadPoseLandmarker, toKeypoints, type PoseModel } from "./pose";
+import { drawSkeleton, jointIndices } from "./skeleton";
 import { sound } from "./sound";
 
 export type EndedBy = "target_reached" | "user_ended" | "attempt_cap";
@@ -40,9 +41,6 @@ export class CameraError extends Error {
   }
 }
 
-const INK = "rgba(233, 228, 216, 0.75)";
-const TAPE = "#FFC940";
-const FIRST_BODY_INDEX = 11; // the face landmarks are not drawn, only the nose
 const VIDEO_TYPES = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
 
 export class LiveSession {
@@ -75,12 +73,7 @@ export class LiveSession {
       onChange: (snapshot: Snapshot) => void;
     },
   ) {
-    for (const rule of opts.rules) {
-      this.highlight.set(
-        rule.name,
-        rule.highlight_joints.map((j) => LANDMARK_NAMES.indexOf(j as (typeof LANDMARK_NAMES)[number])).filter((i) => i >= 0),
-      );
-    }
+    for (const rule of opts.rules) this.highlight.set(rule.name, jointIndices(rule.highlight_joints));
   }
 
   async start() {
@@ -163,36 +156,8 @@ export class LiveSession {
     }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-    const kp = frame.keypoints;
-    const at = (i: number) => kp[LANDMARK_NAMES[i]];
     const lit = new Set(frame.warning_display_rules.flatMap((r) => this.highlight.get(r.name) ?? []));
-
-    ctx.lineWidth = Math.max(2, w / 400);
-    ctx.lineCap = "round";
-    for (const { start, end } of POSE_CONNECTIONS) {
-      if (start < FIRST_BODY_INDEX || end < FIRST_BODY_INDEX) continue;
-      const a = at(start);
-      const b = at(end);
-      if (a.score < 0.5 || b.score < 0.5) continue;
-      ctx.strokeStyle = lit.has(start) && lit.has(end) ? TAPE : INK;
-      ctx.beginPath();
-      ctx.moveTo(a.x * w, a.y * h);
-      ctx.lineTo(b.x * w, b.y * h);
-      ctx.stroke();
-    }
-    for (let i = 0; i < LANDMARK_NAMES.length; i++) {
-      if (i > 0 && i < FIRST_BODY_INDEX) continue;
-      const p = at(i);
-      if (p.score < 0.5) continue;
-      const on = lit.has(i);
-      ctx.fillStyle = on ? TAPE : INK;
-      ctx.beginPath();
-      ctx.arc(p.x * w, p.y * h, on ? w / 90 : w / 160, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    drawSkeleton(ctx, (i) => frame.keypoints[LANDMARK_NAMES[i]], lit);
   }
 
   // Recording and keypoint capture both run from the end of the countdown to the end of
