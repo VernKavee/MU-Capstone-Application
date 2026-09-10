@@ -1,8 +1,9 @@
 -- Run with `npm run test:db`. Workouts and sets reach only their owner, updates are
 -- limited to the columns the app writes after saving, nothing is deleted, and the sets
--- bucket is one folder per user.
+-- bucket is one folder per user. User A tries to read B's workout, its sets, and its
+-- files by id, and gets nothing.
 begin;
-select plan(16);
+select plan(22);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.local'),
@@ -16,6 +17,9 @@ values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000
         '{"attempts":12,"completed_reps":11,"correct_reps":10,"abandoned_attempts":1}', '[]', '{"schema_version":4}', 'stub'),
        ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 1, 'initial', 'user_ended', now(), now(),
         '{"attempts":3,"completed_reps":3,"correct_reps":3,"abandoned_attempts":0}', '[]', '{"schema_version":4}', 'stub');
+-- B's video, stored as the storage service would store it.
+insert into storage.objects (bucket_id, name)
+values ('sets', '00000000-0000-0000-0000-000000000002/20000000-0000-0000-0000-000000000002/video.webm');
 
 -- Act as user A.
 set local role authenticated;
@@ -24,6 +28,10 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 select is((select count(*) from public.workouts), 1::bigint, 'A sees exactly one workout');
 select is((select count(*) from public.sets), 1::bigint, 'and exactly one set');
 select is((select exercise_id from public.workouts), 'squat', 'and it is their own');
+select is((select count(*) from public.workouts where id = '10000000-0000-0000-0000-000000000002'), 0::bigint,
+  'A cannot read B''s workout by its id');
+select is((select count(*) from public.sets where workout_id = '10000000-0000-0000-0000-000000000002'), 0::bigint,
+  'nor its sets');
 
 select throws_ok(
   $$ insert into public.workouts (user_id, exercise_id, target_reps, target_sets, rest_seconds)
@@ -47,6 +55,9 @@ select lives_ok(
        keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm', attempts = '[{"attempt_no":1}]'
      where id = '20000000-0000-0000-0000-000000000001' $$,
   'the analyse step and the uploads write their columns');
+select lives_ok(
+  $$ update public.sets set llm_feedback = 'overwritten' where id = '20000000-0000-0000-0000-000000000002' $$,
+  'an update aimed at B''s set is filtered, not errored');
 select throws_ok(
   $$ update public.sets set engine_report = '{}' where id = '20000000-0000-0000-0000-000000000001' $$,
   '42501', null, 'the engine report is never rewritten');
@@ -71,6 +82,13 @@ select throws_ok(
   $$ insert into storage.objects (bucket_id, name)
      values ('sets', '00000000-0000-0000-0000-000000000002/20000000-0000-0000-0000-000000000002/video.webm') $$,
   '42501', null, 'but not into B''s');
+select is((select count(*) from storage.objects where bucket_id = 'sets'), 1::bigint, 'A lists only their own file');
+select is((select count(*) from storage.objects where name like '00000000-0000-0000-0000-000000000002/%'), 0::bigint,
+  'and cannot read B''s video');
+
+reset role;
+select is((select llm_feedback from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
+  'B''s set is unchanged');
 
 select * from finish();
 rollback;

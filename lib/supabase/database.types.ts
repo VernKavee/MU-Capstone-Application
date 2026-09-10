@@ -114,6 +114,38 @@ export type Database = {
           },
         ]
       }
+      knowledge_base: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string | null
+          exercise_id: string
+          id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding?: string | null
+          exercise_id: string
+          id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          exercise_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number

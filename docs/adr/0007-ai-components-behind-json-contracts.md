@@ -34,3 +34,9 @@ The exact TypeScript types are fixed in Phase 4, below.
 - The analyse step is `lib/save-and-analyse.ts`, called through server actions with the user's own Supabase client, so row-level security applies to every read and write, the download of the keypoint file included. The browser saves the set, uploads both files, then asks for the analysis.
 - History bound: `HISTORY_WORKOUTS` is 5. The feedback input carries the user's five most recent other workouts of the same exercise, finished or left part way, newest first. Each comes with its sets summarised as set number, kind, ended by, totals, similarity, and feedback. Attempt records of past workouts are not sent; the current set's are. The current workout's earlier sets travel in `workout.earlier_sets` in the same summary form. Five keeps the input small while covering about a week of regular training; Sujira's component may lower it once the model's context and cost are known.
 - A retry re-runs only what is missing. Similarity is skipped when the set already has it, and file paths already stored are never erased.
+
+## As built in Phase 6
+
+- `knowledge_base` exists, empty: `id`, `exercise_id` referencing the catalogue, `content`, `embedding`, `created_at`, with an index on `exercise_id` for retrieval scoped to one exercise. The report's `chunk_id` is `id`, as on every other table.
+- `embedding` is the untyped `extensions.vector`, the fallback named above, so any length goes in while the model is open. It is nullable, so a chunk can be stored before it is embedded. No vector index can exist on an untyped column; at integration the column becomes `vector(<dimension>)` and gets an hnsw index.
+- Like `expert_motions`, no API role has any privilege on it and row-level security has no policy: the component connects to the database directly. `supabase/tests/knowledge_base.test.sql` proves both.
