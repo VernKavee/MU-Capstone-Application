@@ -11,6 +11,6 @@ Phase 0 of the build plan is complete. There is no application code yet.
 - `CONTEXT.md`: the vocabulary.
 - `docs/adr/`: the decisions made in Phase 0.
 - `CLAUDE.md`: working rules and invariants for coding sessions.
-- `ref_doc/sessions/`: one log per session.
+- `docs/sessions/`: one log per session.
 
 Phase 1 sets up the project skeleton, the database, sign-in, the profile, and consent.

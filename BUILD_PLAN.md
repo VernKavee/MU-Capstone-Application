@@ -267,6 +267,6 @@ What each one is for here:
   alternative. Do not quietly work around it.
 - No em dashes in any output.
 - Work directly on main. Do not create branches. Do not suggest opening PRs.
-- Write a session log to `ref_doc/sessions/YYYY-MM-DD.md` at the end of each phase.
+- Write a session log to `docs/sessions/YYYY-MM-DD.md` at the end of each phase.
 - **Do not implement any of the three AI parts.** Rule-based plus FSM, similarity, and
   LLM plus RAG are all owned by specific people and all stay stubbed in this repo.

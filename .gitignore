@@ -34,3 +34,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase cli and self-hosted stack (database and storage volumes hold user data)
+supabase/.temp/
+supabase/.branches/
+**/volumes/db/data/
+**/volumes/storage/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# per-user tool settings
+.claude/settings.local.json

@@ -11,7 +11,7 @@ documents, the vocabulary, and the decision records.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
 - `CONTEXT.md` is the vocabulary. Use its terms in code, UI, and docs, and challenge any term that conflicts with it.
 - `docs/adr/` holds the seven decision records from Phase 0. Read the ones a phase depends on before starting it, and update them rather than deciding silently.
-- `ref_doc/sessions/` holds one log per session.
+- `docs/sessions/` holds one log per session.
 
 The project is a web app for checking exercise posture with AI, covering exactly four
 bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
@@ -141,5 +141,5 @@ Relevant for cross-checking behaviour:
 - No em dashes in any output, including files written here.
 - Small team of three working directly on `main`. Never create branches. Never suggest
   opening a PR.
-- Write a session log to `ref_doc/sessions/YYYY-MM-DD.md` at the end of each phase.
+- Write a session log to `docs/sessions/YYYY-MM-DD.md` at the end of each phase.
 - Keep `README.md` current with what actually exists.
