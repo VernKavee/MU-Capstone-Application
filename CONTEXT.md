@@ -115,6 +115,10 @@ _Avoid_: calibration
 **Countdown**:
 The three seconds between the ready pose and the first attempt.
 
+**Stub**:
+The file standing in for one of the three AI components, the engine, similarity, or feedback, returning believable fake output behind the real interface until its owner replaces it. `docs/HANDOVER.md` lists all three.
+_Avoid_: mock, placeholder (a placeholder is the labelled gap shown where media does not exist yet)
+
 ### Motion data
 
 **Landmark**:

@@ -53,3 +53,9 @@ JSON rather than a binary format because the similarity contract of ADR-0007 alr
 - History level 4 replays a set in the browser: it signs a download URL for the video and downloads the keypoint file, only when Play is pressed. The video plays as recorded, not mirrored, and the skeleton is drawn over it frame by frame from the keypoint file by `lib/live/skeleton.ts`, the drawing the live screen uses.
 - The recorded webm reports no duration. The replay times everything by the keypoint file's `t`, and Chromium seeks to any time in the video.
 - The file holds no violations per frame, so replay lights an attempt's violated rules for the whole attempt, found through the attempt records' frame ranges (ADR-0003). The format is unchanged.
+
+## As built in Phase 6
+
+- Deletion on request, which the consent text promises: deleting the user in Studio's Authentication page cascades to their profile, consents, workouts, and sets, but not to their files, which are deleted from their folder in the `sets` bucket by hand. `docs/HANDOVER.md` has the task; it has not been rehearsed.
+- Storage refuses a file over 500 MiB (`supabase/config.toml`), about seven minutes of video at the rate measured in Phase 5.
+- A file backup is a `docker cp` of the storage volume, where each object sits under the storage service's own folder layout rather than its path in the bucket (ADR-0001).

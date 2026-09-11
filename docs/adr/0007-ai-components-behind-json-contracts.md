@@ -4,7 +4,7 @@ status: accepted
 
 # Similarity and feedback are JSON contracts behind stubs
 
-Similarity is Punnapat's component and coaching feedback with retrieval is Sujira's. Neither exists yet, and their language and runtime are theirs. The app talks to each through a JSON-in, JSON-out contract from one server-side analyse step in Next.js. This repo ships an in-process TypeScript stub for each that returns believable fake output. The real implementation of a stub is expected to be an HTTP client to a small service in the same Docker Compose, written in whatever its owner chose; a TypeScript module satisfies the same contract. This decision is expected to be revised when the components exist. The contract is the stable part, the transport is not.
+Similarity is Punnapat's component and coaching feedback with retrieval is Sujira's. Neither exists yet, and their language and runtime are theirs. The app talks to each through a JSON-in, JSON-out contract from one server-side analyse step in Next.js. This repo ships an in-process TypeScript stub for each that returns believable fake output. The real implementation of a stub is expected to be an HTTP client to a small service on the same machine, written in whatever its owner chose; a TypeScript module satisfies the same contract. This decision is expected to be revised when the components exist. The contract is the stable part, the transport is not.
 
 ## The analyse step
 
@@ -40,3 +40,6 @@ The exact TypeScript types are fixed in Phase 4, below.
 - `knowledge_base` exists, empty: `id`, `exercise_id` referencing the catalogue, `content`, `embedding`, `created_at`, with an index on `exercise_id` for retrieval scoped to one exercise. The report's `chunk_id` is `id`, as on every other table.
 - `embedding` is the untyped `extensions.vector`, the fallback named above, so any length goes in while the model is open. It is nullable, so a chunk can be stored before it is embedded. No vector index can exist on an untyped column; at integration the column becomes `vector(<dimension>)` and gets an hnsw index.
 - Like `expert_motions`, no API role has any privilege on it and row-level security has no policy: the component connects to the database directly. `supabase/tests/knowledge_base.test.sql` proves both.
+- This record first placed a component's service "in the same Docker Compose". Since Phase 1 there is none: the stack is `npx supabase start` (ADR-0001), so a service runs beside it on the team machine and the stub file calls it by URL.
+- The database checks only that `similarity` is a JSON object and `attempts` an array. The six integer keys are a convention the UI relies on, not a constraint, and `llm_feedback` is plain text without a limit.
+- `docs/HANDOVER.md` is each owner's page: the input and output field by field, what the stub returns today, and which tests change with the replacement.

@@ -4,12 +4,13 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 ## Status
 
-Phases 1 to 5 of the build plan are complete: project skeleton, database foundation,
+Every phase of the build plan is complete: project skeleton, database foundation,
 sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
 setup and guide screens, the live session screen with the camera, the pose model, and a
 stub engine, the completion flow that saves every set with its video and keypoint file,
-then writes similarity and feedback from stubs, and History with the replay of every set.
-Phase 6 is hardening and handover.
+then writes similarity and feedback from stubs, History with the replay of every set, and
+Phase 6's hardening and handover. The three AI components stay stubs until their owners
+replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -17,16 +18,18 @@ Phase 6 is hardening and handover.
 - `docs/adr/`: the decisions made in Phase 0, amended as phases settle open items.
 - `CLAUDE.md`: working rules and invariants for coding sessions.
 - `docs/sessions/`: one log per session.
+- `docs/HANDOVER.md`: which stub each teammate replaces, and the tasks for the evaluation.
 
 ## What exists
 
 - Next.js 16 App Router with TypeScript and Tailwind, talking to Supabase through
   `@supabase/ssr`. The session is refreshed in `proxy.ts`; signed-out users go to `/login`.
 - `supabase/migrations/`: pgvector, `profiles`, `consents`, `exercises`, `expert_motions`,
-  `workouts`, `sets`, the private `sets` storage bucket, row-level security, and
-  least-privilege grants down to the column. `supabase/tests/` proves per-user isolation,
-  that the catalogue is read-only through the API, and that each user's files sit in
-  their own folder.
+  `workouts`, `sets`, `knowledge_base`, the private `sets` storage bucket, row-level
+  security, and least-privilege grants down to the column. `supabase/tests/` proves
+  per-user isolation, that user A cannot read user B's workout, sets, or files even by
+  id, that the catalogue is read-only through the API, and that the two AI tables are
+  out of the API's reach.
 - `exercises` holds the four exercises as rows: guide text, media URLs (null until the
   media exists), the research repo's engine key, and `rule_based_logic` with the state
   machine thresholds and one entry per rule (check name, threshold, priority, scope,
@@ -34,8 +37,9 @@ Phase 6 is hardening and handover.
   Adding an exercise built from existing checks is an insert; see ADR-0006. The seeded
   numbers were typed by hand from the research repo and are marked as such in the
   migration.
-- `expert_motions` is empty, 1:1 with exercises, and unreachable through the API; it is
-  filled by the similarity component over a direct database connection.
+- `expert_motions` (1:1 with exercises) and `knowledge_base` (text chunks per exercise, with
+  an embedding) are empty and unreachable through the API; the similarity and feedback
+  components fill them over a direct database connection.
 - Register, sign in, sign out. Email confirmation is off; there is no password reset
   (ADR-0001). A tester who forgets a password asks the team.
 - PDPA consent in three parts, each recorded with version and time (`lib/consent.ts`).
@@ -79,6 +83,16 @@ Phase 6 is hardening and handover.
   jump to any attempt, similarity per region, every violation, and the start of the
   feedback; `feedback?set=` shows the whole text. Days and dates are the browser's, sent
   to the server in a `tz` cookie. The plain-data part is `lib/history.ts`.
+- Every screen has a loading state, an empty state wherever there can be nothing yet, and
+  an error screen with a retry; an address that matches nothing gets a not-found page.
+- One dark design, carried from the live screen to every page: a charcoal ground,
+  off-white ink, tape yellow only for what needs attention, and Big Shoulders Display for
+  titles and big numbers. A bottom tab bar on a phone, a top bar on a laptop; every
+  screen is checked at 375 and 1280 px.
+- Tests at three levels: unit tests under `lib/` (the stub engine and the analysis stubs,
+  the frame loop, the set job, the attempt records, History's data), pgTAP in
+  `supabase/tests/`, and two Playwright tests in `e2e/`, a whole workout through a fake
+  camera into History and the replay, and user B failing to reach user A's data.
 
 ## Running it
 
@@ -105,11 +119,13 @@ its wasm are fetched from Google's storage and jsdelivr on first use, about 10 M
 |---|---|
 | `npm run dev` | Next.js dev server |
 | `npm run build` | production build |
+| `npm run start` | serve the production build, as on the evaluation machine |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | type check |
 | `npm run db:reset` | replay all migrations from scratch on the local stack |
 | `npm run test:db` | run the pgTAP tests in `supabase/tests/` |
 | `npm run test:unit` | run the unit tests under `lib/` with Node's test runner |
+| `npm run test:e2e` | run the Playwright tests in `e2e/` on the installed Chrome, with the stack up; the workout test needs the fixture in `e2e/fixtures/README.md` |
 | `npm run db:types` | regenerate `lib/supabase/database.types.ts` after a migration |
 | `npx supabase migration new <name>` | create a new migration file |
 | `npx supabase stop` | stop the stack, data kept in the Docker volume |

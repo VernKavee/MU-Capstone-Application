@@ -4,21 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Phases 0 to 5 are done. The repo holds the planning documents, the vocabulary, the
-decision records, and the code so far: scaffolding, the foundation migration, auth,
-consent, profile, the app shell, the exercise catalogue as data, the workout setup and
-guide screens, the live session screen with the camera, MediaPipe, and the stub engine,
-the completion flow: every set saved with its attempt records, engine report, video,
-and keypoint file, similarity and feedback from stubs, the repair set, the rest timer,
-and the finished summary, and History: the weekly chart on Home, active days, each
-exercise's workouts, and the workout deep-dive with the replay. Phase 6 is hardening and
-handover.
+All seven phases, 0 to 6, are done. The repo holds the planning documents, the
+vocabulary, the decision records, and the code: scaffolding, the foundation migration,
+auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
+and guide screens, the live session screen with the camera, MediaPipe, and the stub
+engine, the completion flow: every set saved with its attempt records, engine report,
+video, and keypoint file, similarity and feedback from stubs, the repair set, the rest
+timer, and the finished summary, History: the weekly chart on Home, active days, each
+exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
+unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
+`knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: each owner
+replacing a stub, and running the evaluation.
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
 - `CONTEXT.md` is the vocabulary. Use its terms in code, UI, and docs, and challenge any term that conflicts with it.
 - `docs/adr/` holds the seven decision records from Phase 0. Read the ones a phase depends on before starting it, and update them rather than deciding silently.
 - `docs/sessions/` holds one log per session.
+- `docs/HANDOVER.md` is the handover: which stub each owner replaces, the interface it
+  must satisfy, what it returns today, and the evaluation tasks.
 
 The project is a web app for checking exercise posture with AI, covering exactly four
 bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
@@ -42,7 +46,11 @@ Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
   Files those tests reach import each other with `.ts` extensions for this reason.
 - `npx next typegen` before `npx tsc --noEmit` after adding a route.
 - `npx supabase db advisors` after any schema change.
-- No end-to-end tests yet; Phase 6 adds them.
+- `npm run test:e2e`: Playwright on the installed Chrome, one worker, with the stack up; it
+  reuses a running dev server or starts one. `e2e/workout.spec.ts` runs a whole workout
+  through Chrome's fake camera and skips itself without `e2e/fixtures/t-pose.y4m`, which is
+  not in git (`e2e/fixtures/README.md`). `e2e/isolation.spec.ts` has user B fail to reach
+  user A's workout, set, and files.
 
 Conventions the code follows, because the docs changed since the plan was written:
 
@@ -65,9 +73,11 @@ Conventions the code follows, because the docs changed since the plan was writte
   renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
   the overlay, the recorder, and the keypoint capture.
 - The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
-  client passed in, `live/actions.ts` wraps it as server actions, `live/pipeline.ts` runs
-  save, uploads, and analyse for one set in the browser, and `live/set-complete.tsx`
-  renders it. `lib/set.ts` builds the attempt records and the keypoint file. The
+  client passed in, `live/actions.ts` wraps it as server actions, `lib/set-job.ts` runs
+  save, uploads, and analyse for one set with that API passed in (`live/pipeline.ts`
+  passes the real one), and `live/set-complete.tsx` renders it. `lib/set.ts` builds the
+  attempt records and the keypoint file, and its `afterSet` decides repair, rest, or
+  finish. The
   similarity and feedback stubs are `lib/analysis/similarity.ts` and
   `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each owner replaces one
   file.
@@ -79,6 +89,23 @@ Conventions the code follows, because the docs changed since the plan was writte
   keypoint file from storage in the browser when Play is pressed.
 - JSX built in a server component and passed as a prop to a client component that renders
   it beside its own children gets a `key`.
+- Server queries end in `.throwOnError()`, so a failure reaches `app/error.tsx` and its
+  retry instead of rendering as no data. An id from the address goes through `isUuid`
+  (`lib/history.ts`) first, so a malformed one is not found rather than a database error.
+- A page renders beside the (app) layout's gate, not after it, so no page may assume the
+  gate ran: Home and Settings read the profile with `maybeSingle()`.
+- Next shows only the loading file of the folder whose child segment a navigation
+  changes, so every folder whose pages link to each other has a `loading.tsx` that
+  re-exports `app/(app)/loading.tsx`.
+- Design (Phase 6): one dark theme, with no light palette and no `dark:` variants. Tokens
+  in `app/globals.css`: `ink`, `tape`, `tape-ink`, with `background` and `foreground`
+  naming the page's ground and text. Shared classes: `.btn` for the one main action,
+  `.btn-quiet`, `.field`, and `.alert`, the tape band for anything to fix; over video, the
+  live screen's `pill`. Every `h1` is Big Shoulders through a base rule, and the tape
+  focus ring is global. Tape yellow marks only what needs attention.
+- Layout: the (app) column is `max-w-5xl` on every page and each page sets its own
+  measure inside it, left aligned. The tab bar is one `nav` named Primary, at the bottom
+  on a phone and at the top from `md` up.
 
 ## The three-part AI structure
 
@@ -223,7 +250,8 @@ Decided in Phase 3, recorded in the Phase 3 session log:
 - End of set: target reached, End set, or attempts at twice the target, checked only while
   active.
 - Design: over video, off-white ink, tape yellow as the only accent, Big Shoulders Display
-  800 (self-hosted, OFL) for the counter and the countdown only, text buttons in pills.
+  800 (self-hosted, OFL) for the counter and the countdown, text buttons in pills. Phase 6
+  carried it to every page.
 
 Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 session log:
 
@@ -261,25 +289,45 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   comes from the keypoint file's `t`, never the video's duration; an attempt's violations
   light their joints for the whole attempt; a set missing a file, or whose keypoint file
   holds fewer than two frames, is not replayed.
-- The chart sits on the live screen's dark ground because tape yellow on white fails
-  contrast. Big Shoulders also sets the deep-dive's similarity number.
-- The deep-dive widens the (app) column through `data-wide`; other pages keep the phone
-  column until Phase 6.
+- The chart sits on a dark ground because tape yellow on white fails contrast; since
+  Phase 6 every page does. Big Shoulders also sets the deep-dive's similarity number.
 - No migration: the Phase 4 policies cover every read.
 
-Still open, to be settled in the phase named:
+Decided in Phase 6, recorded in ADR-0001, 0002, 0004, 0005, 0007, `docs/HANDOVER.md`, and
+the Phase 6 session log:
+
+- `knowledge_base` exists, empty, with an untyped `extensions.vector` embedding and no API
+  privilege, like `expert_motions`. pgTAP proves both, and that user A cannot read user B's
+  workout, sets, or files even by id.
+- End-to-end tests run on the installed Chrome with a fake camera fed a still T pose, with
+  `--disable-ipv6` and `--disable-quic` for this network. The workout spec narrows
+  `Math.random` after load so every attempt is incorrect; pinning it before load silently
+  stops hydration. A not-found page streams inside a 200, so tests check the page.
+- Every screen has loading, empty, and error states, checked at 375 and 1280 px.
+- One dark theme on every page, and Big Shoulders for every page title and big number,
+  both Vern's choices; the system light/dark switch and `data-wide` are gone. The guide
+  shows each rule as its warning band, in priority order.
+- Password resets are one SQL statement in Studio's SQL editor; backups are a data-only
+  `db dump` plus `docker cp` of the storage volume. All three were run on the local stack.
+- The evaluation tasks in the handover have their owners left blank, as Vern chose.
+
+Still open, outside the build plan:
 
 - Video comes out at about 75 MB per minute (10 Mbit/s in Chrome); `videoBitsPerSecond` on
   the recorder would cut it. The keypoint file follows the device's frame rate, 60 fps on
-  Vern's Mac, about 1.7 MB per minute.
+  Vern's Mac, about 1.7 MB per minute. Storage refuses a file over 500 MiB, about seven
+  minutes of video.
 - A workout left part way cannot be opened in History; Level 3 has no paging; a set
   missing one file is not replayed.
 - A failed first save, or a reload mid-workout, gives the next set a new workout row.
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
-- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5), and a
-  look at the live overlay since its drawing moved to `lib/live/skeleton.ts`.
+- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5).
+- The three components replacing their stubs (`docs/HANDOVER.md`). With the port, the
+  workout e2e needs a clip of real reps as its camera.
+- The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
+  rehearsed, and a deleted tester's files stay until removed by hand.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.

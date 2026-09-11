@@ -45,3 +45,9 @@ The report's setup screen collects reps per set and a number of sets, but its da
 - The weekly chart covers the last seven days ending today, not Monday to Sunday, at Vern's request. It stays set based, so the sets of a workout left part way count there and nowhere else in History.
 - An active day is a day with a finished workout of the exercise, dated by the workout's start in the browser's time zone.
 - Level 4 lists every set of the workout, each repair set after the set it repairs, and shows the chosen one in full.
+
+## As built in Phase 6
+
+- What follows a set, one repair set after an initial set with any violation, abandoned attempts included, unless it was skipped, then the rest or the end, is `afterSet` in `lib/set.ts`, tested in `lib/set.test.ts`.
+- The job that saves a set, uploads its files, and analyses it is `lib/set-job.ts`. `lib/set-job.test.ts` proves the order, that a retry redoes only what is missing, that each save waits for the previous set's, and that a skip before the save lands is still recorded.
+- The workout end-to-end test takes one repair set and skips another, and checks that the rest timer follows a repair set rather than a second offer.

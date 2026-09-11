@@ -28,3 +28,9 @@ Row-level security gives NFR2 at the database layer, signed upload URLs give NFR
 - For the evaluation the team reads everyone's data directly: the service role in the database, the files on disk. There is no admin screen and no export feature.
 - All data, including video, stays on the team machine in Thailand.
 - The existing `.gitignore` is already Next.js shaped and is kept.
+
+## As built in Phase 6
+
+- `docs/HANDOVER.md` lists the evaluation tasks, with owners left for the team to fill in: the tunnel, running the production build, backups, disk, password resets, deletion on request, and reading the results.
+- Without email there is no reset link, so a reset is one SQL statement on `auth.users` in Studio's SQL editor, given in the handover. Run against the local stack, the new password signs in and the old one is refused.
+- Backups: `npx supabase db dump --local --data-only` holds the accounts, the app's rows, and storage's records of the files. The files themselves sit in the Docker volume `supabase_storage_MU-Capstone-Application` and are copied with `docker cp` while the stack runs. Both were run; a restore has not been rehearsed.

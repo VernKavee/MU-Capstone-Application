@@ -30,3 +30,9 @@ The UI reads counters, states, and warnings from the frame result and never re-d
 - Thresholds, messages, priorities, state names, and highlight joints will be exported from the Python into the exercises seed by a script, so the numbers have one source. Until the port, the seed is typed from the Python by hand and marked as such.
 - A parity harness that replays a recorded keypoint stream through both engines needs recordings with raw landmarks per frame. The research repo's live recordings hold angles and joint scores but not landmarks; adding that dump is a request to the research repo.
 - The browser runs MediaPipe's full pose model everywhere, the variant the thresholds were calibrated on. Lite is offered as a manual fallback for a phone that cannot hold fifteen frames per second.
+
+## As built in Phase 6
+
+- The live screen builds a new engine for every set, for every "Try again" after a camera or model failure, and when the pose model is switched; the frame loop calls `reset()` once the camera and the model are up. The port's construction must be cheap and must not fetch anything.
+- The workout end-to-end test gets its attempts from the stub's clock while Chrome's fake camera shows a still T pose. The port produces no attempts from a still frame, so that test will need a recorded clip of real reps as its camera.
+- `docs/HANDOVER.md` lists what the app reads from each frame result beyond the types, and what the stub returns today.
