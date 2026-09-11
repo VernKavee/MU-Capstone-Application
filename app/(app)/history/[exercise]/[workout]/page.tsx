@@ -44,12 +44,12 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const href = (setId: string) => `/history/${exerciseId}/${id}?set=${setId}`;
 
   return (
-    <main data-wide className="space-y-6 p-6">
-      <header className="space-y-1">
+    <main className="space-y-6 p-6">
+      <header className="space-y-2">
         <Link href={`/history/${exerciseId}`} className="text-sm underline">
           {name}
         </Link>
-        <h1 className="text-2xl font-semibold">{formatWhen(workout.started_at, tz)}</h1>
+        <h1>{formatWhen(workout.started_at, tz)}</h1>
         <p className="text-sm opacity-70">
           {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
           {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}. {correct} correct reps in {tries} attempts
@@ -69,7 +69,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                   href={href(s.id)}
                   scroll={false}
                   aria-current={on ? "page" : undefined}
-                  className={`block h-full rounded-lg border p-3 ${on ? "border-foreground bg-foreground text-background" : "hover:border-foreground"}`}
+                  className={`block h-full rounded-xl border p-3 ${on ? "border-foreground bg-foreground text-background" : "hover:border-foreground/50"}`}
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-2">
                     <span className="whitespace-nowrap text-sm font-medium">{setName(s)}</span>
@@ -97,7 +97,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
         regions={<Regions key="regions" similarity={selected.similarity as Similarity | null} />}
         feedback={
           <section key="feedback" aria-labelledby="feedback-title" className="space-y-2">
-            <h2 id="feedback-title" className="font-medium">
+            <h2 id="feedback-title" className="font-semibold">
               Feedback on {setName(selected).toLowerCase()}
             </h2>
             {detail.llm_feedback ? (

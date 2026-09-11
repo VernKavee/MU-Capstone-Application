@@ -165,11 +165,7 @@ export function LiveScreen({ exercise, setup }: Props) {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={startCamera}
-              className="rounded bg-black px-5 py-2.5 font-medium text-white dark:bg-white dark:text-black"
-            >
+            <button type="button" onClick={startCamera} className="btn">
               {stage.kind === "error" ? "Try again" : "Start camera"}
             </button>
             <Link href={guideHref} className="text-sm underline">Back to the guide</Link>

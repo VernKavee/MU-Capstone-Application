@@ -27,13 +27,13 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
   const name = workout.exercises.name;
 
   return (
-    <main className="space-y-6 p-6">
-      <header className="space-y-1">
+    <main className="max-w-2xl space-y-6 p-6">
+      <header className="space-y-2">
         <p className="text-sm opacity-60">{name}, workout finished</p>
-        <h1 className="text-2xl font-semibold">
+        <h1>
           {sum("correct_reps")} correct reps in {sum("attempts")} attempts
         </h1>
-        <p className="text-sm">
+        <p className="text-sm opacity-70">
           {sets.filter((s) => s.kind === "initial").length} of {workout.target_sets} sets of {workout.target_reps} reps
           {mean !== null && `, ${mean}% mean similarity`}.
         </p>
@@ -45,7 +45,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
           const similarity = set.similarity as Similarity | null;
           return (
             <li key={set.id} className="space-y-2 border-t pt-4">
-              <h2 className="font-medium">
+              <h2 className="font-semibold">
                 {set.kind === "repair" ? "Repair set" : "Set"} {set.set_no}
               </h2>
               <p className="text-sm opacity-70">
@@ -60,7 +60,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
       </ol>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Link href="/" className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
+        <Link href="/" className="btn">
           Home
         </Link>
         <Link href={`/history/${exercise}/${id}`} className="text-sm underline">

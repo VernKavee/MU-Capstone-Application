@@ -25,28 +25,28 @@ export default async function HistoryPage() {
 
   return (
     <main className="space-y-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">History</h1>
+      <header className="space-y-2">
+        <h1>History</h1>
         <p className="text-sm opacity-70">Days with a finished workout in the last 7 days, today on the right.</p>
       </header>
       {/* The first thing a new user sees here (Phase 6). The exercises stay listed below:
           each still leads to its workouts from before these 7 days. */}
       {active.size === 0 && (
-        <p className="rounded-lg bg-foreground/5 p-4">
+        <p className="max-w-2xl rounded-xl bg-foreground/5 p-4">
           No finished workouts in the last 7 days. Each workout you finish marks its day below.{" "}
           <Link href="/" className="underline">
             Start a workout
           </Link>
         </p>
       )}
-      <ul className="space-y-3">
+      <ul className="grid gap-3 md:grid-cols-2">
         {exercises.map((exercise) => {
           const on = active.get(exercise.id) ?? new Set<string>();
           return (
             <li key={exercise.id}>
-              <Link href={`/history/${exercise.id}`} className="block space-y-3 rounded-lg border p-4 hover:border-foreground">
+              <Link href={`/history/${exercise.id}`} className="block space-y-3 rounded-xl border p-4 hover:border-foreground/50">
                 <span className="flex items-baseline justify-between gap-4">
-                  <span className="font-medium">{exercise.name}</span>
+                  <span className="font-display text-3xl leading-none">{exercise.name}</span>
                   <span className="text-sm">
                     <span className="font-semibold tabular-nums">{on.size}</span> active {on.size === 1 ? "day" : "days"}
                     {on.size > 0 && <span className="sr-only">: {[...on].map(dayName).join(", ")}</span>}
@@ -54,7 +54,7 @@ export default async function HistoryPage() {
                 </span>
                 <span aria-hidden className="grid grid-cols-7 gap-1">
                   {days.map((date) => (
-                    <span key={date} className={`h-2 rounded-sm ${on.has(date) ? "bg-foreground" : "bg-foreground/10"}`} />
+                    <span key={date} className={`h-2 rounded-full ${on.has(date) ? "bg-foreground" : "bg-foreground/10"}`} />
                   ))}
                 </span>
               </Link>

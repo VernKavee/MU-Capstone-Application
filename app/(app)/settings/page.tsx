@@ -10,12 +10,18 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const { error, saved } = await searchParams;
 
   return (
-    <main className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      {saved && <p role="status" className="rounded border border-green-300 bg-green-50 p-2 text-sm text-green-800">Profile saved.</p>}
+    <main className="max-w-md space-y-6 p-6">
+      <h1>Settings</h1>
+      {saved && (
+        <p role="status" className="rounded-lg bg-foreground/10 px-4 py-2.5 text-sm">
+          Profile saved.
+        </p>
+      )}
       <ProfileForm mode="settings" profile={profile} error={typeof error === "string" ? error : undefined} />
-      <form action={signOut}>
-        <SubmitButton pendingText="Signing out" className="rounded border px-4 py-2">Sign out</SubmitButton>
+      <form action={signOut} className="border-t pt-6">
+        <SubmitButton pendingText="Signing out" className="btn-quiet">
+          Sign out
+        </SubmitButton>
       </form>
     </main>
   );

@@ -6,7 +6,7 @@ export function TickAll() {
     <button
       type="button"
       onClick={(e) => e.currentTarget.form?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((c) => (c.checked = true))}
-      className="rounded border px-4 py-2"
+      className="btn-quiet"
     >
       Tick all three
     </button>

@@ -15,44 +15,47 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
   const rules = [...ruleBasedLogic(exercise).rules].sort((a, b) => a.priority - b.priority);
 
   return (
-    <main className="p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{exercise.name}</h1>
-        <p className="text-sm">
+    <main className="space-y-6 p-6">
+      <header className="space-y-2">
+        <h1>{exercise.name}</h1>
+        <p className="text-sm opacity-70">
           {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest.{" "}
           <Link href={`/workout/${exercise.id}/setup`} className="underline">Change</Link>
         </p>
       </header>
 
-      {exercise.guide_video_url ? (
-        <video src={exercise.guide_video_url} controls playsInline className="w-full rounded-lg" />
-      ) : (
-        <div className="flex aspect-video items-center justify-center rounded-lg bg-foreground/5 text-sm opacity-60">
-          Demonstration video not available yet
+      {/* On a laptop the video on the left, what to do on the right. */}
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        {exercise.guide_video_url ? (
+          <video src={exercise.guide_video_url} controls playsInline className="w-full rounded-xl bg-black" />
+        ) : (
+          <div className="flex aspect-video items-center justify-center rounded-xl bg-black text-sm text-ink/50 ring-1 ring-ink/10">
+            Demonstration video not available yet
+          </div>
+        )}
+
+        <div className="max-w-prose space-y-6">
+          <p className="whitespace-pre-line leading-relaxed">{exercise.guide_text}</p>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">What the coach checks</h2>
+            <p className="text-sm opacity-70">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
+            {/* Each rule as its warning band looks on the live screen, in priority order. */}
+            <ol className="space-y-2">
+              {rules.map((rule) => (
+                <li key={rule.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="rounded-md bg-tape px-3 py-1 font-semibold text-tape-ink">{rule.messages.en}</span>
+                  <span className="text-xs opacity-60">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <Link href={`/workout/${exercise.id}/live?reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}`} className="btn">
+            Open camera
+          </Link>
         </div>
-      )}
-
-      <p className="whitespace-pre-line">{exercise.guide_text}</p>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-medium">What the coach checks</h2>
-        <ol className="list-decimal space-y-1 pl-5">
-          {rules.map((rule) => (
-            <li key={rule.name}>
-              {rule.messages.en}{" "}
-              <span className="text-xs opacity-60">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="text-xs opacity-60">A rep only counts when none of these fire.</p>
-      </section>
-
-      <Link
-        href={`/workout/${exercise.id}/live?reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}`}
-        className="inline-block rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black"
-      >
-        Open camera
-      </Link>
+      </div>
     </main>
   );
 }

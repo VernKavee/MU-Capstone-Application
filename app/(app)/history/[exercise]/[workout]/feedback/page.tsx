@@ -25,11 +25,11 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
 
   return (
     <main className="space-y-6 p-6">
-      <header className="space-y-1">
+      <header className="space-y-2">
         <Link href={`/history/${exerciseId}/${workoutId}?set=${setId}`} className="text-sm underline">
           {workout.exercises.name}, {formatWhen(workout.started_at, tz)}
         </Link>
-        <h1 className="text-2xl font-semibold">
+        <h1>
           Feedback on {set.kind === "repair" ? "repair set" : "set"} {set.set_no} of {workout.target_sets}
         </h1>
       </header>

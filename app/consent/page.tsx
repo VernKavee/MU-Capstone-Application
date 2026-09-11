@@ -14,22 +14,24 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
   const { error } = await searchParams;
 
   return (
-    <main className="mx-auto w-full max-w-lg p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Before you start</h1>
-      <p className="text-sm">
+    <main className="mx-auto w-full max-w-lg space-y-6 p-6">
+      <h1>Before you start</h1>
+      <p className="text-sm opacity-80">
         This app records you while you exercise. Under Thailand&apos;s PDPA we need your explicit
         agreement to each of the three things below. All three are needed to use the app.
       </p>
       {typeof error === "string" && (
-        <p role="alert" className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">{error}</p>
+        <p role="alert" className="alert">
+          {error}
+        </p>
       )}
       <form className="space-y-4">
         {CONSENT_KINDS.map(({ kind, title, text }) => (
-          <label key={kind} className="flex gap-3 rounded border p-3">
-            <input type="checkbox" name={kind} required className="mt-1" />
+          <label key={kind} className="flex gap-3 rounded-xl border p-4 has-checked:border-foreground/60">
+            <input type="checkbox" name={kind} required className="mt-0.5 size-5 shrink-0" />
             <span>
-              <span className="block font-medium">{title}</span>
-              <span className="block text-sm opacity-80">{text}</span>
+              <span className="block font-semibold">{title}</span>
+              <span className="mt-1 block text-sm opacity-80">{text}</span>
             </span>
           </label>
         ))}
@@ -37,10 +39,10 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
         <p className="text-sm">Tick all three boxes, then press Continue.</p>
         <div className="flex flex-wrap gap-3">
           <TickAll />
-          <SubmitButton formAction={grantConsents} className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
+          <SubmitButton formAction={grantConsents} className="btn">
             Continue
           </SubmitButton>
-          <SubmitButton formAction={signOut} formNoValidate className="rounded border px-4 py-2">
+          <SubmitButton formAction={signOut} formNoValidate className="btn-quiet">
             Decline and sign out
           </SubmitButton>
         </div>

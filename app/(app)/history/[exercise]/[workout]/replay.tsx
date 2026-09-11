@@ -13,7 +13,6 @@ const OUTCOME = { correct: "Correct", incorrect: "Incorrect", abandoned: "Abando
 // the page's attempt markers alike.
 const SEGMENT = { correct: "bg-ink/70", incorrect: "bg-tape", abandoned: "bg-ink/25" } as const;
 const MARKER = { correct: "bg-foreground", incorrect: "bg-tape", abandoned: "bg-foreground/25" } as const;
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tape";
 
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 
@@ -167,7 +166,7 @@ export function Replay({
                       {state.message}
                     </p>
                   )}
-                  <button type="button" onClick={() => playFrame(0)} className={`rounded-full bg-ink px-5 py-2.5 font-medium text-tape-ink ${focus}`}>
+                  <button type="button" onClick={() => playFrame(0)} className="btn">
                     {state.kind === "error" ? "Try again" : "Play the set with the skeleton"}
                   </button>
                 </>
@@ -199,7 +198,7 @@ export function Replay({
                       e.stopPropagation();
                       playFrame(a.frame_start!);
                     }}
-                    className={`absolute inset-y-1.5 min-w-0.5 rounded-sm ${SEGMENT[a.outcome]} ${a.attempt_no === current ? "ring-2 ring-ink ring-offset-2 ring-offset-black" : ""} ${focus}`}
+                    className={`absolute inset-y-1.5 min-w-0.5 rounded-sm ${SEGMENT[a.outcome]} ${a.attempt_no === current ? "ring-2 ring-ink ring-offset-2 ring-offset-black" : ""}`}
                     style={{ left: `${at(a.frame_start)}%`, width: `${at(a.frame_end) - at(a.frame_start)}%` }}
                   />
                 ),
@@ -213,7 +212,7 @@ export function Replay({
                   const v = videoRef.current;
                   if (v) void (v.paused ? v.play() : v.pause());
                 }}
-                className={`rounded-full bg-ink/10 px-3 py-1.5 hover:bg-ink/20 ${focus}`}
+                className="rounded-full bg-ink/10 px-3 py-1.5 hover:bg-ink/20"
               >
                 {playing ? "Pause" : "Play"}
               </button>
@@ -230,7 +229,7 @@ export function Replay({
         {regions}
         <section aria-labelledby="attempts-title" className="space-y-3">
           <div className="space-y-0.5">
-            <h2 id="attempts-title" className="font-medium">
+            <h2 id="attempts-title" className="font-semibold">
               Attempts
             </h2>
             <p className="text-sm opacity-70">
@@ -244,7 +243,7 @@ export function Replay({
               {attempts.map((a) => (
                 <li key={a.attempt_no} aria-current={a.attempt_no === current ? "step" : undefined} className={a.attempt_no === current ? "bg-foreground/5" : undefined}>
                   {canPlay && a.frame_start !== null ? (
-                    <button type="button" onClick={() => playFrame(a.frame_start!)} className={`block w-full text-left hover:bg-foreground/5 ${focus}`}>
+                    <button type="button" onClick={() => playFrame(a.frame_start!)} className="block w-full text-left hover:bg-foreground/5">
                       <AttemptRow attempt={a} />
                     </button>
                   ) : (

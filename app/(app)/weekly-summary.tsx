@@ -12,7 +12,7 @@ const BAR_REM = 8.5; // a column at 100; the value label sits in the 1.5rem abov
 export function WeeklySummary({ days }: { days: Day[] }) {
   const empty = days.every((d) => d.sets === 0);
   return (
-    <section aria-labelledby="week-title" className="rounded-2xl bg-tape-ink px-5 pb-4 pt-5 text-ink dark:ring-1 dark:ring-ink/15">
+    <section aria-labelledby="week-title" className="rounded-2xl bg-black px-5 pb-4 pt-5 text-ink ring-1 ring-ink/10">
       <div className="flex items-baseline justify-between gap-4">
         <h2 id="week-title" className="text-lg font-semibold">
           Last 7 days
@@ -33,7 +33,7 @@ export function WeeklySummary({ days }: { days: Day[] }) {
               <li key={day.date} className="flex flex-col items-center">
                 <span className="sr-only">{describe(day, isToday)}</span>
                 <div aria-hidden className="flex h-40 w-full flex-col items-center justify-end border-b border-ink/15">
-                  {day.sets > 0 && <span className="mb-1 bg-tape-ink px-1 text-sm font-semibold leading-5">{day.mean ?? "–"}</span>}
+                  {day.sets > 0 && <span className="mb-1 bg-black px-1 text-sm font-semibold leading-5">{day.mean ?? "–"}</span>}
                   {day.mean !== null && (
                     <span
                       className="block w-full max-w-6 origin-bottom rounded-t bg-tape motion-safe:animate-rise"

@@ -7,7 +7,8 @@
 export default function Loading() {
   return (
     <main aria-busy="true" className="space-y-6 p-6">
-      <div aria-hidden className="h-8 w-2/3 rounded bg-foreground/10 motion-safe:animate-pulse" />
+      {/* The height of a page title, where every page's title sits. */}
+      <div aria-hidden className="h-[2.6rem] w-2/3 max-w-sm rounded bg-foreground/10 motion-safe:animate-pulse" />
       <p role="status" className="text-sm opacity-60">
         Loading
       </p>

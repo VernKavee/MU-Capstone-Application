@@ -26,12 +26,12 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
   if (!exercise) notFound();
 
   return (
-    <main className="space-y-6 p-6">
-      <header className="space-y-1">
+    <main className="max-w-2xl space-y-6 p-6">
+      <header className="space-y-2">
         <Link href="/history" className="text-sm underline">
           History
         </Link>
-        <h1 className="text-2xl font-semibold">{exercise.name}</h1>
+        <h1>{exercise.name}</h1>
         <p className="text-sm opacity-70">
           {list.length} finished {list.length === 1 ? "workout" : "workouts"}, newest first
         </p>
@@ -53,7 +53,7 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
                     </span>
                   </span>
                   <span className="text-right">
-                    <span className="block text-xl font-semibold tabular-nums">{mean === null ? "–" : `${mean}%`}</span>
+                    <span className="block font-display text-4xl leading-none tabular-nums">{mean === null ? "–" : `${mean}%`}</span>
                     <span className="block text-xs opacity-70">similarity</span>
                   </span>
                 </Link>

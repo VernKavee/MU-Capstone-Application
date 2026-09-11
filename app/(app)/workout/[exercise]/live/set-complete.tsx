@@ -20,9 +20,8 @@ export type SetEntry = Progress & {
 
 export const setLabel = ({ setNo, kind }: Progress, sets: number) => `${kind === "repair" ? "repair set" : "set"} ${setNo} of ${sets}`;
 
-export const pill =
-  "rounded-full bg-black/55 px-3 py-1.5 text-sm text-ink backdrop-blur-sm hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-tape";
-const primary = "rounded bg-ink px-5 py-2.5 font-medium text-tape-ink disabled:opacity-60";
+// Over video; the pages' own pills (.btn, .btn-quiet) sit on the solid ground.
+export const pill = "rounded-full bg-black/55 px-3 py-1.5 text-sm text-ink backdrop-blur-sm hover:bg-black/70";
 
 const STATUS_TEXT: Partial<Record<JobStatus, string>> = {
   saving: "Saving the set",
@@ -146,7 +145,7 @@ export function SetComplete({
               At least one attempt broke a rule, so you get one repair set at the same target. It is offered once.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={onRepair} disabled={busy} className={primary}>
+              <button type="button" onClick={onRepair} disabled={busy} className="btn">
                 Start the repair set
               </button>
               <button type="button" onClick={decline} disabled={busy} className={pill}>
@@ -163,7 +162,7 @@ export function SetComplete({
           <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />
         ) : (
           <div className="space-y-3 border-t border-ink/20 pt-4">
-            <button type="button" onClick={finish} disabled={busy} className={primary}>
+            <button type="button" onClick={finish} disabled={busy} className="btn">
               {busy ? "Finishing" : "Finish workout"}
             </button>
             {actionError && (
@@ -204,7 +203,7 @@ function RestTimer({ seconds, next, onDone }: { seconds: number; next: string; o
           {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
         </span>
       </p>
-      <button type="button" onClick={onDone} className={primary}>
+      <button type="button" onClick={onDone} className="btn">
         Start now
       </button>
     </div>
@@ -215,7 +214,7 @@ function SimilarityRow({ similarity }: { similarity: Similarity }) {
   return (
     <div className="space-y-2">
       <p className="text-sm">
-        <span className="text-2xl font-semibold tabular-nums">{similarity.overall}%</span>{" "}
+        <span className="font-display text-4xl leading-none tabular-nums">{similarity.overall}%</span>{" "}
         <span className="opacity-70">similar to the expert motion</span>
       </p>
       <dl className="grid grid-cols-5 gap-2 text-xs">

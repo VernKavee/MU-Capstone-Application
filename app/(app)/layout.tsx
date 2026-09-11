@@ -15,9 +15,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <TimeZone current={(await cookies()).get(TZ_COOKIE)?.value} />
-      {/* A page marked data-wide (the history deep-dive) gets two columns' room on a laptop. */}
-      <div className="mx-auto w-full max-w-lg flex-1 pb-16 has-[[data-wide]]:max-w-5xl">{children}</div>
       <TabBar />
+      {/* One column for every page, so titles never move between pages or against the
+          loading screen. Each page sets its own measure inside it, left aligned. */}
+      <div className="mx-auto w-full max-w-5xl flex-1 pb-16 md:pb-0">{children}</div>
     </>
   );
 }

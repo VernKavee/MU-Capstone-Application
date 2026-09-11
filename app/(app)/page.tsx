@@ -24,32 +24,39 @@ export default async function HomePage() {
   );
 
   return (
-    <main className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Hello, {profile?.display_name}</h1>
-      <WeeklySummary days={week} />
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Start a workout</h2>
-        <ul className="grid grid-cols-2 gap-4">
-          {exercises.map((exercise) => (
-            <li key={exercise.id}>
-              <Link
-                href={`/workout/${exercise.id}/setup`}
-                className="block overflow-hidden rounded-lg border hover:border-foreground"
-              >
-                {exercise.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={exercise.thumbnail_url} alt="" className="aspect-[4/3] w-full object-cover" />
-                ) : (
-                  <div className="flex aspect-[4/3] items-center justify-center bg-foreground/5 text-xs opacity-60">
-                    Thumbnail not available yet
-                  </div>
-                )}
-                <span className="block p-3 font-medium">{exercise.name}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+    <main className="space-y-8 p-6">
+      <h1>Hello, {profile?.display_name}</h1>
+      {/* Side by side on a laptop: the week on the left, the four exercises on the right. */}
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <WeeklySummary days={week} />
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Start a workout</h2>
+          <ul className="grid grid-cols-2 gap-3">
+            {exercises.map((exercise) => (
+              <li key={exercise.id}>
+                {/* A black tile like the stage: the thumbnail fills it once it exists, and the
+                    name sits over it in a pill, as the live screen's labels sit over video. */}
+                <Link
+                  href={`/workout/${exercise.id}/setup`}
+                  className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl bg-black p-2.5 ring-1 ring-ink/10 hover:ring-ink/50"
+                >
+                  {exercise.thumbnail_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={exercise.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <span aria-hidden className="absolute left-3 top-3 text-xs text-ink/50">
+                      Thumbnail not available yet
+                    </span>
+                  )}
+                  <span className="relative self-start rounded-md bg-black/55 px-1.5 py-1 font-display text-3xl leading-none backdrop-blur-sm">
+                    {exercise.name}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </main>
   );
 }

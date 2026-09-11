@@ -13,26 +13,33 @@ type Props = {
 export function AuthForm({ title, submitLabel, pendingLabel, action, error, footer }: Props) {
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <form action={action} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        {error && (
-          <p role="alert" className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800">
-            {error}
-          </p>
-        )}
-        <label className="block text-sm">
-          Email
-          <input name="email" type="email" required autoComplete="email" className="mt-1 w-full rounded border p-2" />
-        </label>
-        <label className="block text-sm">
-          Password
-          <input name="password" type="password" required minLength={8} autoComplete="current-password" className="mt-1 w-full rounded border p-2" />
-        </label>
-        <SubmitButton pendingText={pendingLabel} className="w-full rounded bg-black p-2 text-white dark:bg-white dark:text-black">
-          {submitLabel}
-        </SubmitButton>
-        <p className="text-sm">{footer}</p>
-      </form>
+      <div className="w-full max-w-sm space-y-10">
+        {/* The name in the counter's face: the first screen anyone sees. */}
+        <div className="space-y-3">
+          <p className="font-display text-7xl leading-[0.85]">Posture Coach</p>
+          <p className="opacity-70">Checks your form and counts your correct reps as you move, for Squat, Push-up, Lunge, and Bicep curl.</p>
+        </div>
+        <form action={action} className="space-y-4">
+          <h1 className="text-3xl">{title}</h1>
+          {error && (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          )}
+          <label className="block text-sm">
+            Email
+            <input name="email" type="email" required autoComplete="email" className="field" />
+          </label>
+          <label className="block text-sm">
+            Password
+            <input name="password" type="password" required minLength={8} autoComplete="current-password" className="field" />
+          </label>
+          <SubmitButton pendingText={pendingLabel} className="btn w-full">
+            {submitLabel}
+          </SubmitButton>
+          <p className="text-sm">{footer}</p>
+        </form>
+      </div>
     </main>
   );
 }

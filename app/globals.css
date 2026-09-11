@@ -1,17 +1,8 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-display: var(--font-big-shoulders), "Arial Narrow", system-ui, sans-serif;
-}
-
-/* The live screen sits over camera video: off-white ink, one accent, tape yellow. */
+/* One dark theme, the live screen's, on every page (Phase 6): the warm charcoal floor,
+   off-white ink on it, black screens for video and data, and tape yellow only where
+   something needs attention: a warning, a form error, the chart's bars, the focus ring. */
 @theme {
   --color-ink: #f5f3ee;
   --color-tape: #ffc940;
@@ -33,15 +24,56 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* The page's ground and text, named for what they are on a page. */
+@theme inline {
+  --color-background: var(--color-tape-ink);
+  --color-foreground: var(--color-ink);
+  --font-display: var(--font-big-shoulders), "Arial Narrow", system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
+  }
+  html {
+    accent-color: var(--color-tape);
+    text-underline-offset: 0.2em;
+  }
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  /* Every page title in the counter's face. */
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2.75rem;
+    line-height: 0.95;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-tape);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@layer components {
+  /* Pills, as on the live screen: ink for the one main action, a quiet tint for the rest. */
+  .btn {
+    @apply inline-block rounded-full bg-ink px-5 py-2.5 text-center font-medium text-tape-ink hover:bg-white disabled:opacity-60;
+  }
+  .btn-quiet {
+    @apply inline-block rounded-full bg-ink/10 px-5 py-2.5 text-center font-medium hover:bg-ink/20 disabled:opacity-60;
+  }
+  .field {
+    @apply mt-1 block w-full rounded-lg border border-ink/25 bg-ink/5 px-3 py-2.5 placeholder:text-ink/40;
+  }
+  /* The live screen's warning band, for anything to fix before going on. */
+  .alert {
+    @apply rounded-lg bg-tape px-4 py-2.5 text-sm font-semibold text-tape-ink;
+  }
 }
