@@ -10,7 +10,8 @@
     "test:db": "supabase test db",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "test:unit": "node --no-warnings --experimental-strip-types --test \"lib/**/*.test.ts\""
+    "test:unit": "node --no-warnings --experimental-strip-types --test \"lib/**/*.test.ts\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",
@@ -21,6 +22,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

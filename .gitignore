@@ -46,6 +46,8 @@ supabase/.branches/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+# a frame from a research recording, a real person; not published (see e2e/fixtures/README.md)
+/e2e/fixtures/t-pose.y4m
 
 # per-user tool settings
 .claude/settings.local.json
