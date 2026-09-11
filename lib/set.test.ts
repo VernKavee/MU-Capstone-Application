@@ -1,12 +1,13 @@
 // Run with `npm run test:unit`. The one check that fails if the merge stops honouring
 // ADR-0003: one record per attempt in order, frame ranges from the events, state
-// durations from the frames, and violations carrying the state they fired in.
+// durations from the frames, and violations carrying the state they fired in. Also the
+// ADR-0004 rule for what follows a set.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { emptyKeypoints, type SessionReport } from "./engine/types.ts";
 import type { Rule } from "./exercise";
 import type { KeypointFrame } from "./live/session.ts";
-import { buildAttempts, hasViolation, toKeypointFile, totalsOf } from "./set.ts";
+import { afterSet, buildAttempts, hasViolation, toKeypointFile, totalsOf } from "./set.ts";
 
 const rules: Rule[] = [
   { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
@@ -76,4 +77,16 @@ test("the keypoint file is one flat row of 231 numbers per frame at capture rate
   assert.equal(file.frames[0].points.length, 33 * 7);
   assert.equal(file.joints.length, 33);
   assert.deepEqual(file.frames[13], { t: 1300, state: "Idle", event: "rep_completed", points: file.frames[13].points });
+});
+
+test("one repair set follows an initial set with any violation, then the rest or the end", () => {
+  const attempts = buildAttempts(frames, report, rules);
+  const clean = attempts.slice(0, 2);
+  const abandonedWithViolation = [{ ...attempts[1], violations: attempts[2].violations }];
+  assert.equal(afterSet({ kind: "initial", setNo: 1, attempts }, 3, false), "repair");
+  assert.equal(afterSet({ kind: "initial", setNo: 1, attempts: abandonedWithViolation }, 3, false), "repair", "an abandoned attempt's violation counts");
+  assert.equal(afterSet({ kind: "initial", setNo: 1, attempts }, 3, true), "rest", "a skipped repair set goes to the rest");
+  assert.equal(afterSet({ kind: "repair", setNo: 1, attempts }, 3, false), "rest", "never a repair set after a repair set");
+  assert.equal(afterSet({ kind: "initial", setNo: 3, attempts: clean }, 3, false), "finish");
+  assert.equal(afterSet({ kind: "repair", setNo: 3, attempts }, 3, false), "finish");
 });

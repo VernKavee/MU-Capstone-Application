@@ -116,6 +116,14 @@ export function buildAttempts(frames: KeypointFrame[], report: SessionReport, ru
 
 export const hasViolation = (attempts: Attempt[]) => attempts.some((a) => a.violations.length > 0);
 
+// What follows a set (ADR-0004): one repair set after an initial set in which any attempt
+// had a violation, abandoned attempts included, unless it was skipped; never after a
+// repair set. Otherwise the rest before the next set, or the end of the workout.
+export function afterSet(set: { kind: "initial" | "repair"; setNo: number; attempts: Attempt[] }, sets: number, declined: boolean): "repair" | "rest" | "finish" {
+  if (set.kind === "initial" && !declined && hasViolation(set.attempts)) return "repair";
+  return set.setNo < sets ? "rest" : "finish";
+}
+
 // The keypoint file (ADR-0005): JSON, gzipped on upload. Every frame's 33 landmarks at
 // capture rate as one flat row of numbers, joints then fields, so the file is the
 // `landmarks` object the similarity contract takes (ADR-0007) and what replay draws.

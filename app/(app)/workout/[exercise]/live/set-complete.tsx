@@ -3,7 +3,7 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
-import { hasViolation, REGIONS, type Attempt, type Similarity } from "@/lib/set";
+import { afterSet, REGIONS, type Attempt, type Similarity } from "@/lib/set";
 import type { JobStatus } from "./pipeline";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
@@ -68,9 +68,10 @@ export function SetComplete({
   }[capture.endedBy];
   const counts = new Map<string, number>();
   for (const attempt of attempts) for (const v of attempt.violations) counts.set(v.message, (counts.get(v.message) ?? 0) + 1);
-  // ADR-0004: any violation on any attempt, abandoned ones included, offers one repair set.
-  const offerRepair = entry.kind === "initial" && hasViolation(attempts) && !declined;
-  const hasNext = entry.setNo < setup.sets;
+  // ADR-0004: the repair offer, the rest before the next set, or the end of the workout.
+  const next = afterSet(entry, setup.sets, declined);
+  const offerRepair = next === "repair";
+  const hasNext = next === "rest";
 
   async function decline() {
     setBusy(true);

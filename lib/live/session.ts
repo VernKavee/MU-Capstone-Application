@@ -3,11 +3,14 @@
 // receives Snapshots through onChange, and only when something it shows has changed.
 //
 // Everything here runs on the user's device (NFR1). Nothing is sent per frame.
+// Node-testable (session.test.ts): MediaPipe is imported only when the camera starts, and
+// every import that is not a type carries a .ts extension.
+import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { Rule } from "@/lib/exercise";
-import { LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "@/lib/engine/types";
-import { loadPoseLandmarker, toKeypoints, type PoseModel } from "./pose";
-import { drawSkeleton, jointIndices } from "./skeleton";
-import { sound } from "./sound";
+import { LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "../engine/types.ts";
+import type { PoseModel } from "./pose";
+import { drawSkeleton, jointIndices } from "./skeleton.ts";
+import { sound } from "./sound.ts";
 
 export type EndedBy = "target_reached" | "user_ended" | "attempt_cap";
 
@@ -35,17 +38,34 @@ export type Snapshot = {
   capture: SetCapture | null;
 };
 
+// Plain fields rather than constructor parameter properties, which Node's type stripping
+// cannot run.
 export class CameraError extends Error {
-  constructor(public kind: "denied" | "no-camera" | "insecure" | "model") {
+  kind: "denied" | "no-camera" | "insecure" | "model";
+  constructor(kind: CameraError["kind"]) {
     super(kind);
+    this.kind = kind;
   }
 }
 
 const VIDEO_TYPES = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
 
+type SessionOptions = {
+  engine: Engine;
+  rules: Rule[];
+  target: number;
+  attemptCap: number;
+  model: PoseModel;
+  video: HTMLVideoElement;
+  canvas: HTMLCanvasElement;
+  onChange: (snapshot: Snapshot) => void;
+};
+
 export class LiveSession {
+  private readonly opts: SessionOptions;
   private stream: MediaStream | null = null;
-  private landmarker: Awaited<ReturnType<typeof loadPoseLandmarker>> | null = null;
+  private landmarker: PoseLandmarker | null = null;
+  private toKeypoints: ((result: PoseLandmarkerResult) => Keypoints) | null = null;
   private raf = 0;
   private running = false;
   private lastVideoTime = -1;
@@ -61,18 +81,8 @@ export class LiveSession {
   private stopped = false;
   private highlight = new Map<string, number[]>();
 
-  constructor(
-    private readonly opts: {
-      engine: Engine;
-      rules: Rule[];
-      target: number;
-      attemptCap: number;
-      model: PoseModel;
-      video: HTMLVideoElement;
-      canvas: HTMLCanvasElement;
-      onChange: (snapshot: Snapshot) => void;
-    },
-  ) {
+  constructor(opts: SessionOptions) {
+    this.opts = opts;
     for (const rule of opts.rules) this.highlight.set(rule.name, jointIndices(rule.highlight_joints));
   }
 
@@ -90,7 +100,9 @@ export class LiveSession {
     }
     if (this.stopped) return this.stop(); // unmounted while the permission prompt was open
     try {
-      this.landmarker = await loadPoseLandmarker(this.opts.model);
+      const pose = await import("./pose");
+      this.toKeypoints = pose.toKeypoints;
+      this.landmarker = await pose.loadPoseLandmarker(this.opts.model);
     } catch {
       this.stop();
       throw new CameraError("model");
@@ -122,12 +134,19 @@ export class LiveSession {
   private tick = () => {
     if (!this.running) return;
     this.raf = requestAnimationFrame(this.tick);
-    const { video, engine } = this.opts;
-    if (video.readyState < 2 || video.currentTime === this.lastVideoTime || !this.landmarker) return;
+    const { video } = this.opts;
+    if (video.readyState < 2 || video.currentTime === this.lastVideoTime || !this.landmarker || !this.toKeypoints) return;
     this.lastVideoTime = video.currentTime;
     const now = performance.now();
-    const keypoints = toKeypoints(this.landmarker.detectForVideo(video, now));
-    const frame = engine.process(keypoints, now);
+    this.feed(this.toKeypoints(this.landmarker.detectForVideo(video, now)), now);
+  };
+
+  // One frame's landmarks through the engine, the overlay, the capture, the sound, and the
+  // end conditions. The camera loop calls it once per video frame; a test, or a recorded
+  // landmark stream, can call it directly. Frames after the set has ended are ignored.
+  feed(keypoints: Keypoints, now: number) {
+    if (this.ended) return;
+    const frame = this.opts.engine.process(keypoints, now);
     this.draw(frame);
     this.capture(frame, now);
     this.announce(frame);
@@ -140,7 +159,7 @@ export class LiveSession {
     } else if (frame.ready_phase === "ended") {
       this.finish("user_ended");
     }
-  };
+  }
 
   private fps(now: number) {
     this.fpsWindow.push(now);

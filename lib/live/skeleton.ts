@@ -1,7 +1,7 @@
 // The skeleton overlay, drawn the same way live (lib/live/session.ts) and at replay
 // (history level 4, ADR-0005): bone-white bones and joints, tape yellow where a warning's
 // highlight joints are. The face is left out, except the nose.
-import { LANDMARK_NAMES, type LandmarkName } from "@/lib/engine/types";
+import { LANDMARK_NAMES, type LandmarkName } from "../engine/types.ts";
 
 const INK = "rgba(233, 228, 216, 0.75)";
 const TAPE = "#FFC940";
