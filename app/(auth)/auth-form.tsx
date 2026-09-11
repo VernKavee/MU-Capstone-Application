@@ -1,14 +1,16 @@
 import Link from "next/link";
+import { SubmitButton } from "../submit-button";
 
 type Props = {
   title: string;
   submitLabel: string;
+  pendingLabel: string;
   action: (formData: FormData) => Promise<void>;
   error?: string;
   footer: React.ReactNode;
 };
 
-export function AuthForm({ title, submitLabel, action, error, footer }: Props) {
+export function AuthForm({ title, submitLabel, pendingLabel, action, error, footer }: Props) {
   return (
     <main className="flex flex-1 items-center justify-center p-6">
       <form action={action} className="w-full max-w-sm space-y-4">
@@ -26,9 +28,9 @@ export function AuthForm({ title, submitLabel, action, error, footer }: Props) {
           Password
           <input name="password" type="password" required minLength={8} autoComplete="current-password" className="mt-1 w-full rounded border p-2" />
         </label>
-        <button type="submit" className="w-full rounded bg-black p-2 text-white dark:bg-white dark:text-black">
+        <SubmitButton pendingText={pendingLabel} className="w-full rounded bg-black p-2 text-white dark:bg-white dark:text-black">
           {submitLabel}
-        </button>
+        </SubmitButton>
         <p className="text-sm">{footer}</p>
       </form>
     </main>

@@ -11,7 +11,7 @@ export default async function SetupPage({ params, searchParams }: PageProps<"/wo
   const { exercise: id } = await params;
   const { error } = await searchParams;
   const supabase = await createClient();
-  const { data: exercise } = await supabase.from("exercises").select("id, name").eq("id", id).maybeSingle();
+  const { data: exercise } = await supabase.from("exercises").select("id, name").eq("id", id).maybeSingle().throwOnError();
   if (!exercise) notFound();
 
   return (

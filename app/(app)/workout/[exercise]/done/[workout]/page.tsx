@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ENDED_BY, meanSimilarity, setOrder } from "@/lib/history";
+import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import type { Similarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,13 +9,15 @@ import { createClient } from "@/lib/supabase/server";
 // as not there yet; the retry lives on the set-complete screen (ADR-0007).
 export default async function DonePage({ params }: PageProps<"/workout/[exercise]/done/[workout]">) {
   const { exercise, workout: id } = await params;
+  if (!isUuid(id)) notFound();
   const supabase = await createClient();
   const { data: workout } = await supabase
     .from("workouts")
     .select("*, exercises!inner(name), sets(*)")
     .eq("id", id)
     .eq("exercise_id", exercise)
-    .maybeSingle();
+    .maybeSingle()
+    .throwOnError();
   if (!workout) notFound();
 
   const sets = [...workout.sets].sort(setOrder);

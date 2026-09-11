@@ -1,10 +1,12 @@
 import { signOut } from "../../(auth)/actions";
 import { ProfileForm } from "../../profile/profile-form";
+import { SubmitButton } from "../../submit-button";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
   const supabase = await createClient();
-  const { data: profile } = await supabase.from("profiles").select("*").single();
+  // No row only while the (app) layout's gate, rendering beside this page, redirects.
+  const { data: profile } = await supabase.from("profiles").select("*").maybeSingle().throwOnError();
   const { error, saved } = await searchParams;
 
   return (
@@ -13,7 +15,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       {saved && <p role="status" className="rounded border border-green-300 bg-green-50 p-2 text-sm text-green-800">Profile saved.</p>}
       <ProfileForm mode="settings" profile={profile} error={typeof error === "string" ? error : undefined} />
       <form action={signOut}>
-        <button type="submit" className="rounded border px-4 py-2">Sign out</button>
+        <SubmitButton pendingText="Signing out" className="rounded border px-4 py-2">Sign out</SubmitButton>
       </form>
     </main>
   );

@@ -55,13 +55,17 @@ test("user B cannot reach user A's workout, its set, or its files", async ({ pag
     await signIn(page, emailB, password);
     await grantConsent(page);
     await fillProfile(page, "none");
+    // These pages have a loading state, so their response has already started streaming,
+    // status 200, by the time the query finds no row: the not-found page arrives inside
+    // it. What the test holds to is what B sees: that page, and none of A's data.
     for (const url of [
       `/workout/squat/done/${workout!.id}`,
       `/history/squat/${workout!.id}`,
       `/history/squat/${workout!.id}/feedback?set=${set!.id}`,
     ]) {
-      const response = await page.goto(url);
-      expect(response?.status(), url).toBe(404);
+      await page.goto(url);
+      await expect(page.getByRole("heading", { name: "Page not found" }), url).toBeVisible();
+      await expect(page.getByText("A's feedback, not B's to read."), url).toHaveCount(0);
     }
 
     // B, through the database and storage APIs directly, with the same key the app uses.

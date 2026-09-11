@@ -12,18 +12,18 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
   const { exercise: id } = await params;
   const supabase = await createClient();
   const tz = await userTimeZone();
-  const [{ data: exercise }, { data: workouts }] = await Promise.all([
-    supabase.from("exercises").select("id, name").eq("id", id).maybeSingle(),
+  const [{ data: exercise }, { data: list }] = await Promise.all([
+    supabase.from("exercises").select("id, name").eq("id", id).maybeSingle().throwOnError(),
     // ponytail: no paging; add .range() if a tester passes a few hundred workouts
     supabase
       .from("workouts")
       .select("id, started_at, target_reps, target_sets, sets(kind, similarity)")
       .eq("exercise_id", id)
       .not("ended_at", "is", null)
-      .order("started_at", { ascending: false }),
+      .order("started_at", { ascending: false })
+      .throwOnError(),
   ]);
   if (!exercise) notFound();
-  const list = workouts ?? [];
 
   return (
     <main className="space-y-6 p-6">

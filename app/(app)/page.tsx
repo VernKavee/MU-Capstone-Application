@@ -10,14 +10,16 @@ export default async function HomePage() {
   const tz = await userTimeZone();
   const now = new Date();
   // Level 1 fetches the start time and similarity of the last seven days' sets, nothing else.
+  // The page renders beside the (app) layout, not after it, so for a user still without a
+  // profile it runs while the layout's gate redirects: no row is not a failure here.
   const [{ data: profile }, { data: exercises }, { data: sets }] = await Promise.all([
-    supabase.from("profiles").select("display_name").single(),
-    supabase.from("exercises").select("id, name, thumbnail_url").order("sort_order"),
-    supabase.from("sets").select("started_at, similarity").gte("started_at", new Date(now.getTime() - WEEK_FETCH_MS).toISOString()),
+    supabase.from("profiles").select("display_name").maybeSingle().throwOnError(),
+    supabase.from("exercises").select("id, name, thumbnail_url").order("sort_order").throwOnError(),
+    supabase.from("sets").select("started_at, similarity").gte("started_at", new Date(now.getTime() - WEEK_FETCH_MS).toISOString()).throwOnError(),
   ]);
   const week = weeklySummary(
     lastSevenDays(now, tz),
-    (sets ?? []).map((s) => ({ started_at: s.started_at, similarity: s.similarity as Similarity | null })),
+    sets.map((s) => ({ started_at: s.started_at, similarity: s.similarity as Similarity | null })),
     tz,
   );
 
@@ -28,7 +30,7 @@ export default async function HomePage() {
       <section className="space-y-3">
         <h2 className="text-lg font-medium">Start a workout</h2>
         <ul className="grid grid-cols-2 gap-4">
-          {exercises?.map((exercise) => (
+          {exercises.map((exercise) => (
             <li key={exercise.id}>
               <Link
                 href={`/workout/${exercise.id}/setup`}

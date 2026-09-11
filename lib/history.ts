@@ -10,6 +10,11 @@ const DAY_MS = 86_400_000;
 // change too.
 export const WEEK_FETCH_MS = 8 * DAY_MS;
 
+// A workout or set id from the address bar. Anything else is a page not found: sent to
+// Postgres it is a uuid syntax error (22P02), which pages throw as a failed query.
+export const isUuid = (s: unknown): s is string =>
+  typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 // The cookie's zone when it names a real one, else the server's own until the browser
 // has sent it (app/(app)/time-zone.tsx).
 export function timeZone(cookie: string | undefined): string {

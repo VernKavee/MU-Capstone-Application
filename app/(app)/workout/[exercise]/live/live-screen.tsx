@@ -133,12 +133,20 @@ export function LiveScreen({ exercise, setup }: Props) {
     setRun((n) => n + 1);
   }
 
-  async function finish() {
+  // Writes ended_at, then opens the finished summary. A failure, returned or a dropped
+  // connection, comes back as text for the set-complete screen, whose Finish button stays
+  // for another go.
+  async function finish(): Promise<string | null> {
     await lastSave.current;
     const id = workoutId.current;
-    if (!id) return router.push("/"); // nothing was saved
-    await endWorkout(id);
+    if (!id) {
+      router.push("/"); // nothing was saved
+      return null;
+    }
+    const { error } = await endWorkout(id).catch((e: unknown) => ({ error: e instanceof Error ? e.message : String(e) }));
+    if (error) return `The workout was not finished: ${error}`;
     router.push(`/workout/${exercise.id}/done/${id}`);
+    return null;
   }
 
   if (stage.kind === "preflight" || stage.kind === "error") {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { signOut } from "../(auth)/actions";
+import { SubmitButton } from "../submit-button";
 import { grantConsents } from "./actions";
 import { TickAll } from "./tick-all";
 import { CONSENT_KINDS, CONSENT_VERSION } from "@/lib/consent";
@@ -36,12 +37,12 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
         <p className="text-sm">Tick all three boxes, then press Continue.</p>
         <div className="flex flex-wrap gap-3">
           <TickAll />
-          <button formAction={grantConsents} className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
+          <SubmitButton formAction={grantConsents} className="rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black">
             Continue
-          </button>
-          <button formAction={signOut} formNoValidate className="rounded border px-4 py-2">
+          </SubmitButton>
+          <SubmitButton formAction={signOut} formNoValidate className="rounded border px-4 py-2">
             Decline and sign out
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </main>

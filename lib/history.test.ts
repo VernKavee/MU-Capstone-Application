@@ -2,7 +2,7 @@
 // days stop ending today, or the mean starts counting unscored sets.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeDays, attemptAt, formatWhen, frameAt, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
+import { activeDays, attemptAt, formatWhen, frameAt, isUuid, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
 import type { Similarity } from "./set.ts";
 
 const BKK = "Asia/Bangkok";
@@ -66,6 +66,13 @@ test("dates show the local time, and the year only when it is another one there"
   assert.match(formatWhen("2026-09-10T14:35:13Z", BKK, THURSDAY), /21:35$/);
   assert.ok(!formatWhen("2025-12-31T20:00:00Z", BKK, THURSDAY).includes("202"), "1 January 2026 in Bangkok is this year");
   assert.ok(formatWhen("2025-06-01T00:00:00Z", BKK, THURSDAY).includes("2025"));
+});
+
+test("a mistyped id in the address is not found, never sent to the database", () => {
+  assert.ok(isUuid("0b6c3f5e-8f1a-4c2d-9e7b-1a2b3c4d5e6f"));
+  for (const id of ["not-a-uuid", "0b6c3f5e-8f1a-4c2d-9e7b-1a2b3c4d5e6", " 0b6c3f5e-8f1a-4c2d-9e7b-1a2b3c4d5e6f", undefined, ["0b6c3f5e-8f1a-4c2d-9e7b-1a2b3c4d5e6f"]]) {
+    assert.equal(isUuid(id), false, String(id));
+  }
 });
 
 test("an unknown zone in the cookie falls back to the server's", () => {

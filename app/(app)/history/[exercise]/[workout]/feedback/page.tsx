@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatWhen } from "@/lib/history";
+import { formatWhen, isUuid } from "@/lib/history";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 
@@ -9,7 +9,7 @@ import { userTimeZone } from "@/lib/time-zone";
 export default async function FeedbackPage({ params, searchParams }: PageProps<"/history/[exercise]/[workout]/feedback">) {
   const { exercise: exerciseId, workout: workoutId } = await params;
   const { set: setId } = await searchParams;
-  if (typeof setId !== "string") notFound();
+  if (!isUuid(workoutId) || !isUuid(setId)) notFound();
   const supabase = await createClient();
   const tz = await userTimeZone();
   const { data: set } = await supabase
@@ -18,7 +18,8 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
     .eq("id", setId)
     .eq("workout_id", workoutId)
     .eq("workouts.exercise_id", exerciseId)
-    .maybeSingle();
+    .maybeSingle()
+    .throwOnError();
   if (!set) notFound();
   const { workouts: workout } = set;
 

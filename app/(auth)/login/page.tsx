@@ -7,6 +7,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <AuthForm
       title="Sign in"
       submitLabel="Sign in"
+      pendingLabel="Signing in"
       action={signIn}
       error={typeof error === "string" ? error : undefined}
       footer={<>No account? <AuthLink href="/register">Register</AuthLink></>}

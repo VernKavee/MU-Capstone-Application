@@ -234,22 +234,26 @@ export function Replay({
               Attempts
             </h2>
             <p className="text-sm opacity-70">
-              {counts}. Every violation is listed{canPlay && "; press an attempt to watch it"}.
+              {attempts.length === 0
+                ? "None: the set was ended before the first attempt."
+                : `${counts}. Every violation is listed${canPlay ? "; press an attempt to watch it" : ""}.`}
             </p>
           </div>
-          <ol className="divide-y border-y">
-            {attempts.map((a) => (
-              <li key={a.attempt_no} aria-current={a.attempt_no === current ? "step" : undefined} className={a.attempt_no === current ? "bg-foreground/5" : undefined}>
-                {canPlay && a.frame_start !== null ? (
-                  <button type="button" onClick={() => playFrame(a.frame_start!)} className={`block w-full text-left hover:bg-foreground/5 ${focus}`}>
+          {attempts.length > 0 && (
+            <ol className="divide-y border-y">
+              {attempts.map((a) => (
+                <li key={a.attempt_no} aria-current={a.attempt_no === current ? "step" : undefined} className={a.attempt_no === current ? "bg-foreground/5" : undefined}>
+                  {canPlay && a.frame_start !== null ? (
+                    <button type="button" onClick={() => playFrame(a.frame_start!)} className={`block w-full text-left hover:bg-foreground/5 ${focus}`}>
+                      <AttemptRow attempt={a} />
+                    </button>
+                  ) : (
                     <AttemptRow attempt={a} />
-                  </button>
-                ) : (
-                  <AttemptRow attempt={a} />
-                )}
-              </li>
-            ))}
-          </ol>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
         </section>
         {feedback}
       </div>

@@ -12,7 +12,7 @@ export default async function LivePage({ params, searchParams }: PageProps<"/wor
   if (!setup) redirect(`/workout/${id}/setup?error=${encodeURIComponent("Check the reps, sets, and rest values.")}`);
 
   const supabase = await createClient();
-  const { data: exercise } = await supabase.from("exercises").select("*").eq("id", id).maybeSingle();
+  const { data: exercise } = await supabase.from("exercises").select("*").eq("id", id).maybeSingle().throwOnError();
   if (!exercise) notFound();
 
   return (

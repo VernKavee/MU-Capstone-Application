@@ -7,6 +7,7 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
     <AuthForm
       title="Register"
       submitLabel="Create account"
+      pendingLabel="Creating the account"
       action={signUp}
       error={typeof error === "string" ? error : undefined}
       footer={<>Already registered? <AuthLink href="/login">Sign in</AuthLink></>}

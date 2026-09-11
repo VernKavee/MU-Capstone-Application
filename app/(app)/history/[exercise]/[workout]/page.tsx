@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic } from "@/lib/exercise";
-import { ENDED_BY, formatWhen, meanSimilarity, setOrder } from "@/lib/history";
+import { ENDED_BY, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import { jointIndices } from "@/lib/live/skeleton";
 import { REGIONS, type Attempt, type Similarity, type Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +18,7 @@ const setName = (s: { set_no: number; kind: string }) => `${s.kind === "repair" 
 export default async function WorkoutPage({ params, searchParams }: PageProps<"/history/[exercise]/[workout]">) {
   const { exercise: exerciseId, workout: id } = await params;
   const { set: chosen } = await searchParams;
+  if (!isUuid(id)) notFound();
   const supabase = await createClient();
   const tz = await userTimeZone();
   const { data: workout } = await supabase
@@ -25,12 +26,13 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
     .select("id, started_at, target_reps, target_sets, exercises!inner(name, rule_based_logic), sets(id, set_no, kind, ended_by, repair_declined, totals, similarity)")
     .eq("id", id)
     .eq("exercise_id", exerciseId)
-    .maybeSingle();
+    .maybeSingle()
+    .throwOnError();
   if (!workout?.sets.length) notFound();
   const sets = [...workout.sets].sort(setOrder);
   const selected = sets.find((s) => s.id === chosen) ?? sets[0];
-  const { data: detail } = await supabase.from("sets").select("attempts, llm_feedback, video_url, keypoints_url").eq("id", selected.id).single();
-  if (!detail) notFound();
+  // The same policies just returned this set, so exactly one row comes back.
+  const { data: detail } = await supabase.from("sets").select("attempts, llm_feedback, video_url, keypoints_url").eq("id", selected.id).single().throwOnError();
 
   const name = workout.exercises.name;
   const totals = sets.map((s) => s.totals as Totals);

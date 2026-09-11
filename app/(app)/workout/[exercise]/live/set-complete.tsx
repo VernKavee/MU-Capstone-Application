@@ -53,10 +53,10 @@ export function SetComplete({
   onRepair: () => void;
   onDecline: () => Promise<string | null>;
   onNext: () => void;
-  onFinish: () => Promise<void>;
+  onFinish: () => Promise<string | null>;
 }) {
   const [declined, setDeclined] = useState(false);
-  const [declineError, setDeclineError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null); // of Skip it or Finish workout
   const [busy, setBusy] = useState(false);
   const { capture, attempts } = entry;
   const { report } = capture;
@@ -75,16 +75,21 @@ export function SetComplete({
 
   async function decline() {
     setBusy(true);
-    setDeclineError(null);
+    setActionError(null);
     const error = await onDecline();
     setBusy(false);
-    if (error) setDeclineError(error);
+    if (error) setActionError(error);
     else setDeclined(true);
   }
 
+  // On success the page moves on to the summary, so busy stays set until it does.
   async function finish() {
     setBusy(true);
-    await onFinish();
+    setActionError(null);
+    const error = await onFinish();
+    if (!error) return;
+    setBusy(false);
+    setActionError(error);
   }
 
   return (
@@ -148,19 +153,24 @@ export function SetComplete({
                 Skip it
               </button>
             </div>
-            {declineError && (
+            {actionError && (
               <p role="alert" className="text-sm">
-                {declineError}
+                {actionError}
               </p>
             )}
           </div>
         ) : hasNext ? (
           <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />
         ) : (
-          <div className="border-t border-ink/20 pt-4">
+          <div className="space-y-3 border-t border-ink/20 pt-4">
             <button type="button" onClick={finish} disabled={busy} className={primary}>
               {busy ? "Finishing" : "Finish workout"}
             </button>
+            {actionError && (
+              <p role="alert" className="text-sm">
+                {actionError}
+              </p>
+            )}
           </div>
         )}
       </div>
