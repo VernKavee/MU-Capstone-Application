@@ -116,3 +116,6 @@ its wasm are fetched from Google's storage and jsdelivr on first use, about 10 M
 
 For the evaluation the same stack runs on a team machine and is reached through
 Tailscale Funnel: the app on port 443 and the Supabase API on 8443 (ADR-0001).
+
+Which stub each teammate replaces, the interface it must satisfy, and the tasks for the
+evaluation are in [docs/HANDOVER.md](docs/HANDOVER.md).
