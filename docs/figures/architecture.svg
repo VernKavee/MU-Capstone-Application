@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1100" viewBox="0 0 1700 1100">
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;fill:#111}
+.box{fill:#fff;stroke:#111;stroke-width:3}
+.store{fill:#fff;stroke:#e53935;stroke-width:3}
+.ctr{fill:none;stroke:#111;stroke-width:3.5}
+.grp{fill:none;stroke:#666;stroke-width:2;stroke-dasharray:9 6}
+.t{font-size:19px;font-weight:700;text-anchor:middle}
+.s{font-size:15px;fill:#555;text-anchor:middle}
+.h{font-size:36px;font-weight:700}
+.hc{font-size:30px;font-weight:700;text-anchor:middle}
+.hs{font-size:16px;fill:#555}
+.gl{font-size:17px;font-weight:700;fill:#444}
+.ln{fill:none;stroke:#111;stroke-width:2.5}
+.lb{font-size:16px;paint-order:stroke;stroke:#fff;stroke-width:8px;stroke-linejoin:round}
+.m{text-anchor:middle}.e{text-anchor:end}
+</style>
+</defs>
+<rect width="1700" height="1100" fill="#fff"/>
+
+<rect class="ctr" x="330" y="10" width="1360" height="580" rx="22"/>
+<text class="h" x="360" y="58">Backend</text>
+<text class="hs" x="360" y="86">Team machine, Docker</text>
+<text class="hs" x="360" y="108">HTTPS via Tailscale Funnel</text>
+
+<rect class="grp" x="600" y="30" width="1075" height="185" rx="16"/>
+<text class="gl" x="620" y="57">Supabase, self-hosted</text>
+<rect class="box" x="620" y="75" width="440" height="120" rx="14"/>
+<text class="t" x="840" y="127">PostgreSQL + pgvector</text>
+<text class="s" x="840" y="155">all app data, row-level security</text>
+<rect class="box" x="1100" y="75" width="230" height="120" rx="14"/>
+<text class="t" x="1215" y="127">Auth</text>
+<text class="s" x="1215" y="155">sign-in, sessions</text>
+<rect class="box" x="1370" y="75" width="285" height="120" rx="14"/>
+<text class="t" x="1512" y="127">Storage</text>
+<text class="s" x="1512" y="155">videos, keypoint files</text>
+
+<rect class="box" x="560" y="270" width="260" height="110" rx="14"/>
+<text class="t" x="690" y="318">Coaching Feedback</text>
+<text class="s" x="690" y="346">LLM + RAG retrieval</text>
+
+<rect class="box" x="920" y="270" width="240" height="110" rx="14"/>
+<text class="t" x="1040" y="318">Similarity Analysis</text>
+<text class="s" x="1040" y="346">per rep, five body regions</text>
+
+<rect class="box" x="680" y="450" width="720" height="110" rx="14"/>
+<text class="t" x="1040" y="500">Next.js Server</text>
+<text class="s" x="1040" y="528">server pages, server actions, auth proxy</text>
+
+<path class="ln" d="M740 197V268" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb e" x="730" y="240">knowledge-base search</text>
+<path class="ln" d="M1000 197V268" marker-end="url(#a)"/>
+<text class="lb" x="1012" y="240">expert motion</text>
+<path class="ln" d="M870 197V448" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb e" x="860" y="422">CRUD, row-level security</text>
+<path class="ln" d="M620 382V505H678" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb e" x="610" y="440">set context in,</text>
+<text class="lb e" x="610" y="462">coaching text out</text>
+<path class="ln" d="M1040 382V448" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb" x="1052" y="422">keypoints, scores</text>
+<path class="ln" d="M1230 197V448" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb" x="1242" y="330">sign-in</text>
+<path class="ln" d="M1402 505H1450V197" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb e" x="1440" y="400">signed URLs</text>
+
+<text class="hc" x="125" y="250">LLM</text>
+<rect class="box" x="10" y="270" width="230" height="110" rx="14"/>
+<text class="t" x="125" y="318">LLM API</text>
+<text class="s" x="125" y="346">e.g. Gemini</text>
+<path class="ln" d="M558 305H242" marker-end="url(#a)"/>
+<text class="lb m" x="420" y="311">request</text>
+<path class="ln" d="M242 350H558" marker-end="url(#a)"/>
+<text class="lb m" x="420" y="356">response</text>
+
+<path class="ln" d="M1000 638V562" marker-end="url(#a)"/>
+<text class="lb e" x="990" y="622">request</text>
+<path class="ln" d="M1160 562V638" marker-end="url(#a)"/>
+<text class="lb" x="1170" y="622">response</text>
+<path class="ln" d="M1630 678V197" marker-start="url(#a)" marker-end="url(#a)"/>
+<text class="lb e" x="1620" y="540">direct upload,</text>
+<text class="lb e" x="1620" y="562">replay download</text>
+
+<rect class="ctr" x="560" y="640" width="1130" height="375" rx="22"/>
+<text class="h" x="590" y="688">Frontend</text>
+<text class="hs" x="765" y="688">Next.js web app in the browser</text>
+
+<rect class="box" x="600" y="830" width="200" height="100" rx="14"/>
+<text class="t" x="700" y="874">MediaPipe Pose</text>
+<text class="s" x="700" y="902">33 landmarks</text>
+
+<rect class="grp" x="850" y="735" width="540" height="265" rx="16"/>
+<text class="gl" x="870" y="763">On-device rule engine</text>
+<rect class="box" x="870" y="830" width="210" height="100" rx="14"/>
+<text class="t" x="975" y="874">Angle Calculation</text>
+<text class="s" x="975" y="902">joint angles</text>
+<rect class="box" x="1135" y="780" width="240" height="90" rx="14"/>
+<text class="t" x="1255" y="819">Repetition Count</text>
+<text class="s" x="1255" y="845">state machine</text>
+<rect class="box" x="1135" y="895" width="240" height="90" rx="14"/>
+<text class="t" x="1255" y="934">Rule-Based Correction</text>
+<text class="s" x="1255" y="960">show one, record all</text>
+
+<rect class="store" x="1440" y="680" width="230" height="100" rx="14"/>
+<text class="t" x="1555" y="724">Store Video</text>
+<text class="s" x="1555" y="752">and keypoint file</text>
+<rect class="store" x="1440" y="860" width="230" height="100" rx="14"/>
+<text class="t" x="1555" y="904">Store Result</text>
+<text class="s" x="1555" y="932">save set, then analyse</text>
+
+<path class="ln" d="M802 880H868" marker-end="url(#a)"/>
+<path class="ln" d="M1080 880H1105M1105 825V940"/>
+<path class="ln" d="M1105 825H1133" marker-end="url(#a)"/>
+<path class="ln" d="M1105 940H1133" marker-end="url(#a)"/>
+<path class="ln" d="M1375 825H1405V940H1375"/>
+<path class="ln" d="M1405 910H1438" marker-end="url(#a)"/>
+<path class="ln" d="M700 828V712H1438" marker-end="url(#a)"/>
+
+<text class="hc" x="125" y="700">User</text>
+<rect class="box" x="10" y="720" width="230" height="240" rx="14"/>
+<text class="t" x="125" y="832">Phone or Laptop</text>
+<text class="s" x="125" y="860">browser with camera</text>
+<path class="ln" d="M558 790H242" marker-end="url(#a)"/>
+<text class="lb m" x="400" y="796">Display &amp; feedback</text>
+<path class="ln" d="M242 880H558" marker-end="url(#a)"/>
+<text class="lb m" x="400" y="886">Camera feed &amp; UI interaction</text>
+<path class="ln" d="M1255 987V1070H125V962" marker-end="url(#a)"/>
+<rect x="520" y="1059" width="360" height="22" fill="#fff"/>
+<text class="lb m" x="700" y="1076">Live rule-based feedback: warning, voice, beep</text>
+</svg>
