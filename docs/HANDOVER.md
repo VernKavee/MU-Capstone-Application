@@ -117,6 +117,19 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
 Compares the user's motion with the expert's and returns six numbers per rep: `overall`,
 `head_neck`, `back_core`, `hips_pelvis`, `knees`, `ankles_feet` (REQUIREMENTS section 7).
 
+Punnapat writes it in Python as a service the app calls with JSON over HTTP (ADR-0007,
+2026-09-29). The exact fields are still to be agreed; open questions for him:
+
+- Which 15 joints, by MediaPipe index. They must cover the head and neck and the ankles
+  and feet, since those are regions of the output.
+- Image-normalised x, y, z (fields 0 to 2) or MediaPipe's world coordinates in metres
+  (fields 3 to 5).
+- Whether an attempt's frame range, from leaving Idle to returning to it, is trimmed
+  enough or needs more trimming.
+- One expert rep per exercise, since `expert_motions` holds one `motion_data` each.
+- The frame rate differs between sets, 60 fps on a Mac and perhaps 30 on a phone.
+- Python has to be installed on the evaluation machine.
+
 ### What to replace
 
 `lib/analysis/similarity.ts`, one function:

@@ -43,3 +43,9 @@ The exact TypeScript types are fixed in Phase 4, below.
 - This record first placed a component's service "in the same Docker Compose". Since Phase 1 there is none: the stack is `npx supabase start` (ADR-0001), so a service runs beside it on the team machine and the stub file calls it by URL.
 - The database checks only that `similarity` is a JSON object and `attempts` an array. The six integer keys are a convention the UI relies on, not a constraint, and `llm_feedback` is plain text without a limit.
 - `docs/HANDOVER.md` is each owner's page: the input and output field by field, what the stub returns today, and which tests change with the replacement.
+
+## Decided 2026-09-29
+
+- Similarity is a Python service beside the stack on the team machine, Punnapat's choice. `scoreSimilarity` becomes an HTTP client that POSTs JSON to it.
+- The request's exact fields are still to be agreed with him. Until they are, `SimilarityInput` in `lib/analysis/contracts.ts` stands, and a change to it changes this record too.
+- His component works on one array per rep of shape (15, 3, T): 15 joints, x, y, z, and the rep's frames. His service cuts these from the keypoint file's `frames` and each attempt's `frame_start` and `frame_end`, so the app writes no `.npy` files.

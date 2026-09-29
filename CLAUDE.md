@@ -328,6 +328,8 @@ Still open, outside the build plan:
   workout e2e needs a clip of real reps as its camera.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
+- Similarity is a Python service over JSON (ADR-0007, 2026-09-29); its exact fields are
+  pending with Punnapat, and Python must be installed on the evaluation machine.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.
