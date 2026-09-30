@@ -34,3 +34,13 @@ Row-level security gives NFR2 at the database layer, signed upload URLs give NFR
 - `docs/HANDOVER.md` lists the evaluation tasks, with owners left for the team to fill in: the tunnel, running the production build, backups, disk, password resets, deletion on request, and reading the results.
 - Without email there is no reset link, so a reset is one SQL statement on `auth.users` in Studio's SQL editor, given in the handover. Run against the local stack, the new password signs in and the old one is refused.
 - Backups: `npx supabase db dump --local --data-only` holds the accounts, the app's rows, and storage's records of the files. The files themselves sit in the Docker volume `supabase_storage_MU-Capstone-Application` and are copied with `docker cp` while the stack runs. Both were run; a restore has not been rehearsed.
+
+## Planned 2026-09-30, pending the professor's answer
+
+- The goal grew from an evaluation on a team machine to a site the professor can open on his own phone at any time. Vern has asked him whether a public server is required; until he answers, this section is a plan and the record above stands.
+- The planned final deploy is a Google Cloud VM paid from Vern's student credit, because similarity and feedback are both Python services that need a host beside the app (ADR-0007) and the site should stay up without a laptop. Supabase cloud with Vercel was considered again and set aside for the free plan's 50 MB per file and for needing a third host for the Python services.
+- The CLI stack cannot face the internet. `npx supabase start` uses Supabase's published demo secrets, the same on every install, and `supabase/config.toml` cannot replace them, so anyone who reaches the public API could use the published service role key to skip row-level security (NFR2). This reverses the Phase 1 consequence above for the VM only: it runs the self-hosted Docker Compose distribution with generated secrets. Local development stays on `npx supabase start`.
+- The same weakness applies to Funnel on a team machine, so that route is for supervised sessions with the tunnel closed afterwards.
+- On the VM, Caddy serves two hostnames on 443, the app and the Supabase API, with certificates through sslip.io until a domain is bought. Tailscale Funnel is not used there.
+- Data would then sit in Google's Singapore region, not on a team machine in Thailand, and the VM and its disk are deleted when the project ends.
+- The route, its limits, the stages, and the checks are in `docs/DEPLOY.md`. Nothing has been run.

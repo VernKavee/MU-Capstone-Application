@@ -49,3 +49,8 @@ The exact TypeScript types are fixed in Phase 4, below.
 - Similarity is a Python service beside the stack on the team machine, Punnapat's choice. `scoreSimilarity` becomes an HTTP client that POSTs JSON to it.
 - The request's exact fields are still to be agreed with him. Until they are, `SimilarityInput` in `lib/analysis/contracts.ts` stands, and a change to it changes this record too.
 - His component works on one array per rep of shape (15, 3, T): 15 joints, x, y, z, and the rep's frames. His service cuts these from the keypoint file's `frames` and each attempt's `frame_start` and `frame_end`, so the app writes no `.npy` files.
+
+## Decided 2026-09-30
+
+- Feedback is a Python service too, as Vern reports for Sujira's component. `writeFeedback` becomes an HTTP client like `scoreSimilarity`. Its fields are `FeedbackInput` and `FeedbackOutput` until agreed otherwise with her.
+- Both services are planned to run on the deployment machine beside Next.js, reached over localhost, which is one reason the planned deploy is a VM and not a hosted platform (ADR-0001, `docs/DEPLOY.md`).
