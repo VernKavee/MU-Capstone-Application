@@ -23,6 +23,8 @@ replacing a stub, and running the evaluation.
 - `docs/sessions/` holds one log per session.
 - `docs/HANDOVER.md` is the handover: which stub each owner replaces, the interface it
   must satisfy, what it returns today, and the evaluation tasks.
+- `docs/DEPLOY.md` is the deployment plan: a Google Cloud VM, planned on 2026-09-30,
+  pending the professor's answer, and not rehearsed.
 
 The project is a web app for checking exercise posture with AI, covering exactly four
 bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
@@ -333,6 +335,13 @@ Still open, outside the build plan:
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
   versus the Pro plan.
+- The deploy route (`docs/DEPLOY.md`, ADR-0001, 2026-09-30): Vern has asked the professor
+  whether a public server is required. Planned if so: a Google Cloud VM running
+  Supabase's self-hosted Docker Compose with generated secrets, Caddy, and the two Python
+  services. `npx supabase start` uses published demo secrets, so it never faces the
+  internet with real testers' data; Funnel on a team machine is for supervised sessions.
+  Feedback is a Python service like similarity (ADR-0007). No app code changes until he
+  answers; the bitrate cut and the phone test come first after that.
 - Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
   is a draft awaiting review.
 - Whether `exercises.name` and `guide_text` should be locale-keyed like rule messages.

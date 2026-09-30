@@ -19,6 +19,7 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
 - `CLAUDE.md`: working rules and invariants for coding sessions.
 - `docs/sessions/`: one log per session.
 - `docs/HANDOVER.md`: which stub each teammate replaces, and the tasks for the evaluation.
+- `docs/DEPLOY.md`: the deployment plan, not yet rehearsed.
 
 ## What exists
 
@@ -132,6 +133,13 @@ its wasm are fetched from Google's storage and jsdelivr on first use, about 10 M
 
 For the evaluation the same stack runs on a team machine and is reached through
 Tailscale Funnel: the app on port 443 and the Supabase API on 8443 (ADR-0001).
+
+## Deploying it
+
+Not deployed yet. The plan, pending the professor's answer, is a Google Cloud VM running
+Supabase's self-hosted Docker Compose with its own secrets, because the local stack's
+secrets are published and must not face the internet. The routes, their limits, and the
+steps are in [docs/DEPLOY.md](docs/DEPLOY.md); nothing in it has been rehearsed.
 
 Which stub each teammate replaces, the interface it must satisfy, and the tasks for the
 evaluation are in [docs/HANDOVER.md](docs/HANDOVER.md).
