@@ -28,6 +28,9 @@ Rules for all three:
 The TypeScript port of the research repo's portable core, behind the research repo's own
 contract (ADR-0002). It must run on the user's device (NFR1).
 
+The port plan (what moves, where each number lives, the generated `rule_based_logic`, and the
+parity test) is in the research repo: `~/Documents/SeniorProject/docs/rule_based/WEB_APP_PORT.md`.
+
 ### What to replace
 
 `lib/engine/stub.ts`. The live screen is its only importer and uses two names from it:
