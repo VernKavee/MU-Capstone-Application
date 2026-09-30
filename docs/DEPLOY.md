@@ -32,7 +32,9 @@ No route needs a code change.
 
 `npx supabase start` uses Supabase's published local development secrets: the JWT secret
 and the service role key are the same on every install and printed in Supabase's own
-documentation. `supabase/config.toml` has no setting that replaces them. Once the API is
+documentation. The CLI stack is built for local development; `supabase/config.toml` has a
+commented `signing_keys_path`, which was not checked and is not assumed to retire the
+published keys. Once the API is
 public, anyone who knows the address can use the published service role key to skip
 row-level security and read every user's rows, video, and medical history. That breaks
 NFR2 and the consent text.
@@ -133,6 +135,9 @@ in the compose `.env`. The exact key names are checked against that file at the 
    and tested then, and this document loses its "not rehearsed" mark.
 3. **Near the end.** The real deploy from this runbook, with the three real components.
    When the project ends, the VM and its disk are deleted, as the consent text promises.
+   The consent text in `lib/consent.ts` names no location, so moving the data to Google's
+   Singapore region needs no new consent version; ADR-0001's "stays on the team machine
+   in Thailand" is what changes.
 
 ## Checks for the rehearsal and the real deploy
 

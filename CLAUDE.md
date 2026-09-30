@@ -196,7 +196,8 @@ Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
 
 - Tunnel: Tailscale Funnel. App on 443, Supabase API on 8443, no domain needed.
 - Local and evaluation stack are both `npx supabase start`; the separate self-hosted
-  compose file is not used.
+  compose file is not used. Both this and the tunnel above are under review for the final
+  deploy: see the deploy route under "Still open".
 - The profile row is created when the user submits the profile form, not by a trigger at
   signup, so every profile column is NOT NULL and "row exists" means "profile complete".
 - Consent is one screen, three checkboxes, all required; declining signs out. Each is a
