@@ -327,8 +327,8 @@ the fixture in `e2e/fixtures/README.md` is generated.
 
 The evaluation runs on a team machine (ADR-0001). Owners are for the team to fill in.
 
-Planned on 2026-09-30 and pending the professor's answer: the final deploy moves to a
-Google Cloud VM, and the rows below then apply with the changes in
+Decided on 2026-10-01, after the professor required a published site: the final deploy
+is a Google Cloud VM, and the rows below apply with the changes in
 [DEPLOY.md](DEPLOY.md). The local stack uses Supabase's published demo secrets, so a team
 machine behind Funnel is for supervised sessions with the tunnel closed afterwards.
 
@@ -336,7 +336,7 @@ machine behind Funnel is for supervised sessions with the tunnel closed afterwar
 |---|---|---|
 | Tunnel | | Install Tailscale on the team machine and open Funnel: the app on 443, the Supabase API on 8443. `NEXT_PUBLIC_SUPABASE_URL` must be the 8443 address, because browsers upload straight to storage (NFR3). The camera needs https, which Funnel gives. |
 | Run the app | | `npm run build`, then `npm run start` rather than the dev server. Keep the machine awake and the stack up for the whole evaluation. Testers' devices need the internet: the pose model and its wasm come from Google's storage and jsdelivr. |
-| Supervised or unsupervised | | Not decided. If testers use it on their own over days, the planned route is the Google Cloud VM of [DEPLOY.md](DEPLOY.md); the Pro plan stays a fallback that needs no code change but gives the Python services no host (ADR-0001). |
+| Supervised or unsupervised | | Not decided, and no longer decides the hosting: the Google Cloud VM of [DEPLOY.md](DEPLOY.md) stays up either way (ADR-0001). |
 | Before the evaluation | | A camera run on a real phone and on iOS Safari has not happened yet. Guide videos and thumbnails do not exist (the UI labels the gap) and the guide text awaits the physiotherapy experts' review; both are data changes in Studio. |
 | Database backup | | `npx supabase db dump --local --data-only -f backup-<date>.sql` covers accounts, consents, profiles, workouts, sets, and storage's records of the files. The schema is the migrations in git. |
 | File backup | | `docker cp supabase_storage_MU-Capstone-Application:/mnt files-<date>` while the stack runs copies every video and keypoint file. Storage keeps them under its own folder layout, so restore by copying back into the volume, from the same moment as the database backup. A restore has not been rehearsed. |

@@ -2,9 +2,10 @@
 
 How Posture Coach gets from Vern's Mac to an address a stranger's phone can open.
 
-**Status, 2026-09-30: planned, not rehearsed, and pending the professor's answer.** Vern
-has asked the professor whether a public server is required or whether hosting on his own
-computer is enough. Nothing here has been run. Commands and setting names marked "check
+**Status, 2026-10-01: decided, not rehearsed.** The professor confirmed that the website
+must be published on AWS or a cloud provider, and that the group's project budget can pay
+for it. Vern chose a Google Cloud VM: his student credit first, the project budget after.
+Nothing here has been run. Commands and setting names marked "check
 at the rehearsal" are from the documentation, not from a run.
 
 The goal is a demonstration, not traffic: the professor opens an https address on his own
@@ -60,10 +61,11 @@ So:
 | Setup | Minutes, already in ADR-0001 | About a day once, then the runbook |
 | Other limits | Funnel is relayed and rate limited; a network that blocks port 8443 breaks sign-in and uploads; storage is the Mac's disk | The team maintains it: updates, backups, restarts; one machine, no redundancy |
 
-Planned: the VM for the final deploy, because similarity and feedback are both Python
-services and need a host beside the app, and because the site should stay up without
-Vern's laptop. If the professor says the Mac is enough, the VM stages are dropped and
-ADR-0001 stands as written.
+Decided: the VM. The professor requires a published site, similarity and feedback are
+both Python services that need a host beside the app, and the site must stay up without
+Vern's laptop. AWS Lightsail and EC2 were the alternatives; the setup on the machine is
+the same, so moving later changes only the console steps. The Mac with Funnel stays for
+supervised phone tests during development.
 
 ## The VM layout
 
@@ -90,8 +92,9 @@ Python services ── localhost ──> Postgres (expert_motions, knowledge_bas
 
 **Vern, with his Google account, because it needs his billing:**
 
-1. A Google Cloud project with billing on the student credit. Check how much credit is
-   left and when it expires.
+1. A Google Cloud project with billing on the student credit, with the project budget
+   taking over when the credit runs out or expires. Check both amounts and the expiry
+   date, and set a billing alert below the budget.
 2. A VM in `asia-southeast1` (Singapore): Ubuntu LTS, 2 vCPU and 8 GB of memory to start,
    a 50 GB disk, and a reserved static IP. The size is a starting guess for the stack plus
    `next build`; check it at the rehearsal.
@@ -124,7 +127,7 @@ in the compose `.env`. The exact key names are checked against that file at the 
 
 ## Stages
 
-1. **After the professor answers.** Cut the video bitrate: `videoBitsPerSecond` on the
+1. **Next, on the Mac.** Cut the video bitrate: `videoBitsPerSecond` on the
    recorder in `lib/live/session.ts`, between 1.5 and 2.5 Mbit/s, chosen by looking at a
    test recording. Today's recording is about 10 Mbit/s, 75 MB per minute. The cut changes
    only the file the replay plays; scoring reads the live frames and the keypoint file.

@@ -23,8 +23,8 @@ replacing a stub, and running the evaluation.
 - `docs/sessions/` holds one log per session.
 - `docs/HANDOVER.md` is the handover: which stub each owner replaces, the interface it
   must satisfy, what it returns today, and the evaluation tasks.
-- `docs/DEPLOY.md` is the deployment plan: a Google Cloud VM, planned on 2026-09-30,
-  pending the professor's answer, and not rehearsed.
+- `docs/DEPLOY.md` is the deployment plan: a Google Cloud VM, decided on 2026-10-01
+  after the professor required a published site, and not rehearsed.
 
 The project is a web app for checking exercise posture with AI, covering exactly four
 bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
@@ -165,6 +165,7 @@ a decision wrong, say so and update the ADR.
 
 - ADR-0001: web app, Next.js against the Supabase API, self-hosted Docker stack on a team
   machine for the evaluation, no SMTP, evaluation through direct database and file access.
+  Amended 2026-10-01: the published site runs on a Google Cloud VM (`docs/DEPLOY.md`).
 - ADR-0002: rule engine client-side in TypeScript, ported by Vern later, behind the
   research repo's contract; MediaPipe full model everywhere.
 - ADR-0003: one merged record per attempt plus the engine's report verbatim.
@@ -196,8 +197,8 @@ Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
 
 - Tunnel: Tailscale Funnel. App on 443, Supabase API on 8443, no domain needed.
 - Local and evaluation stack are both `npx supabase start`; the separate self-hosted
-  compose file is not used. Both this and the tunnel above are under review for the final
-  deploy: see the deploy route under "Still open".
+  compose file is not used. Since 2026-10-01 both this and the tunnel above hold for
+  development only: the published site is a Google Cloud VM, see "Still open".
 - The profile row is created when the user submits the profile form, not by a trigger at
   signup, so every profile column is NOT NULL and "row exists" means "profile complete".
 - Consent is one screen, three checkboxes, all required; declining signs out. Each is a
@@ -334,15 +335,15 @@ Still open, outside the build plan:
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29); its exact fields are
   pending with Punnapat, and Python must be installed on the evaluation machine.
 - Embedding model and column dimension, at integration with Sujira's component.
-- Whether the evaluation is supervised sessions or unsupervised use; decides self-hosted
-  versus the Pro plan.
-- The deploy route (`docs/DEPLOY.md`, ADR-0001, 2026-09-30): Vern has asked the professor
-  whether a public server is required. Planned if so: a Google Cloud VM running
+- Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
+  the hosting.
+- The deploy (`docs/DEPLOY.md`, ADR-0001, 2026-10-01): the professor requires a published
+  site on AWS or a cloud, paid from the project budget. Decided: a Google Cloud VM running
   Supabase's self-hosted Docker Compose with generated secrets, Caddy, and the two Python
   services. `npx supabase start` uses published demo secrets, so it never faces the
   internet with real testers' data; Funnel on a team machine is for supervised sessions.
-  Feedback is a Python service like similarity (ADR-0007). No app code changes until he
-  answers; the bitrate cut and the phone test come first after that.
+  Feedback is a Python service like similarity (ADR-0007). Next: the bitrate cut and the
+  phone test, then a rehearsal deploy, then the real one. Not rehearsed.
 - Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
   is a draft awaiting review.
 - Whether `exercises.name` and `guide_text` should be locale-keyed like rule messages.

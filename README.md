@@ -136,7 +136,7 @@ Tailscale Funnel: the app on port 443 and the Supabase API on 8443 (ADR-0001).
 
 ## Deploying it
 
-Not deployed yet. The plan, pending the professor's answer, is a Google Cloud VM running
+Not deployed yet. The professor requires a published site, so it goes on a Google Cloud VM running
 Supabase's self-hosted Docker Compose with its own secrets, because the local stack's
 secrets are published and must not face the internet. The routes, their limits, and the
 steps are in [docs/DEPLOY.md](docs/DEPLOY.md); nothing in it has been rehearsed.
