@@ -49,6 +49,9 @@ export class CameraError extends Error {
 }
 
 const VIDEO_TYPES = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+// Chrome records 720p at about 10 Mbit/s by default, 75 MB per minute. 2.5 Mbit/s, chosen by eye
+// from a side by side recording, is about 19 MB per minute. Only the replay file changes.
+const VIDEO_BITS_PER_SECOND = 2_500_000;
 
 type SessionOptions = {
   engine: Engine;
@@ -201,7 +204,10 @@ export class LiveSession {
     if (typeof MediaRecorder === "undefined" || !this.stream) return;
     const mimeType = VIDEO_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
     if (!mimeType) return;
-    this.recorder = new MediaRecorder(new MediaStream(this.stream.getVideoTracks()), { mimeType });
+    this.recorder = new MediaRecorder(new MediaStream(this.stream.getVideoTracks()), {
+      mimeType,
+      videoBitsPerSecond: VIDEO_BITS_PER_SECOND,
+    });
     this.recorder.ondataavailable = (event) => {
       if (event.data.size) this.chunks.push(event.data);
     };

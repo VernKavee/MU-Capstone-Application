@@ -317,10 +317,11 @@ the Phase 6 session log:
 
 Still open, outside the build plan:
 
-- Video comes out at about 75 MB per minute (10 Mbit/s in Chrome); `videoBitsPerSecond` on
-  the recorder would cut it. The keypoint file follows the device's frame rate, 60 fps on
-  Vern's Mac, about 1.7 MB per minute. Storage refuses a file over 500 MiB, about seven
-  minutes of video.
+- Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
+  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75; the size on a
+  real camera through the app is not measured yet. The keypoint file follows the device's
+  frame rate, 60 fps on Vern's Mac, about 1.7 MB per minute. Storage refuses a file over
+  500 MiB, about 25 minutes of video.
 - A workout left part way cannot be opened in History; Level 3 has no paging; a set
   missing one file is not replayed.
 - A failed first save, or a reload mid-workout, gives the next set a new workout row.
@@ -342,7 +343,7 @@ Still open, outside the build plan:
   Supabase's self-hosted Docker Compose with generated secrets, Caddy, and the two Python
   services. `npx supabase start` uses published demo secrets, so it never faces the
   internet with real testers' data; Funnel on a team machine is for supervised sessions.
-  Feedback is a Python service like similarity (ADR-0007). Next: the bitrate cut and the
+  Feedback is a Python service like similarity (ADR-0007). Bitrate cut done; next the
   phone test, then a rehearsal deploy, then the real one. Not rehearsed.
 - Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
   is a draft awaiting review.

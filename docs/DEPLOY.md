@@ -127,10 +127,10 @@ in the compose `.env`. The exact key names are checked against that file at the 
 
 ## Stages
 
-1. **Next, on the Mac.** Cut the video bitrate: `videoBitsPerSecond` on the
-   recorder in `lib/live/session.ts`, between 1.5 and 2.5 Mbit/s, chosen by looking at a
-   test recording. Today's recording is about 10 Mbit/s, 75 MB per minute. The cut changes
-   only the file the replay plays; scoring reads the live frames and the keypoint file.
+1. **Next, on the Mac.** The video bitrate is cut (done 2026-10-01): `videoBitsPerSecond`
+   is 2.5 Mbit/s in `lib/live/session.ts`, about 19 MB per minute instead of 75, chosen
+   by eye from a side by side recording at 10, 2.5, and 1.5 Mbit/s. It changes only the
+   file the replay plays; scoring reads the live frames and the keypoint file.
    Then a phone test through Funnel on the Mac, on Android Chrome and iOS Safari, with a
    test account and the tunnel closed afterwards.
 2. **Mid-project, one afternoon.** A rehearsal deploy on a VM that is deleted afterwards.
@@ -162,4 +162,4 @@ in the compose `.env`. The exact key names are checked against that file at the 
 - Anyone with the link can register. The consent screen applies to them like any tester.
 - sslip.io hostnames share a certificate quota with everyone who uses the service. If a
   certificate is refused, the way out is a bought domain.
-- Video fills the disk first. The bitrate cut of stage 1 comes before any real use.
+- Video fills the disk first, at about 19 MB per minute of set since the bitrate cut.

@@ -59,3 +59,8 @@ JSON rather than a binary format because the similarity contract of ADR-0007 alr
 - Deletion on request, which the consent text promises: deleting the user in Studio's Authentication page cascades to their profile, consents, workouts, and sets, but not to their files, which are deleted from their folder in the `sets` bucket by hand. `docs/HANDOVER.md` has the task; it has not been rehearsed.
 - Storage refuses a file over 500 MiB (`supabase/config.toml`), about seven minutes of video at the rate measured in Phase 5.
 - A file backup is a `docker cp` of the storage volume, where each object sits under the storage service's own folder layout rather than its path in the bucket (ADR-0001).
+
+## Decided 2026-10-01
+
+- The recorder asks for 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`), about 19 MB per minute instead of the 75 measured in Phase 5. Vern chose it by eye from one 15 second recording through three recorders at once, at Chrome's default, 2.5, and 1.5 Mbit/s. Scoring and the replay's skeleton come from the keypoint file and are unaffected.
+- `e2e/workout.spec.ts` passes with the change, so a set still records, uploads, and replays. The rate through the app on a real camera is not measured yet; the phone test of `docs/DEPLOY.md` stage 1 reads it from storage.
