@@ -164,9 +164,12 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
 
 ### Still to do
 
-- Gunzip one real keypoint file from storage and check the scores are real visibilities,
-  not all 1 (WEB_APP_PORT.md section 12). `MODEL_URL` in `lib/live/pose.ts` is already
-  pinned to version 1, byte for byte the model the thresholds were tuned on.
+- `MODEL_URL` in `lib/live/pose.ts` is pinned to version 1, byte for byte the model the
+  thresholds were tuned on, and real keypoint files carry real visibility scores (both
+  checked 2026-10-04).
+- Push-up `hip_sag_or_pike` warns on near-straight reps at 45 degrees, because the hidden
+  far ankle is guessed and the rule averages both sides. Evidence and options:
+  `docs/sessions/2026-10-04.md`.
 - A live run on the laptop with real turns and real reps for all four exercises, then the
   phone. The curl's turn direction in its guide text is geometry, unconfirmed.
 - `e2e/workout.spec.ts` is skipped: the still T pose of `e2e/fixtures/` faces the camera,

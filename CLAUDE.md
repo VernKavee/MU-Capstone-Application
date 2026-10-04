@@ -352,9 +352,11 @@ Still open, outside the build plan:
 - Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
   skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
   facing the camera first.
-- After the port (WEB_APP_PORT.md section 15, items 6 and 7): check a real keypoint file
-  carries visibility scores that are not all 1; film the e2e clip. `MODEL_URL` is pinned
-  to `float16/1`, byte for byte the research repo's model (2026-10-04). `docs/HANDOVER.md` section 1 describes the port.
+- After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
+  pinned to `float16/1`, byte for byte the research repo's model, and real keypoint files
+  carry real visibility scores (both 2026-10-04).
+- Push-up `hip_sag_or_pike` false warnings from the hidden far ankle at 45 degrees, found on
+  the first laptop run: evidence and options in `docs/sessions/2026-10-04.md`. Vern's call. `docs/HANDOVER.md` section 1 describes the port.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29); its exact fields are
