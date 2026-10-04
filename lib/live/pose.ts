@@ -8,9 +8,13 @@ export type PoseModel = "full" | "lite";
 
 // The version must match package.json; the package does not export its own package.json.
 const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
+// Pinned to version 1, not `latest`, so the model cannot change under the thresholds.
+// full/1 is byte for byte the research repo's models/mediapipe_pose_full.task (sha256
+// 5134a3aa...11b1), the model every threshold was tuned on; checked 2026-10-04, when
+// `latest` held the same two .tflite files with only the zip timestamps differing.
 const MODEL_URL: Record<PoseModel, string> = {
-  full: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
-  lite: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+  full: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+  lite: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
 };
 
 // Full is the model the thresholds were calibrated on; lite is the manual fallback for a
