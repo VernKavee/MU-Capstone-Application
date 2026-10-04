@@ -35,26 +35,29 @@ that plan and the Python disagree, the Python in `~/Documents/SeniorProject/src`
 
 | File | Ported from | What it does |
 |---|---|---|
-| `lib/engine/engine.ts` | `frame_processor.py`, `session_report.py` | `createEngine(logic, engineKey, {placement, ready, armed})`, the per-frame order, the warning hold, the report; `ENGINE_VERSION` |
+| `lib/engine/engine.ts` | `frame_processor.py`, `session_report.py` | `createEngine(logic, engineKey, {placement, ready, armed, side})`, the per-frame order, the warning hold, the report; `ENGINE_VERSION` |
 | `lib/engine/gates.ts` | `ready_pose.py`, `placement_guide.py` | the T or A pose, the ready gate, framing, distance, centring, facing |
 | `lib/engine/evaluator.ts` | `form_evaluator.py`, `exercise_session.py` | debounce streaks, show one and record all, the attempt records, the push-up floor bar |
 | `lib/engine/rules.ts` | `form_rules.py` | the check registry, one function per check name, and the per-rep statistics per engine key |
 | `lib/engine/fsm.ts` | `base_fsm.py`, `exercise_fsms.py` | the state machine and its four variants, chosen by engine key |
 | `lib/engine/angles.ts` | `angles.py` | the 3D geometry |
 
-The live screen is the only caller: `createEngine(exercise.logic, exercise.engineKey)` in
-`live-screen.tsx`, with both gates on and the state machine unarmed until the countdown
-ends. `ENGINE_VERSION` is `2695984`, the SeniorProject commit the port was made from, and
-is stored on every set as `engine_version`.
+The live screen is the only caller: `createEngine(exercise.logic, exercise.engineKey, { side })`
+in `live-screen.tsx`, with both gates on and the state machine unarmed until the countdown
+ends. `side` is the arm the user chose on the setup screen, for a row with
+`state_machine.chooses_side` (the curl), else null. `ENGINE_VERSION` is `32168a5`, the
+SeniorProject commit of the latest export (the port was made from `2695984`), and is stored
+on every set as `engine_version`.
 
 ### Where each number lives
 
 - **The bars Vern tunes are in the row**, `exercises.rule_based_logic`: the state machine
   thresholds and gate bars, the arming joints and tilt band, `confidence_joints`,
-  `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees), and per
+  `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees),
+  `chooses_side`, and per
   rule the check name, threshold, priority, scope, debounce, message, and highlight
-  joints. The rows are the output of `scratch/export_web_logic.py` in the migration
-  `rule_logic_2695984`.
+  joints. The rows are the output of `scratch/export_web_logic.py` in the latest
+  `rule_logic_<commit>` migration (`rule_logic_32168a5`).
 - **The numbers that define a measurement are constants** in the TypeScript files
   (WEB_APP_PORT.md 5.2): confidence bars, the profile ratio, the knee band, the lunge
   bottom window, arming frames, the ready pose angles and holds, the placement box, the
