@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { parseSetup, ruleBasedLogic } from "@/lib/exercise";
+import { parseSetup, ruleBasedLogic, setupError } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
 import { LiveScreen } from "./live-screen";
 
@@ -8,16 +8,16 @@ import { LiveScreen } from "./live-screen";
 // the exercise name (ADR-0006).
 export default async function LivePage({ params, searchParams }: PageProps<"/workout/[exercise]/live">) {
   const { exercise: id } = await params;
-  const setup = parseSetup(await searchParams);
-  if (!setup) redirect(`/workout/${id}/setup?error=${encodeURIComponent("Check the reps, sets, and rest values.")}`);
-
   const supabase = await createClient();
   const { data: exercise } = await supabase.from("exercises").select("*").eq("id", id).maybeSingle().throwOnError();
   if (!exercise) notFound();
+  const logic = ruleBasedLogic(exercise);
+  const setup = parseSetup(await searchParams, logic);
+  if (!setup) redirect(`/workout/${id}/setup?error=${setupError(logic)}`);
 
   return (
     <LiveScreen
-      exercise={{ id: exercise.id, name: exercise.name, engineKey: exercise.engine_key, logic: ruleBasedLogic(exercise) }}
+      exercise={{ id: exercise.id, name: exercise.name, engineKey: exercise.engine_key, logic }}
       setup={setup}
     />
   );

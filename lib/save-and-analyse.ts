@@ -9,7 +9,7 @@ import { HISTORY_WORKOUTS, type FeedbackInput, type SetSummary } from "./analysi
 import { writeFeedback } from "./analysis/feedback.ts";
 import { scoreSimilarity } from "./analysis/similarity.ts";
 import type { SessionReport } from "./engine/types.ts";
-import { ruleBasedLogic } from "./exercise.ts";
+import { ruleBasedLogic, type Setup } from "./exercise.ts";
 import { SETS_BUCKET, type Attempt, type KeypointFile, type Similarity, type Totals } from "./set.ts";
 import type { Database, Json } from "./supabase/database.types.ts";
 
@@ -18,7 +18,7 @@ type Client = SupabaseClient<Database>;
 export type SaveSetInput = {
   workoutId: string | null; // null saves the workout first (ADR-0004)
   exerciseId: string;
-  setup: { reps: number; sets: number; rest: number };
+  setup: Setup;
   setNo: number;
   kind: "initial" | "repair";
   endedBy: "target_reached" | "user_ended" | "attempt_cap";
@@ -48,7 +48,7 @@ export async function saveSet(supabase: Client, input: SaveSetInput): Promise<Sa
   if (!workoutId) {
     const { data, error } = await supabase
       .from("workouts")
-      .insert({ user_id: userId, exercise_id: input.exerciseId, target_reps: input.setup.reps, target_sets: input.setup.sets, rest_seconds: input.setup.rest, started_at: input.startedAt })
+      .insert({ user_id: userId, exercise_id: input.exerciseId, target_reps: input.setup.reps, target_sets: input.setup.sets, rest_seconds: input.setup.rest, side: input.setup.side, started_at: input.startedAt })
       .select("id")
       .single();
     if (error) return { error: error.message };

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createEngine, ENGINE_VERSION } from "@/lib/engine/engine";
-import type { RuleBasedLogic } from "@/lib/exercise";
+import { setupQuery, type RuleBasedLogic, type Setup } from "@/lib/exercise";
 import type { PoseModel } from "@/lib/live/pose";
 import { CameraError, LiveSession, type SetCapture, type Snapshot } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
@@ -15,7 +15,7 @@ import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set
 
 type Props = {
   exercise: { id: string; name: string; engineKey: string; logic: RuleBasedLogic };
-  setup: { reps: number; sets: number; rest: number };
+  setup: Setup;
 };
 
 type Stage = { kind: "preflight" } | { kind: "live" } | { kind: "error"; error: CameraError["kind"] };
@@ -49,7 +49,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   const lastSave = useRef<Promise<unknown>>(Promise.resolve());
   const workoutId = useRef<string | null>(null);
   const attemptCap = 2 * setup.reps;
-  const guideHref = `/workout/${exercise.id}/guide?reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}`;
+  const guideHref = `/workout/${exercise.id}/guide?${setupQuery(setup)}`;
 
   // Save first, then analyse (ADR-0007), started the moment the set ends.
   const onSetEnded = useEffectEvent((capture: SetCapture) => {
@@ -86,7 +86,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   useEffect(() => {
     if (stage.kind !== "live" || !videoRef.current || !canvasRef.current) return;
     const session = new LiveSession({
-      engine: createEngine(exercise.logic, exercise.engineKey),
+      engine: createEngine(exercise.logic, exercise.engineKey, { side: setup.side }),
       rules: exercise.logic.rules,
       target: setup.reps,
       attemptCap,
@@ -106,7 +106,7 @@ export function LiveScreen({ exercise, setup }: Props) {
       session.stop();
       sessionRef.current = null;
     };
-  }, [stage.kind, model, run, exercise, setup.reps, attemptCap]);
+  }, [stage.kind, model, run, exercise, setup.reps, setup.side, attemptCap]);
 
   // Inside the click so the browser lets audio and speech play later.
   function startCamera() {

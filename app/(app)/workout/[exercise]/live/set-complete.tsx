@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState } from "react";
+import type { Setup } from "@/lib/exercise";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, REGIONS, type Attempt, type Similarity } from "@/lib/set";
@@ -46,7 +47,7 @@ export function SetComplete({
   entry: SetEntry;
   earlierFailures: SetEntry[];
   exerciseName: string;
-  setup: { reps: number; sets: number; rest: number };
+  setup: Setup;
   attemptCap: number;
   onRetry: (key: number) => void;
   onRepair: () => void;

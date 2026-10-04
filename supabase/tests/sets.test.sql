@@ -3,7 +3,7 @@
 -- bucket is one folder per user. User A tries to read B's workout, its sets, and its
 -- files by id, and gets nothing.
 begin;
-select plan(22);
+select plan(24);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.local'),
@@ -70,6 +70,14 @@ select lives_ok(
 select throws_ok(
   $$ update public.workouts set target_reps = 1 where id = '10000000-0000-0000-0000-000000000001' $$,
   '42501', null, 'but its setup is fixed');
+select lives_ok(
+  $$ insert into public.workouts (user_id, exercise_id, target_reps, target_sets, rest_seconds, side)
+     values ('00000000-0000-0000-0000-000000000001', 'bicep-curl', 10, 3, 60, 'left') $$,
+  'a workout records the arm the user chose');
+select throws_ok(
+  $$ insert into public.workouts (user_id, exercise_id, target_reps, target_sets, rest_seconds, side)
+     values ('00000000-0000-0000-0000-000000000001', 'bicep-curl', 10, 3, 60, 'both') $$,
+  '23514', null, 'and only left or right');
 select throws_ok($$ delete from public.sets $$, '42501', null, 'sets are never deleted through the API');
 select throws_ok($$ delete from public.workouts $$, '42501', null, 'nor workouts');
 

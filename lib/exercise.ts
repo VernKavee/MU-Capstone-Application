@@ -1,4 +1,5 @@
 import type { Database } from "./supabase/database.types";
+import type { Side } from "./engine/rules.ts";
 
 export type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
 
@@ -34,7 +35,8 @@ export type RuleBasedLogic = {
 export const ruleBasedLogic = (exercise: Pick<Exercise, "rule_based_logic">) =>
   exercise.rule_based_logic as unknown as RuleBasedLogic;
 
-// The setup screen's three numbers, carried to the guide screen in the query string.
+// The setup screen's three numbers, and the arm for an exercise whose row says
+// state_machine.chooses_side, carried to the guide screen in the query string.
 // A workout row is only created when its first set is saved (ADR-0004).
 export const SETUP_LIMITS = {
   reps: { min: 1, max: 100, default: 10 },
@@ -42,7 +44,11 @@ export const SETUP_LIMITS = {
   rest: { min: 0, max: 600, default: 60 },
 } as const;
 
-export function parseSetup(params: Record<string, string | string[] | undefined>) {
+export type Setup = { reps: number; sets: number; rest: number; side: Side | null };
+
+// null when a number is out of range, or the arm is missing where the row asks for one,
+// or present where it does not.
+export function parseSetup(params: Record<string, string | string[] | undefined>, logic: RuleBasedLogic): Setup | null {
   const read = (key: keyof typeof SETUP_LIMITS) => {
     const n = Number(params[key]);
     const { min, max } = SETUP_LIMITS[key];
@@ -51,5 +57,13 @@ export function parseSetup(params: Record<string, string | string[] | undefined>
   const reps = read("reps");
   const sets = read("sets");
   const rest = read("rest");
-  return reps !== null && sets !== null && rest !== null ? { reps, sets, rest } : null;
+  const side = params.side === "left" || params.side === "right" ? params.side : null;
+  const sideOk = logic.state_machine.chooses_side ? side !== null : params.side === undefined;
+  return reps !== null && sets !== null && rest !== null && sideOk ? { reps, sets, rest, side } : null;
 }
+
+export const setupQuery = (setup: Setup) =>
+  `reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}${setup.side ? `&side=${setup.side}` : ""}`;
+
+export const setupError = (logic: RuleBasedLogic) =>
+  encodeURIComponent(logic.state_machine.chooses_side ? "Check the reps, sets, and rest values, and choose an arm." : "Check the reps, sets, and rest values.");

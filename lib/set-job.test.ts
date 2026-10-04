@@ -58,7 +58,7 @@ function job(api: JobApi, after: Promise<unknown> = Promise.resolve()) {
   const updates: JobUpdate[] = [];
   const handle = createJob(api, {
     input: {
-      exerciseId: "squat", setup: { reps: 10, sets: 3, rest: 60 }, setNo: 1, kind: "initial", endedBy: "target_reached",
+      exerciseId: "squat", setup: { reps: 10, sets: 3, rest: 60, side: null }, setNo: 1, kind: "initial", endedBy: "target_reached",
       startedAt: "", endedAt: "", totals: { attempts: 0, completed_reps: 0, correct_reps: 0, abandoned_attempts: 0 },
       attempts: [], engineReport: report, engineVersion: "stub-1",
     },

@@ -1,25 +1,26 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { parseSetup, ruleBasedLogic } from "@/lib/exercise";
+import { parseSetup, ruleBasedLogic, setupError, setupQuery } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
 
 // Section 4.2: guide text and the demonstration video before the camera opens.
 export default async function GuidePage({ params, searchParams }: PageProps<"/workout/[exercise]/guide">) {
   const { exercise: id } = await params;
-  const setup = parseSetup(await searchParams);
-  if (!setup) redirect(`/workout/${id}/setup?error=${encodeURIComponent("Check the reps, sets, and rest values.")}`);
-
   const supabase = await createClient();
   const { data: exercise } = await supabase.from("exercises").select("*").eq("id", id).maybeSingle().throwOnError();
   if (!exercise) notFound();
-  const rules = [...ruleBasedLogic(exercise).rules].sort((a, b) => a.priority - b.priority);
+  const logic = ruleBasedLogic(exercise);
+  const setup = parseSetup(await searchParams, logic);
+  if (!setup) redirect(`/workout/${id}/setup?error=${setupError(logic)}`);
+  const rules = [...logic.rules].sort((a, b) => a.priority - b.priority);
 
   return (
     <main className="space-y-6 p-6">
       <header className="space-y-2">
         <h1>{exercise.name}</h1>
         <p className="text-sm opacity-70">
-          {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest.{" "}
+          {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest
+          {setup.side && `, ${setup.side} arm`}.{" "}
           <Link href={`/workout/${exercise.id}/setup`} className="underline">Change</Link>
         </p>
       </header>
@@ -51,7 +52,7 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
             </ol>
           </section>
 
-          <Link href={`/workout/${exercise.id}/live?reps=${setup.reps}&sets=${setup.sets}&rest=${setup.rest}`} className="btn">
+          <Link href={`/workout/${exercise.id}/live?${setupQuery(setup)}`} className="btn">
             Open camera
           </Link>
         </div>

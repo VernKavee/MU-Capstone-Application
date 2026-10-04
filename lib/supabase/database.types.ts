@@ -256,6 +256,7 @@ export type Database = {
           exercise_id: string
           id: string
           rest_seconds: number
+          side: string | null
           started_at: string
           target_reps: number
           target_sets: number
@@ -266,6 +267,7 @@ export type Database = {
           exercise_id: string
           id?: string
           rest_seconds: number
+          side?: string | null
           started_at?: string
           target_reps: number
           target_sets: number
@@ -276,6 +278,7 @@ export type Database = {
           exercise_id?: string
           id?: string
           rest_seconds?: number
+          side?: string | null
           started_at?: string
           target_reps?: number
           target_sets?: number
