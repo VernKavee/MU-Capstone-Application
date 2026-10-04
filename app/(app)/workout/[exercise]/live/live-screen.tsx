@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { createStubEngine, ENGINE_VERSION } from "@/lib/engine/stub";
+import { createEngine, ENGINE_VERSION } from "@/lib/engine/engine";
 import type { RuleBasedLogic } from "@/lib/exercise";
 import type { PoseModel } from "@/lib/live/pose";
 import { CameraError, LiveSession, type SetCapture, type Snapshot } from "@/lib/live/session";
@@ -86,7 +86,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   useEffect(() => {
     if (stage.kind !== "live" || !videoRef.current || !canvasRef.current) return;
     const session = new LiveSession({
-      engine: createStubEngine(exercise.logic, exercise.engineKey),
+      engine: createEngine(exercise.logic, exercise.engineKey),
       rules: exercise.logic.rules,
       target: setup.reps,
       attemptCap,
@@ -179,7 +179,11 @@ export function LiveScreen({ exercise, setup }: Props) {
   const frame = snap?.frame ?? null;
   const capture = snap?.status === "ended" ? snap.capture : null;
   const entry = capture ? entries.find((e) => e.capture === capture) : undefined;
-  const phase = !frame ? "starting" : frame.placement_phase === "guiding" ? "placement" : frame.ready_phase;
+  // The ready gate leads: the T pose facing the camera, then placement during the
+  // countdown, which holds at 0 until placed. Placement reports guiding, with no cues,
+  // while the gate waits for the T pose.
+  const phase = frame?.ready_phase ?? "starting";
+  const turnCue = phase === "countdown" && frame?.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
   const warning = frame?.warning_display[0] ?? null;
   const centre = centreText(phase, frame);
 
@@ -230,9 +234,19 @@ export function LiveScreen({ exercise, setup }: Props) {
           {centre && (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
               {phase === "countdown" ? (
-                <p className="font-display text-[min(45vh,45vw)] leading-none tabular-nums" aria-live="assertive">
-                  {centre}
-                </p>
+                <>
+                  {/* The number is hidden at 0, where the countdown waits for placement. */}
+                  {centre !== "0" && (
+                    <p className="font-display text-[min(45vh,45vw)] leading-none tabular-nums" aria-live="assertive">
+                      {centre}
+                    </p>
+                  )}
+                  {turnCue && (
+                    <p className="max-w-md rounded-md bg-black/55 px-5 py-3 text-xl leading-snug backdrop-blur-sm" aria-live="polite">
+                      {turnCue}
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className="max-w-md rounded-md bg-black/55 px-5 py-3 text-xl leading-snug backdrop-blur-sm" aria-live="polite">
                   {centre}
@@ -281,8 +295,6 @@ function centreText(phase: string, frame: Snapshot["frame"]): string | null {
   switch (phase) {
     case "starting":
       return "Starting the camera and loading the pose model";
-    case "placement":
-      return frame?.placement_cues[0] ?? "Hold still";
     case "waiting":
       return frame?.ready_pose
         ? "Hold it"
@@ -297,7 +309,7 @@ function centreText(phase: string, frame: Snapshot["frame"]): string | null {
 }
 
 function phaseLabel(phase: string) {
-  return { starting: "starting", placement: "placing", waiting: "ready pose", countdown: "countdown", ended: "ended" }[phase] ?? phase;
+  return { starting: "starting", waiting: "ready pose", countdown: "countdown", ended: "ended" }[phase] ?? phase;
 }
 
 function ModelChoice({ model, onChange }: { model: PoseModel; onChange: (model: PoseModel) => void }) {

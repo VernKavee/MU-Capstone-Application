@@ -6,10 +6,10 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 
 Every phase of the build plan is complete: project skeleton, database foundation,
 sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
-setup and guide screens, the live session screen with the camera, the pose model, and a
-stub engine, the completion flow that saves every set with its video and keypoint file,
+setup and guide screens, the live session screen with the camera, the pose model, and the
+rule engine ported from the research repo, the completion flow that saves every set with its video and keypoint file,
 then writes similarity and feedback from stubs, History with the replay of every set, and
-Phase 6's hardening and handover. The three AI components stay stubs until their owners
+Phase 6's hardening and handover. Similarity and feedback stay stubs until their owners
 replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
 
 - `REQUIREMENTS.md`: what the system must do.
@@ -60,10 +60,13 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   button, and an attempt cap of twice the target. From the end of the countdown the set
   is recorded and every frame's 33 landmarks are captured. One visit runs the whole
   workout: every set, the repair sets, and the rest between them.
-- The engine seam of ADR-0002 is `lib/engine/types.ts`; `lib/engine/stub.ts` is the stub
-  that Vern's port replaces. It reads the row's `rule_based_logic`, judges placement and
-  the ready pose from the real landmarks, then scripts attempts with random outcomes.
-  `lib/live/session.ts` is the frame loop, outside React.
+- The engine seam of ADR-0002 is `lib/engine/types.ts`. The engine is Vern's TypeScript
+  port of the research repo's rules and state machines (`lib/engine/engine.ts`, from
+  SeniorProject 2695984), configured from the row's `rule_based_logic`: the T pose facing
+  the camera starts a countdown, placement checks the exercise's angle during it, then
+  real reps are counted and judged from the landmarks. `lib/engine/parity.test.ts` proves
+  it equals the Python engine on the exam recordings. `lib/live/session.ts` is the frame
+  loop, outside React.
 - When a set ends it is saved at once: a `workouts` row with the first set, then a `sets`
   row with the totals, one record per attempt (ADR-0003), and the engine's report
   verbatim. The video and the gzipped keypoint file (ADR-0005) go from the browser
@@ -90,10 +93,12 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   off-white ink, tape yellow only for what needs attention, and Big Shoulders Display for
   titles and big numbers. A bottom tab bar on a phone, a top bar on a laptop; every
   screen is checked at 375 and 1280 px.
-- Tests at three levels: unit tests under `lib/` (the stub engine and the analysis stubs,
+- Tests at three levels: unit tests under `lib/` (the engine and its parity with the
+  Python, the analysis stubs,
   the frame loop, the set job, the attempt records, History's data), pgTAP in
   `supabase/tests/`, and two Playwright tests in `e2e/`, a whole workout through a fake
-  camera into History and the replay, and user B failing to reach user A's data.
+  camera into History and the replay (skipped until a clip of real reps exists), and user
+  B failing to reach user A's data.
 
 ## Running it
 

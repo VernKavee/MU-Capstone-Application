@@ -1,9 +1,14 @@
 # e2e/fixtures/t-pose.y4m
 
-Not in git. The workout end-to-end test needs a fake camera feed of a real person holding
-a T pose (arms out, whole body visible), because the stub engine's placement guide and
-ready gate judge real MediaPipe landmarks before it starts scripting attempts. This repo
-is public, so a frame of a real person is not committed.
+Not in git. The workout end-to-end test was written for the stub engine, whose placement
+guide and ready gate accepted a fake camera feed of a real person holding a T pose (arms
+out, whole body visible) before it scripted attempts. This repo is public, so a frame of a
+real person is not committed.
+
+Since the real engine replaced the stub (2026-10-04) the spec is skipped: the still frame
+faces the camera, so it never passes placement, and it makes no reps. It needs a clip of
+real reps filmed at the exercise's angle instead, with the T pose facing the camera first
+(WEB_APP_PORT.md in the research repo, section 15, item 7).
 
 Generate it once, from the research repo (`~/Documents/SeniorProject`, reference only):
 

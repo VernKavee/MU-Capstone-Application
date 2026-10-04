@@ -7,14 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 All seven phases, 0 to 6, are done. The repo holds the planning documents, the
 vocabulary, the decision records, and the code: scaffolding, the foundation migration,
 auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
-and guide screens, the live session screen with the camera, MediaPipe, and the stub
-engine, the completion flow: every set saved with its attempt records, engine report,
+and guide screens, the live session screen with the camera, MediaPipe, and the engine
+(the stub until 2026-10-04, now Vern's port), the completion flow: every set saved with its attempt records, engine report,
 video, and keypoint file, similarity and feedback from stubs, the repair set, the rest
 timer, and the finished summary, History: the weekly chart on Home, active days, each
 exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
 unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
-`knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: each owner
-replacing a stub, and running the evaluation.
+`knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: the
+similarity and feedback owners replacing their stubs, and running the evaluation. The rule
+engine port is in (2026-10-04, see "Decided at the engine port").
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -68,7 +69,7 @@ Conventions the code follows, because the docs changed since the plan was writte
 - Supabase's default grants give `anon` and `authenticated` everything on a new public
   table. Every migration revokes those and grants only what the app uses, so a missing
   policy fails with a privilege error rather than silently touching zero rows.
-- The live session: `lib/engine/types.ts` is the seam, `lib/engine/stub.ts` the stub,
+- The live session: `lib/engine/types.ts` is the seam, `lib/engine/engine.ts` the engine,
   `lib/live/pose.ts` the MediaPipe adapter, `lib/live/sound.ts` the beep and speech,
   `lib/live/session.ts` the frame loop outside React, and
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
@@ -111,13 +112,13 @@ Conventions the code follows, because the docs changed since the plan was writte
 
 ## The three-part AI structure
 
-Three AI components are owned by specific people and **none of them is implemented in
-this repo**. Each stays behind an explicit interface with a stub that returns believable
-fake data, so one person can replace one file.
+Three AI components are owned by specific people. Each stays behind an explicit interface,
+so one person can replace one file. The rule engine is ported (2026-10-04); similarity and
+feedback are still stubs that return believable fake data.
 
 | Component | Owner | Lives where |
 |---|---|---|
-| Rule-based form checking plus FSM rep counting | Kavee (Vern) | already built in the research repo, see below; `lib/engine/stub.ts` stands in for it |
+| Rule-based form checking plus FSM rep counting | Kavee (Vern) | ported from the research repo into `lib/engine/` (angles, fsm, rules, evaluator, gates, engine) |
 | Motion similarity, six numbers per rep | Punnapat | their own component |
 | LLM coaching plus RAG retrieval | Sujira | their own component |
 
@@ -144,7 +145,7 @@ similarity and feedback contracts are in ADR-0007.
 - **The engine seam is the research repo's contract (ADR-0002).** `process(keypoints,
   timestampMs)` returns the FrameResult fields and `getSessionReport()` returns the
   schema version 4 report. The UI never re-derives counters, states, or warnings. The
-  stub and the future port both satisfy it.
+  port satisfies it, and `lib/engine/parity.test.ts` holds it equal to the Python.
 - **Adding an exercise built from existing checks is a data change (ADR-0006).**
   Exercise rows carry thresholds, messages per locale, priorities, scope, debounce,
   state names, highlight joints, an engine key, and the name of each check. A new check
@@ -315,6 +316,25 @@ the Phase 6 session log:
   `db dump` plus `docker cp` of the storage volume. All three were run on the local stack.
 - The evaluation tasks in the handover have their owners left blank, as Vern chose.
 
+Decided at the engine port (2026-10-04), recorded in ADR-0002, 0003, 0006 and the
+2026-10-04 session log:
+
+- `lib/engine/` is a TypeScript port of SeniorProject `2695984` following its
+  `docs/rule_based/WEB_APP_PORT.md`; `ENGINE_VERSION` is that commit and equals the rows'
+  `source`. The rows are the export of `scratch/export_web_logic.py` in the migration
+  `rule_logic_2695984`; never hand-edit them, re-run the export into a new migration.
+- Gate order: the T pose (or A pose) facing the camera starts the 3 s countdown, placement
+  checks the exercise's angle during it, and the countdown holds at 0 until placed. The
+  live screen drives its centre text from `ready_phase` and shows the turn cue during the
+  countdown, hiding the number at 0. A T pose held 30 frames ends the set.
+- The row carries `state_machine.confidence_joints` and `placement` beyond the Phase 2
+  shape; `exercise_logic_valid()` does not require them yet. Records carry `active_side`.
+- Each rule's measured number is also written into `rep_stats` under the rule's name.
+- Parity: `scratch/eval/eval_web_parity.py` in SeniorProject writes golden output for
+  the 25 exam recordings; recordings made without the ready gate replay unarmed (Vern).
+  `lib/engine/fixtures/` holds one trimmed recording per exercise; `PARITY_DIR` runs all.
+- The stub and its test are deleted; the workout e2e is skipped until the real clip exists.
+
 Still open, outside the build plan:
 
 - Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
@@ -329,8 +349,13 @@ Still open, outside the build plan:
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
 - A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5).
-- The three components replacing their stubs (`docs/HANDOVER.md`). With the port, the
-  workout e2e needs a clip of real reps as its camera.
+- Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
+  skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
+  facing the camera first.
+- After the port (WEB_APP_PORT.md section 15, items 6 to 8): pin `MODEL_URL` to the model
+  file the thresholds were tuned on and check real keypoint files carry visibility scores
+  that are not all 1; film the e2e clip; rewrite `docs/HANDOVER.md` section 1, which still
+  describes the stub.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29); its exact fields are

@@ -1,9 +1,9 @@
 import path from "node:path";
 import { defineConfig } from "@playwright/test";
 
-// The camera fixture the stub engine's placement guide and ready gate need real landmarks
-// from (e2e/fixtures/README.md). Chrome's fake video device loops it; a single held T-pose
-// frame is a static feed. Both flags are required together for a fake camera device to
+// The camera fixture, a single held T-pose frame that Chrome's fake video device loops
+// (e2e/fixtures/README.md). The workout spec that needs it is skipped until a clip of real
+// reps replaces it. Both flags are required together for a fake camera device to
 // exist at all and for the getUserMedia prompt to auto-accept.
 const T_POSE = path.resolve(__dirname, "e2e/fixtures/t-pose.y4m");
 
