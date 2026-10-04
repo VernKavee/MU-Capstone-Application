@@ -1,14 +1,15 @@
 # Handover
 
-The app is complete around three AI components that are not built here. Each is a stub
-that returns believable fake output, and each owner replaces one file. This page is
-enough to do that without reading the rest of the codebase: what to replace, the
-interface to satisfy, what the stub returns today, and what else changes when you do.
-The last section lists the tasks for running the evaluation.
+The app is complete around three AI components, each behind an interface so its owner
+replaces one file. The rule engine is ported (section 1); similarity and feedback are still
+stubs that return believable fake output. This page is enough to work on any of them
+without reading the rest of the codebase: where it lives or what to replace, the interface
+to satisfy, what it returns today, and what else changes. The last section lists the tasks
+for running the evaluation.
 
 | Component | Owner | Replace | Interface | Called from | Runs |
 |---|---|---|---|---|---|
-| Rule-based form checking and rep counting | Kavee (Vern) | `lib/engine/stub.ts` | `Engine` in `lib/engine/types.ts` | `app/(app)/workout/[exercise]/live/live-screen.tsx` | in the browser, every camera frame |
+| Rule-based form checking and rep counting | Kavee (Vern) | ported: `lib/engine/` | `Engine` in `lib/engine/types.ts` | `app/(app)/workout/[exercise]/live/live-screen.tsx` | in the browser, every camera frame |
 | Motion similarity, six numbers per rep | Punnapat | `lib/analysis/similarity.ts` | `SimilarityInput` to `SimilarityOutput` in `lib/analysis/contracts.ts` | `analyseSet` in `lib/save-and-analyse.ts` | on the Next.js server, once per set |
 | Coaching feedback with retrieval | Sujira | `lib/analysis/feedback.ts` | `FeedbackInput` to `FeedbackOutput` in `lib/analysis/contracts.ts` | `analyseSet` in `lib/save-and-analyse.ts` | on the Next.js server, once per set, after similarity |
 
@@ -25,28 +26,75 @@ Rules for all three:
 
 ## 1. Rule engine: Vern
 
-The TypeScript port of the research repo's portable core, behind the research repo's own
-contract (ADR-0002). It must run on the user's device (NFR1).
+Ported on 2026-10-04: the research repo's rules and state machines in TypeScript, in the
+browser on every camera frame (NFR1), behind the research repo's own contract (ADR-0002).
+The plan it followed is `~/Documents/SeniorProject/docs/rule_based/WEB_APP_PORT.md`; where
+that plan and the Python disagree, the Python in `~/Documents/SeniorProject/src` wins.
 
-The port plan (what moves, where each number lives, the generated `rule_based_logic`, and the
-parity test) is in the research repo: `~/Documents/SeniorProject/docs/rule_based/WEB_APP_PORT.md`.
+### Where it lives
 
-### What to replace
+| File | Ported from | What it does |
+|---|---|---|
+| `lib/engine/engine.ts` | `frame_processor.py`, `session_report.py` | `createEngine(logic, engineKey, {placement, ready, armed})`, the per-frame order, the warning hold, the report; `ENGINE_VERSION` |
+| `lib/engine/gates.ts` | `ready_pose.py`, `placement_guide.py` | the T or A pose, the ready gate, framing, distance, centring, facing |
+| `lib/engine/evaluator.ts` | `form_evaluator.py`, `exercise_session.py` | debounce streaks, show one and record all, the attempt records, the push-up floor bar |
+| `lib/engine/rules.ts` | `form_rules.py` | the check registry, one function per check name, and the per-rep statistics per engine key |
+| `lib/engine/fsm.ts` | `base_fsm.py`, `exercise_fsms.py` | the state machine and its four variants, chosen by engine key |
+| `lib/engine/angles.ts` | `angles.py` | the 3D geometry |
 
-`lib/engine/stub.ts`. The live screen is its only importer and uses two names from it:
-`createStubEngine(logic, engineKey)` at `live-screen.tsx:89` and `ENGINE_VERSION` at
-`live-screen.tsx:71`. Either keep both names in `stub.ts`, or put the port in its own
-folder and change that one import at `live-screen.tsx:6`. The frame loop,
-`lib/live/session.ts`, takes whatever it is given as an `Engine`.
+The live screen is the only caller: `createEngine(exercise.logic, exercise.engineKey)` in
+`live-screen.tsx`, with both gates on and the state machine unarmed until the countdown
+ends. `ENGINE_VERSION` is `2695984`, the SeniorProject commit the port was made from, and
+is stored on every set as `engine_version`.
 
-- `logic` is the exercise row's `rule_based_logic`: state names, state machine
-  thresholds, arming joints, and the rules with their thresholds, messages, priorities,
-  scope, debounce, and highlight joints. Configure from it, never from the exercise name
+### Where each number lives
+
+- **The bars Vern tunes are in the row**, `exercises.rule_based_logic`: the state machine
+  thresholds and gate bars, the arming joints and tilt band, `confidence_joints`,
+  `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees), and per
+  rule the check name, threshold, priority, scope, debounce, message, and highlight
+  joints. The rows are the output of `scratch/export_web_logic.py` in the migration
+  `rule_logic_2695984`.
+- **The numbers that define a measurement are constants** in the TypeScript files
+  (WEB_APP_PORT.md 5.2): confidence bars, the profile ratio, the knee band, the lunge
+  bottom window, arming frames, the ready pose angles and holds, the placement box, the
+  one second warning hold.
+- **To change a bar**: change the Python, commit, run the export, and paste it into a new
+  migration (`npx supabase migration new rule_logic_<sha>`), bump `ENGINE_VERSION` to
+  that commit, and rewrite the fixtures (below): `parity.test.ts` fails until the rows,
+  the fixtures, and `ENGINE_VERSION` name the same commit. A quick try in Studio works too, but the export is the source and the
+  couplings of WEB_APP_PORT.md 5.1 must hold: `partial_pushup.floor_bar_max` equals the
+  push-up `thr_inflection`, `shallow_lunge.front_shallow_max` and
+  `straight_back_leg.front_target` equal the lunge `thr_inflection`,
+  `partial_curl.flex_target` equals the curl `thr_inflection`. `exercise_logic_valid()`
+  does not check `confidence_joints` or `placement`, so a row missing them saves and then
+  breaks the live screen.
+- **To change what a rule measures**: change the Python and port the same change, then
+  regenerate the parity golden (below). A new check is one entry in `CHECKS` in
+  `rules.ts`; a rep-scope check works only on an engine key whose statistics it reads
   (ADR-0006).
-- `engineKey` is the research repo's registry name: `squat`, `pushup`, `lunge`,
-  `dumbbell_biceps_curls`.
-- `ENGINE_VERSION` is stored on every set as `engine_version`. The stub's is `stub-1`;
-  export your own, for example the research repo's commit.
+
+### Proving it still equals the Python
+
+`lib/engine/parity.test.ts` replays recordings through the engine with both gates off and
+compares every frame's state, event, counters, and rule names, and the report within
+1e-9, against what the Python engine produced from the same file. The rows come from the
+latest `rule_logic` migration, so the test runs on what the database holds.
+
+- `npm run test:unit` runs the four trimmed recordings in `lib/engine/fixtures/`.
+- All 25 exam recordings: in SeniorProject,
+  `.venv/bin/python3 -m scratch.eval.eval_web_parity` writes them to
+  `scratch_output/web_parity/`, then here
+  `PARITY_DIR=~/Documents/SeniorProject/scratch_output/web_parity npm run test:unit`.
+  Adding `--fixtures ~/Documents/MU-Capstone-Application/lib/engine/fixtures` also
+  rewrites the four fixtures.
+  Recordings made without the ready gate (the four push-up phone files) replay unarmed.
+- Parity compares with today's Python replay, which matches `eval_live_rules` on every
+  exam recording. If the two ever differ, report it; do not tune a number to hide it.
+
+Placement and the ready gate have no recording-based check, because the keypoint file
+starts at the first active frame. Their unit tests in `lib/engine/gates.test.ts` are ported
+from the research repo's synthetic cases; a live run is their real check.
 
 ### The interface, `lib/engine/types.ts`
 
@@ -60,7 +108,7 @@ folder and change that one import at `live-screen.tsx:6`. The frame loop,
 - `reset()`, called once the camera and the pose model are up, before the first frame.
   The live screen also builds a new engine for every set, for every "Try again" after a
   camera or model failure, and when the pose model is switched, so construction must be
-  cheap and must not fetch anything.
+  cheap and must not fetch anything. It is.
 
 ### What the app relies on
 
@@ -76,44 +124,56 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
   record can say which state a rule first fired in.
 - `event`: `rep_started` opens an attempt, and `rep_completed` or `rep_abandoned` closes
   it. Attempt frame ranges come from these, and they are matched in order to the
-  report's `reps` and `abandoned_attempts`. Every attempt closed by an event needs its
+  report's `reps` and `abandoned_attempts`. Every attempt closed by an event has its
   entry in the report, in the same order.
-- Every rule name you emit, in `warnings_all`, in `warning_display_rules`, and in the
-  report's `violations`, must be a `name` from the row's `rules`; the message shown comes
-  from the row. `rep_stats` keyed by rule name gives each violation its measured value.
-- `state` must be one of the row's `state_machine.states`.
-- Before the set: `placement_phase` `guiding` shows `placement_cues[0]`; `ready_phase`
-  `waiting` asks for the ready pose and `ready_pose` says it is held; `countdown` shows
-  `countdown_s`. While active, `low_confidence` shows "Step back into view".
+- Every rule name in `warnings_all`, in `warning_display_rules`, and in the report's
+  `violations` is a `name` from the row's `rules`; the message shown comes from the row.
+  `rep_stats` keyed by rule name gives each violation its measured value.
+- `state` is one of the row's `state_machine.states`.
+- Before the set, the centre text follows `ready_phase`: `waiting` asks for the ready
+  pose facing the camera and `ready_pose` says it is held; `countdown` shows `countdown_s`
+  with `placement_cues[0]` under it while `placement_phase` is `guiding`, and hides the
+  number at 0, where the countdown waits for placement. While active, `low_confidence`
+  shows "Step back into view". The frame loop speaks each new placement cue.
 
-### What the stub returns today
+### What the engine returns
 
-- Real: the placement guide from the landmarks' bounding box (whole body in view, head or
-  feet cut off, too far when the body is under 30% of the frame's height, off centre);
-  the ready gate, a T pose held for 8 frames, then a 3 second countdown (no A pose); the
-  confidence guard, which pauses the set when neither side's arming joints reach a score
-  of 0.3.
-- Fake: once active, an attempt about every 2.5 seconds on a clock (Idle 0.5 s,
-  Concentric 0.8 s, Inflection 0.4 s, Eccentric 0.8 s). Each outcome is drawn at random:
-  12% abandoned, 20% incorrect with one of the row's rules and sometimes a second,
-  otherwise correct. A frame-scope rule shows 250 to 800 ms into the Concentric phase. An
-  abandoned attempt carries the highest priority rep-scope rule. `angles` is empty, the
-  yaw fields are null, and every `rep_stats` number is invented: the rule's first
-  threshold plus or minus 5 to 15.
+- **The start**: a T pose (arms out) or an A pose (arms down and away from the body), both
+  arms straight, the whole body at a score of 0.5, held 8 frames facing the camera,
+  starts a 3 second countdown. Placement is not checked while waiting, so it reports
+  `guiding` with no cues. During the countdown it checks the whole body in frame, the
+  height in frame (45% to 95%), centring, and the turn: `body_yaw_deg` must sit in the
+  row's band (squat, push-up, curl 45, lunge 75), and the cue says "Turn to your left" or
+  "Turn to your right", the side picked once from the first reading. The countdown holds
+  at 0 until 8 placed frames in a row; then the set is `active` and the state machine is
+  armed. Placement then stays placed for the set.
+- **During the set**: `low_confidence` while neither side has all of the row's
+  `confidence_joints` at 0.3, or there is no world 3D; nothing advances on such a frame.
+  Otherwise real angles drive the state machine and the rules. A still frame makes no
+  attempt.
+- **The end**: a T pose held 30 frames, at least 3 seconds into the set, makes
+  `ready_phase` `ended`. The A pose never ends a set.
+- **The report**: `reps` and `abandoned_attempts` with `active_side` (the curl's working
+  arm, else null) and `rep_stats`: the Python's statistics under their own names, an
+  unseen one as null, plus each rule's compared number under the rule's name (ADR-0003),
+  null for `elbow_flare`, which records none. `ready_gate.phase` is upper case and
+  `exercise_name` is the engine key, as the Python writes them.
+- **Deliberate differences from the Python** (WEB_APP_PORT.md section 9): no world 3D is
+  low confidence rather than an error, there is no 2D fallback, and the centring cue is
+  mirrored for the mirrored stage.
 
-### What else changes
+### Still to do
 
-- `lib/engine/stub.test.ts` tests the stub's script and goes with it. Its first test's
-  checks belong to the seam, not the stub: the counter moves only on a correct rep, at
-  most one warning per frame, every warning comes from the row, and the report's totals
-  add up. They are worth keeping against the port, fed a recorded landmark stream. A
-  parity harness also needs the research repo to dump raw landmarks per frame
-  (ADR-0002).
-- `e2e/workout.spec.ts` runs a whole workout through Chrome's fake camera, fed a still
-  frame of a person in a T pose. That works only because the stub scripts attempts on a
-  clock, and the spec narrows `Math.random` so every attempt comes out incorrect. With
-  the port a still frame produces no attempts, so the spec needs a clip of real reps as
-  its camera feed (`e2e/fixtures/README.md`) and new expected counts.
+- Pin `MODEL_URL` in `lib/live/pose.ts` to the model file the thresholds were tuned on
+  (WEB_APP_PORT.md section 12), and gunzip one real keypoint file from storage to check
+  the scores are real visibilities, not all 1.
+- A live run on the laptop with real turns and real reps for all four exercises, then the
+  phone. The curl's turn direction in its guide text is geometry, unconfirmed.
+- `e2e/workout.spec.ts` is skipped: the still T pose of `e2e/fixtures/` faces the camera,
+  so it never passes placement and makes no reps. It needs a clip of real reps filmed at
+  the exercise's angle, the T pose facing the camera first, and new expected counts.
+- Every debounce counts frames, tuned at about 44 fps; a 60 fps laptop shortens them and a
+  30 fps phone lengthens them (WEB_APP_PORT.md section 12, open item 14).
 
 ## 2. Similarity: Punnapat
 
@@ -312,16 +372,16 @@ npm run dev
 
 `.env.local` comes from `.env.example` plus the publishable key printed by
 `npx supabase status -o env`. At http://localhost:3000, register, accept the three
-consents, fill in the profile, pick an exercise, and open the camera. Stand back with your
-whole body in view and hold your arms straight out until the countdown; the stub engine
-then scripts attempts. When the set ends, the set-complete screen shows similarity and
+consents, fill in the profile, pick an exercise, and open the camera. Stand back facing the
+camera with your whole body in view and hold your arms straight out until the countdown,
+turn as the cue says, then do real reps; a T pose held for about a second ends the set. When the set ends, the set-complete screen shows similarity and
 feedback as they arrive. Supabase Studio at http://localhost:54323 shows the set's row
 (`attempts`, `similarity`, `llm_feedback`) and its two files in the `sets` bucket. The
 keypoint file there, once gunzipped, is exactly the `landmarks` value similarity receives,
 so one real set gives a test fixture for the components that run after it.
 
-`npm run test:e2e` runs a whole workout without a person in front of the camera, once
-the fixture in `e2e/fixtures/README.md` is generated.
+`npm run test:e2e` runs the isolation test. The whole-workout test is skipped until a clip
+of real reps replaces its still camera frame (`e2e/fixtures/README.md`).
 
 ## Evaluation-time tasks
 
