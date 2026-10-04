@@ -190,6 +190,22 @@ test("placement guide: the turn cue does not flip across frontal", () => {
   assert.equal(guide.targetSign, 1);
 });
 
+test("placement guide: a chosen arm faces the camera, one band only", () => {
+  const left = new PlacementGuide(SQUAT, "left");
+  assert.equal(left.targetSign, -1);
+  assert.equal(left.update(turned(2)).cues[0], "Turn to your left"); // unlatched this steers right
+  assert.ok(left.update(turned(-45)).ok);
+  const mirrored = left.update(turned(45));
+  assert.deepEqual([mirrored.ok, mirrored.cues[0]], [false, "Turn to your left"]);
+  left.reset();
+  assert.equal(left.targetSign, -1);
+  const right = new PlacementGuide(SQUAT, "right");
+  assert.ok(right.update(turned(45)).ok);
+  assert.equal(right.update(turned(-45)).cues[0], "Turn to your right");
+  assert.equal(facingCheck(-45, SQUAT, 1, true), "turn_right");
+  assert.equal(facingCheck(45, SQUAT, 1, true), "ok");
+});
+
 const LOGIC: RuleBasedLogic = {
   source: "test",
   state_machine: {
@@ -197,6 +213,7 @@ const LOGIC: RuleBasedLogic = {
     thresholds: { thr_standing: 160, thr_inflection: 120, thr_descending: 150, hysteresis_buffer: 10, consecutive_frames_req: 3 },
     arming: { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 },
     confidence_joints: ["hip", "knee", "ankle"],
+    chooses_side: false,
   },
   placement: SQUAT,
   rules: [{ name: "partial_squat", check: "partial_squat", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] }],

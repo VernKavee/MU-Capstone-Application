@@ -4,6 +4,7 @@
 
 import { bodyYaw, calculateAngle, hasWorld3d, keypointBbox, world } from "./angles.ts";
 import type { DistanceState, Keypoints, LandmarkName, PlacementPhase, ReadyPhase } from "./types.ts";
+import type { Side } from "./rules.ts";
 
 const READY_REQUIRED_JOINTS: LandmarkName[] = [
   "nose", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist",
@@ -142,9 +143,10 @@ export function framingCheck(bbox: [number, number, number, number] | null): [Di
 export type PlacementTarget = { yaw_center: number; yaw_tol: number };
 
 // "ok" inside the band on |yaw|; outside it, the turn toward the latched side's target.
-export function facingCheck(yaw: number | null, target: PlacementTarget, latchedSign: number | null = null): string {
+// requireSign makes the band one-sided: "ok" only on the latched side.
+export function facingCheck(yaw: number | null, target: PlacementTarget, latchedSign: number | null = null, requireSign = false): string {
   if (yaw === null) return "not_detected";
-  const magnitude = Math.abs(yaw);
+  const magnitude = requireSign && latchedSign !== null ? latchedSign * yaw : Math.abs(yaw);
   if (target.yaw_center - target.yaw_tol <= magnitude && magnitude <= target.yaw_center + target.yaw_tol) return "ok";
   const sign = latchedSign ?? (yaw >= 0 ? 1 : -1);
   return sign * target.yaw_center - yaw > 0 ? "turn_right" : "turn_left";
@@ -164,21 +166,26 @@ export const placementStatus = (phase: PlacementPhase, ok: boolean): PlacementSt
 });
 
 // GUIDING until framing, distance, centring, and facing hold ok for 8 frames, then
-// PLACED for good. The turn side is latched on the first yaw reading.
+// PLACED for good. The turn side is latched on the first yaw reading. A near side (the
+// arm the user chose) must face the camera: positive yaw is the left side turned away, so
+// left is the negative band, fixed from the start and one-sided.
 export class PlacementGuide {
   target: PlacementTarget;
+  nearSign: number | null;
   phase: PlacementPhase = "guiding";
   holdStreak = 0;
   targetSign: number | null = null;
 
-  constructor(target: PlacementTarget) {
+  constructor(target: PlacementTarget, nearSide: Side | null = null) {
     this.target = target;
+    this.nearSign = nearSide === null ? null : nearSide === "left" ? -1 : 1;
+    this.targetSign = this.nearSign;
   }
 
   reset() {
     this.phase = "guiding";
     this.holdStreak = 0;
-    this.targetSign = null;
+    this.targetSign = this.nearSign;
   }
 
   update(kp: Keypoints): PlacementStatus {
@@ -186,7 +193,7 @@ export class PlacementGuide {
     const [distance, centering, framing] = framingCheck(keypointBbox(kp, MIN_SCORE));
     const yaw = hasWorld3d(kp) ? bodyYaw(kp, MIN_SCORE) : null;
     if (yaw !== null && this.targetSign === null) this.targetSign = yaw >= 0 ? 1 : -1;
-    const facing = facingCheck(yaw, this.target, this.targetSign);
+    const facing = facingCheck(yaw, this.target, this.targetSign, this.nearSign !== null);
     const ok = framing === "ok" && distance === "ok" && centering === "ok" && facing === "ok";
     const cues = [`framing:${framing}`, `distance:${distance}`, `centering:${centering}`, `facing:${facing}`]
       .map((key) => CUE[key])

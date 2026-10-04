@@ -4,6 +4,7 @@
 
 import type { RuleBasedLogic } from "../exercise";
 import { angleOr180, pickMoreBentSide, type Angles } from "./angles.ts";
+import type { Side } from "./rules.ts";
 import type { RepEvent } from "./types.ts";
 
 // Index into the row's state_machine.states, the Python ExerciseState value.
@@ -30,6 +31,8 @@ const bar = (sm: StateMachine, key: string) => {
 };
 
 export abstract class BaseFsm {
+  // Whether the user chooses the working side (BaseFSM.CHOOSES_SIDE): only the curl.
+  static choosesSide = false;
   thrStanding: number;
   thrInflection: number;
   thrDescending: number;
@@ -245,23 +248,29 @@ class PushUpFsm extends BaseFsm {
   }
 }
 
+// forcedSide is the arm the user chose: only it can open an attempt, and the active side
+// never leaves it. null picks the arm per attempt.
 class BicepCurlFsm extends BaseFsm {
+  static choosesSide = true;
   startDescentDelta: number;
   minSideScore: number;
-  activeSide: "left" | "right" = "left";
+  forcedSide: Side | null;
+  activeSide: Side;
   idlePeaks = { left: -Infinity, right: -Infinity };
   gateQualified = false;
   rearmExempt = { left: false, right: false };
 
-  constructor(sm: StateMachine) {
+  constructor(sm: StateMachine, forcedSide: Side | null = null) {
     super(sm);
     this.startDescentDelta = bar(sm, "start_descent_delta");
     this.minSideScore = bar(sm, "min_side_score");
+    this.forcedSide = forcedSide;
+    this.activeSide = forcedSide ?? "left";
   }
 
   reset() {
     super.reset();
-    this.activeSide = "left";
+    this.activeSide = this.forcedSide ?? "left";
     this.idlePeaks = { left: -Infinity, right: -Infinity };
     this.gateQualified = false;
     this.rearmExempt = { left: false, right: false };
@@ -302,8 +311,8 @@ class BicepCurlFsm extends BaseFsm {
       for (const side of ["left", "right"] as const) {
         if (this.idlePeaks[side] >= this.thrDescending) this.rearmExempt[side] = false;
       }
-      const leftQ = this.armQualifies("left", left);
-      const rightQ = this.armQualifies("right", right);
+      const leftQ = this.forcedSide !== "right" && this.armQualifies("left", left);
+      const rightQ = this.forcedSide !== "left" && this.armQualifies("right", right);
       if (leftQ && rightQ) this.activeSide = pickMoreBentSide(angles, "left_elbow", "right_elbow");
       else if (leftQ) this.activeSide = "left";
       else if (rightQ) this.activeSide = "right";
@@ -344,15 +353,17 @@ class LungeFsm extends BaseFsm {
   }
 }
 
-const FSMS: Record<string, new (sm: StateMachine) => BaseFsm> = {
+const FSMS: Record<string, (new (sm: StateMachine, side?: Side | null) => BaseFsm) & { choosesSide: boolean }> = {
   squat: SquatFsm,
   pushup: PushUpFsm,
   lunge: LungeFsm,
   dumbbell_biceps_curls: BicepCurlFsm,
 };
 
-export function createFsm(engineKey: string, sm: StateMachine): BaseFsm {
+// side is the working side the user chose, only for a machine that chooses one.
+export function createFsm(engineKey: string, sm: StateMachine, side: Side | null = null): BaseFsm {
   const Fsm = FSMS[engineKey];
   if (!Fsm) throw new Error(`no state machine for engine key ${engineKey}`);
-  return new Fsm(sm);
+  if (side !== null && !Fsm.choosesSide) throw new Error(`${engineKey} does not take a side`);
+  return new Fsm(sm, side);
 }

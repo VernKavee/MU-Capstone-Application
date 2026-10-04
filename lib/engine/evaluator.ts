@@ -202,8 +202,8 @@ export class ExerciseSession {
   floorBar: FloorBar | null;
   lastEvent: RepEvent = "none";
 
-  constructor(logic: RuleBasedLogic, engineKey: string) {
-    this.fsm = createFsm(engineKey, logic.state_machine);
+  constructor(logic: RuleBasedLogic, engineKey: string, side: Side | null = null) {
+    this.fsm = createFsm(engineKey, logic.state_machine, side);
     this.evaluator = new FormEvaluator(logic.rules, accumulatorFor(engineKey, logic.rules));
     this.floorBar = engineKey === "pushup" ? new FloorBar() : null;
   }

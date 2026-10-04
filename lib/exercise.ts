@@ -23,6 +23,8 @@ export type RuleBasedLogic = {
     arming: { joints: string[]; ready_tilt_min: number | null; ready_tilt_max: number | null } | null;
     // The low-confidence guard: at least one side must see every one of these joints.
     confidence_joints: string[];
+    // The user chooses the working side before the workout (the curl's arm).
+    chooses_side: boolean;
   };
   // The yaw the placement gate wants, in the engine's units, not camera degrees.
   placement: { yaw_center: number; yaw_tol: number };

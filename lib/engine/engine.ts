@@ -7,27 +7,29 @@ import type { RuleBasedLogic } from "../exercise";
 import { extractAngles, hasWorld3d } from "./angles.ts";
 import { ExerciseSession } from "./evaluator.ts";
 import { COUNTDOWN_S, PlacementGuide, placementStatus, ReadyPoseGate, type PlacementStatus, type ReadyStatus } from "./gates.ts";
-import { MIN_LM_SCORE } from "./rules.ts";
+import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "2695984";
+export const ENGINE_VERSION = "32168a5";
 
 const WARNING_HOLD_MS = 1000;
 
-export type EngineOptions = { placement: boolean; ready: boolean; armed: boolean };
+export type EngineOptions = { placement: boolean; ready: boolean; armed: boolean; side: Side | null };
 
 // placement and ready are the live gates. armed force-arms the state machine before
-// the first frame, as the parity harness does with both gates off.
+// the first frame, as the parity harness does with both gates off. side is the arm the
+// user chose, for a row with state_machine.chooses_side: the only arm that counts, and
+// the side placement turns toward the camera.
 export function createEngine(
   logic: RuleBasedLogic,
   engineKey: string,
-  { placement = true, ready = true, armed = false }: Partial<EngineOptions> = {},
+  { placement = true, ready = true, armed = false, side = null }: Partial<EngineOptions> = {},
 ): Engine {
   const states = logic.state_machine.states;
   const confidenceJoints = logic.state_machine.confidence_joints;
-  const session = new ExerciseSession(logic, engineKey);
-  const guide = placement ? new PlacementGuide(logic.placement) : null;
+  const session = new ExerciseSession(logic, engineKey, side);
+  const guide = placement ? new PlacementGuide(logic.placement, side) : null;
   const gate = ready ? new ReadyPoseGate() : null;
   let lastAngles: Record<string, number> = {};
   let held: RuleRef[] = [];

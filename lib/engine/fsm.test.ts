@@ -13,10 +13,12 @@ const machine = (thresholds: Record<string, number>, arming: RuleBasedLogic["sta
   thresholds: { consecutive_frames_req: 3, ...thresholds },
   arming,
   confidence_joints: [],
+  chooses_side: false,
 });
 const SQUAT = machine({ thr_standing: 160, thr_inflection: 120, thr_descending: 150, hysteresis_buffer: 10 }, { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 });
 const PUSHUP = machine({ thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1 }, { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null });
 const LUNGE = machine({ thr_standing: 155, thr_inflection: 105, thr_descending: 145, hysteresis_buffer: 12, lunge_start_split_min: 58 }, { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 });
+const CURL = machine({ thr_standing: 155, thr_inflection: 55, thr_descending: 140, hysteresis_buffer: 15, start_descent_delta: 25, min_side_score: 0.3 }, null);
 
 function feed(fsm: BaseFsm, angles: Angles, count: number, tilt: number | null = null): RepEvent[] {
   return Array.from({ length: count }, () => fsm.update(angles, null, tilt).event);
@@ -100,4 +102,26 @@ test("lunge: no attempt opens until the thighs split", () => {
   assert.ok(feed(fsm, { left_knee: 120, right_knee: 170, thigh_split: 30 }, 10).every((e) => e === "none"));
   assert.ok(feed(fsm, { left_knee: 120, right_knee: 140, thigh_split: 70 }, 3).includes("rep_started"));
   assert.equal(fsm.activeSideHint, null);
+});
+
+test("curl: a chosen arm is the only one that counts", () => {
+  const fsm = createFsm("dumbbell_biceps_curls", CURL, "left");
+  assert.equal(fsm.activeSideHint, "left");
+  feed(fsm, { left_elbow: 150, right_elbow: 150 }, 5);
+  const right = [118, 90, 50, 50, 90, 160].flatMap((r) => feed(fsm, { left_elbow: 150, right_elbow: r }, 3));
+  assert.ok(right.every((e) => e === "none"));
+  assert.equal(fsm.attemptCount, 0);
+  for (const l of [118, 50, 90]) feed(fsm, { left_elbow: l, right_elbow: 150 }, 3);
+  assert.ok(feed(fsm, { left_elbow: 160, right_elbow: 150 }, 3).includes("rep_completed"));
+  assert.deepEqual([fsm.repCount, fsm.attemptCount, fsm.activeSideHint], [1, 1, "left"]);
+  fsm.reset();
+  assert.equal(fsm.activeSideHint, "left");
+});
+
+test("curl: without a chosen arm the right arm counts too; other machines take no side", () => {
+  const fsm = createFsm("dumbbell_biceps_curls", CURL);
+  feed(fsm, { left_elbow: 150, right_elbow: 150 }, 5);
+  assert.ok(feed(fsm, { left_elbow: 150, right_elbow: 118 }, 3).includes("rep_started"));
+  assert.equal(fsm.activeSideHint, "right");
+  assert.throws(() => createFsm("squat", SQUAT, "left"), /does not take a side/);
 });

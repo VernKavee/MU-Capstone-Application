@@ -48,6 +48,7 @@ test("floor bar: zeroed 3D gives no reading, and the session reset clears the he
         thresholds: { thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1, consecutive_frames_req: 3 },
         arming: { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null },
         confidence_joints: ["shoulder", "elbow", "wrist"],
+        chooses_side: false,
       },
       placement: { yaw_center: 45, yaw_tol: 25 },
       rules: [],

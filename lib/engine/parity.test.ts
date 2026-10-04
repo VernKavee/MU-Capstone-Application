@@ -17,6 +17,7 @@ import { test } from "node:test";
 import { gunzipSync } from "node:zlib";
 import type { RuleBasedLogic } from "../exercise";
 import { createEngine, ENGINE_VERSION } from "./engine.ts";
+import type { Side } from "./rules.ts";
 import { LANDMARK_NAMES, type FrameResult, type Keypoint, type Keypoints } from "./types.ts";
 
 type GoldenFrame = {
@@ -33,6 +34,7 @@ type GoldenFrame = {
 type Recording = {
   engine_key: string;
   armed: boolean;
+  side?: Side | null; // the arm the user chose; absent before 2026-10-04's goldens
   source: string;
   keypoints: { joints: string[]; fields: string[]; frames: { t: number; points: number[] }[] };
   golden: { frames: GoldenFrame[]; report: Record<string, unknown> };
@@ -112,7 +114,7 @@ function replay(file: string) {
   assert.ok(logic, `no row for ${rec.engine_key}`);
   const ruleNames = new Set(logic.rules.map((r) => r.name));
   const messages = new Set(logic.rules.map((r) => r.messages.en));
-  const engine = createEngine(logic, rec.engine_key, { placement: false, ready: false, armed: rec.armed });
+  const engine = createEngine(logic, rec.engine_key, { placement: false, ready: false, armed: rec.armed, side: rec.side ?? null });
   let prev: FrameResult | null = null;
   rec.keypoints.frames.forEach((row, i) => {
     const r = engine.process(keypoints(rec, row.points), row.t);
