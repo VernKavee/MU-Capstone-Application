@@ -320,9 +320,10 @@ Decided at the engine port (2026-10-04), recorded in ADR-0002, 0003, 0006 and th
 2026-10-04 session log:
 
 - `lib/engine/` is a TypeScript port of SeniorProject `2695984` following its
-  `docs/rule_based/WEB_APP_PORT.md`; `ENGINE_VERSION` is that commit and equals the rows'
-  `source`. The rows are the export of `scratch/export_web_logic.py` in the migration
-  `rule_logic_2695984`; never hand-edit them, re-run the export into a new migration.
+  `docs/rule_based/WEB_APP_PORT.md`, brought to `32168a5` for the chosen arm;
+  `ENGINE_VERSION` is the latest commit and equals the rows' `source`. The rows are the
+  export of `scratch/export_web_logic.py` in the latest `rule_logic_<commit>` migration;
+  never hand-edit them, re-run the export into a new migration.
 - Gate order: the T pose (or A pose) facing the camera starts the 3 s countdown, placement
   checks the exercise's angle during it, and the countdown holds at 0 until placed. The
   live screen drives its centre text from `ready_phase` and shows the turn cue during the
@@ -335,7 +336,29 @@ Decided at the engine port (2026-10-04), recorded in ADR-0002, 0003, 0006 and th
   `lib/engine/fixtures/` holds one trimmed recording per exercise; `PARITY_DIR` runs all.
 - The stub and its test are deleted; the workout e2e is skipped until the real clip exists.
 
+Decided 2026-10-04 (later), the chosen curl arm, recorded in ADR-0002, 0006 and the
+2026-10-04 session log:
+
+- The user chooses the arm once per workout on the setup screen (Left or Right, no
+  default), shown only when the row's `state_machine.chooses_side` is true (the curl).
+  `parseSetup(params, logic)` requires `side` there and refuses it elsewhere;
+  `setupQuery` carries it with reps, sets, and rest; `workouts.side` stores it, fixed
+  once saved. Every set and repair set of the workout uses it.
+- `createEngine(..., { side })`: only that arm can open an attempt, and placement wants
+  that arm toward the camera (left -45, right +45, one band only). Python first:
+  SeniorProject `32168a5` (`forced_side`, `near_side`, `CHOOSES_SIDE`), then the export,
+  then the port. `lib/engine/fixtures/dumbbell_biceps_curls_left.json.gz` is the forced
+  golden.
+- An exercise's active side is never guessed from the more-bent elbow when reading saved
+  sets: it is in `engine_report` per rep.
+
 Still open, outside the build plan:
+
+- The curl's bump at the top: MediaPipe's depth error at 45 degrees moves the elbow toward
+  the camera, which splits reps, opens the elbow angle, and nudges `elbow_flare`. Evidence,
+  a replay of hysteresis 30 (not accepted), and the Vicon plan are in
+  `docs/bicep-curl-depth-error.md`, a copy of SeniorProject's
+  `docs/rule_based/BICEP_CURL_DEPTH_ERROR.md`, which is the one to work from.
 
 - Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
   2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75; the size on a

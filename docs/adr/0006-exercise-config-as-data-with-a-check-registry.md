@@ -20,3 +20,8 @@ A fifth exercise, plank, with the rule "hips must not sag". If it can be written
 
 - The rep-scope accumulator is chosen by engine key, like the state machine, not by check. It is stateful per exercise: the lunge one tracks both knees' minima and a bottom window, the squat one averages the knee angle inside a depth band.
 - A rep-scope check can only be reused where its accumulator produces the statistic the check reads. `partial_squat` reads `min_knee`, which only the squat accumulator writes. Frame-scope checks read the current frame and reuse freely, so the plank example works.
+
+## The chosen side, 2026-10-04
+
+- Whether an exercise asks the user for a working side is data: `state_machine.chooses_side`, written by the export from the Python FSM's `CHOOSES_SIDE` (true only for the bicep curl). The setup screen shows the Arm choice, and `parseSetup` requires the side, only where the row says so. Nothing branches on the exercise name.
+- The chosen side is stored on the workout (`workouts.side`, left, right, or null), fixed once saved like the targets.

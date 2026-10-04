@@ -46,3 +46,13 @@ The port follows the research repo's `docs/rule_based/WEB_APP_PORT.md`, made fro
 - The row gains `state_machine.confidence_joints` (the joints the low-confidence guard needs on one side) and `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees). Numbers that define a measurement stay constants in the TypeScript engine; only the bars Vern tunes are in the row.
 - The ready gate runs before placement: a T or A pose held facing the camera starts the countdown, placement is checked during it, and the countdown holds at 0 until the user is placed. A T pose held 30 frames, after 3 s of the set, ends it.
 - `RepRecord` and `AbandonedRecord` carry `active_side`, as the Python emits it, since the report is stored verbatim.
+
+## Decided 2026-10-04 (later): the user chooses the curl arm
+
+Made in SeniorProject `32168a5` and ported here, at Vern's request: per-attempt arm detection held on the recordings but leans on the resting arm staying still.
+
+- `createEngine(logic, engineKey, { side })` takes the arm the user chose, `"left"`, `"right"`, or null (the default, today's per-attempt pick). It sets `BicepCurlFsm`'s `forcedSide` (only that arm can open an attempt, and the active side never leaves it) and the placement guide's near side.
+- The near side makes the facing band one-sided: positive yaw is the left side turned away, so the left arm is the negative band (-45) and the right arm the positive one (+45). The turn cue points that way from the first frame. This overrides the research placement report's choice not to bake in a side, which hedged against the working arm landing on the far side.
+- A side for a machine that does not choose one throws (`BaseFSM.CHOOSES_SIDE`, `choosesSide` here).
+- Parity: the fixtures are regenerated at `32168a5`, and `dumbbell_biceps_curls_left.json.gz` replays the curl window with the side forced. All 25 exam recordings still match.
+- Found alongside, not fixed: MediaPipe's depth error at the top of the curl at 45 degrees, which splits reps and opens the elbow angle. `docs/bicep-curl-depth-error.md`.
