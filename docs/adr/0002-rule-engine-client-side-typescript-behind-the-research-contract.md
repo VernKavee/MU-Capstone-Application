@@ -36,3 +36,13 @@ The UI reads counters, states, and warnings from the frame result and never re-d
 - The live screen builds a new engine for every set, for every "Try again" after a camera or model failure, and when the pose model is switched; the frame loop calls `reset()` once the camera and the model are up. The port's construction must be cheap and must not fetch anything.
 - The workout end-to-end test gets its attempts from the stub's clock while Chrome's fake camera shows a still T pose. The port produces no attempts from a still frame, so that test will need a recorded clip of real reps as its camera.
 - `docs/HANDOVER.md` lists what the app reads from each frame result beyond the types, and what the stub returns today.
+
+## Decided 2026-10-04: the port
+
+The port follows the research repo's `docs/rule_based/WEB_APP_PORT.md`, made from SeniorProject `2695984`.
+
+- The research repo's live recordings have logged `kp3d`, the 3D world landmarks with their scores for 16 joints, since 2026-07-24, and the ankle since 2026-09-19. The consequence above that they hold no landmarks is outdated: the parity harness replays them.
+- The seed is replaced by the export of `scratch/export_web_logic.py` in the migration `rule_logic_2695984`. Every row's `source` names the commit, and `ENGINE_VERSION` equals it.
+- The row gains `state_machine.confidence_joints` (the joints the low-confidence guard needs on one side) and `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees). Numbers that define a measurement stay constants in the TypeScript engine; only the bars Vern tunes are in the row.
+- The ready gate runs before placement: a T or A pose held facing the camera starts the countdown, placement is checked during it, and the countdown holds at 0 until the user is placed. A T pose held 30 frames, after 3 s of the set, ends it.
+- `RepRecord` and `AbandonedRecord` carry `active_side`, as the Python emits it, since the report is stored verbatim.

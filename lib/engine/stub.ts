@@ -203,6 +203,7 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
         abandonedCount += 1;
         abandoned.push({
           attempt_number: abandonedCount,
+          active_side: null,
           counted: false,
           warnings: byPriority(current.repRules).map((r) => r.messages.en),
           violations: byPriority(current.repRules).map((r) => r.name),
@@ -225,6 +226,7 @@ export function createStubEngine(logic: RuleBasedLogic, engineKey: string, rando
       attemptCount += 1;
       reps.push({
         rep_number: repCount,
+        active_side: null,
         correct: all.length === 0,
         warnings: all.map((r) => r.messages.en),
         violations: all.map((r) => r.name),

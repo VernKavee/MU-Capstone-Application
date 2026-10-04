@@ -55,3 +55,22 @@ The report's `reps_detail` and the research repo's schema version 4 report descr
 - `state_durations_s` is keyed by the row's state names in lower case and sums the frame gaps from `rep_started` to the closing event.
 - A report record whose event the frames never showed keeps its place with a null frame range, so every attempt still has a record.
 - `similarity` is written into each record by the analyse step of ADR-0007, at the same time as the set's own `similarity`.
+
+## Decided 2026-10-04: rule-named values from the port
+
+The Python engine keeps its statistics under the measurement's name (`min_knee`, `max_torso_tilt`, ...), so `rep_stats[rule name]` found nothing. When an attempt ends, the TypeScript engine also writes each rule's compared number under the rule's own name, beside the Python-named keys, so `value` fills:
+
+| Rule | Value |
+|---|---|
+| `partial_squat` | `min_knee` |
+| `knee_valgus`, `knee_varus` | `knee_parallel_deg` |
+| `rounded_back` | `max_back_tilt` |
+| `hip_sag_or_pike` | `min_body_alignment` |
+| `partial_pushup` | `min_floor_bar` |
+| `shallow_lunge`, `excessive_front_knee_flexion` | the smaller of `min_left_knee` and `min_right_knee` |
+| `forward_trunk_lean` | `max_torso_tilt` |
+| `straight_back_leg` | the back leg's `back_at_left_bottom` or `back_at_right_bottom` |
+| `partial_curl` | `min_elbow` when the top of the curl was missed, otherwise `max_elbow` |
+| `elbow_flare` | null: no statistic is recorded for it |
+
+The Python engine is unchanged and the parity test ignores these extra keys. The example record above uses the placeholder rule name `knee_depth`, now `partial_squat`.

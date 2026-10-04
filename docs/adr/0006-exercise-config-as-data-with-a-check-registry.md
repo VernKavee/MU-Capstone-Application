@@ -12,6 +12,11 @@ A fifth exercise, plank, with the rule "hips must not sag". If it can be written
 
 ## Consequences
 
-- The four seeded exercises name only checks the research repo already implements: `knee_depth`, `knee_valgus`, `back_straight`, `body_alignment`, `elbow_depth`, `front_knee_depth`, `torso_upright`, `back_knee_form`, `full_rom`, `elbow_fixed`.
+- The four seeded exercises name only checks the research repo already implements. Since the export of 2026-10-04 (SeniorProject `2695984`) each rule's check has the rule's name: squat `partial_squat`, `knee_valgus`, `knee_varus`, `rounded_back`; push-up `hip_sag_or_pike`, `partial_pushup`; lunge `shallow_lunge`, `excessive_front_knee_flexion`, `forward_trunk_lean`, `straight_back_leg`; bicep curl `elbow_flare`, `partial_curl`. The plank example above is `hip_sag_or_pike`.
 - Phase 2 proves the property by adding a fake fifth exercise as a row, rendering it, and removing it.
 - The engine key column (ADR-0002) is what selects a state machine until the state machines are themselves data-driven, which is a port concern, not an app concern.
+
+## Two limits found at the port, 2026-10-04
+
+- The rep-scope accumulator is chosen by engine key, like the state machine, not by check. It is stateful per exercise: the lunge one tracks both knees' minima and a bottom window, the squat one averages the knee angle inside a depth band.
+- A rep-scope check can only be reused where its accumulator produces the statistic the check reads. `partial_squat` reads `min_knee`, which only the squat accumulator writes. Frame-scope checks read the current frame and reuse freely, so the plank example works.

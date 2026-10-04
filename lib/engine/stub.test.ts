@@ -13,7 +13,9 @@ const logic: RuleBasedLogic = {
     states: ["Idle", "Concentric", "Inflection", "Eccentric"],
     thresholds: { thr_standing: 160 },
     arming: { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 },
+    confidence_joints: ["hip", "knee", "ankle"],
   },
+  placement: { yaw_center: 45, yaw_tol: 12 },
   rules: [
     { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
     { name: "back_straight", check: "back_straight", priority: 3, scope: "frame", debounce_frames: 10, threshold: { tilt_max: 55 }, messages: { en: "Keep back straight" }, highlight_joints: [] },

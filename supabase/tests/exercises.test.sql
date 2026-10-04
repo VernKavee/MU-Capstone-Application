@@ -29,13 +29,13 @@ reset role;
 select throws_ok(
   $$ insert into public.exercises (id, name, sort_order, guide_text, engine_key, rule_based_logic)
      values ('bad', 'Bad', 8, 'x', 'bad', '{"state_machine":{"states":[],"thresholds":{}},
-       "rules":[{"name":"r","check":"body_alignment","threshold":{"align_min":160},"priority":1,
+       "rules":[{"name":"r","check":"hip_sag_or_pike","threshold":{"align_min":160},"priority":1,
                  "scope":"frame","debounce_frames":10,"messages":{},"highlight_joints":[]}]}') $$,
   '23514', null, 'a rule without an English message is rejected');
 select lives_ok(
   $$ insert into public.exercises (id, name, sort_order, guide_text, engine_key, rule_based_logic)
      values ('plank', 'Plank', 9, 'Hold a straight line.', 'plank', '{"state_machine":{"states":["Idle"],"thresholds":{}},
-       "rules":[{"name":"hip_sag","check":"body_alignment","threshold":{"align_min":160},"priority":1,
+       "rules":[{"name":"hip_sag","check":"hip_sag_or_pike","threshold":{"align_min":160},"priority":1,
                  "scope":"frame","debounce_frames":10,"messages":{"en":"Lift your hips"},"highlight_joints":["left_hip","right_hip"]}]}') $$,
   'a fifth exercise built from an existing check is one row');
 

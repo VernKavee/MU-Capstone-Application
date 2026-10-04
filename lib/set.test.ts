@@ -39,10 +39,10 @@ const report: SessionReport = {
   ready_gate: { enabled: true, phase: "active", countdown_s: 3, ended_by_pose: false },
   total_attempts: 3, total_reps_completed: 2, total_reps_correct: 1, total_attempts_abandoned: 1,
   reps: [
-    { rep_number: 1, correct: true, warnings: [], violations: [], rep_stats: { min_knee: 88 } },
-    { rep_number: 2, correct: false, warnings: ["Lower to 90 degrees", "Keep back straight"], violations: ["knee_depth", "back_straight"], rep_stats: { knee_depth: 112 } },
+    { rep_number: 1, active_side: null, correct: true, warnings: [], violations: [], rep_stats: { min_knee: 88 } },
+    { rep_number: 2, active_side: null, correct: false, warnings: ["Lower to 90 degrees", "Keep back straight"], violations: ["knee_depth", "back_straight"], rep_stats: { knee_depth: 112 } },
   ],
-  abandoned_attempts: [{ attempt_number: 1, counted: false, warnings: [], violations: [], rep_stats: {} }],
+  abandoned_attempts: [{ attempt_number: 1, active_side: null, counted: false, warnings: [], violations: [], rep_stats: {} }],
 };
 
 test("attempts merge the report with the frames", () => {

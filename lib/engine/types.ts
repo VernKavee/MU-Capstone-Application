@@ -60,8 +60,9 @@ export type FrameResult = {
 };
 
 export type RepStats = Record<string, number | null>;
-export type RepRecord = { rep_number: number; correct: boolean; warnings: string[]; violations: string[]; rep_stats: RepStats };
-export type AbandonedRecord = { attempt_number: number; counted: false; warnings: string[]; violations: string[]; rep_stats: RepStats };
+// active_side is the side the rules judged (the curl's working arm), null when none.
+export type RepRecord = { rep_number: number; active_side: string | null; correct: boolean; warnings: string[]; violations: string[]; rep_stats: RepStats };
+export type AbandonedRecord = { attempt_number: number; active_side: string | null; counted: false; warnings: string[]; violations: string[]; rep_stats: RepStats };
 
 // src/pipeline/session_report.py, SCHEMA_VERSION 4. Stored verbatim on the set (ADR-0003).
 export type SessionReport = {

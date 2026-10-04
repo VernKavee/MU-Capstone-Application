@@ -361,8 +361,9 @@ Relevant for cross-checking behaviour:
 - `src/rule_based/` and `src/fsm_counter/` - the existing rule and state machine logic
 - `src/pipeline/session_report.py` - emits the versioned report at `SCHEMA_VERSION = 4`
 - `src/pipeline/frame_processor.py` - the FrameResult contract the engine seam mirrors
-- `scratch_output/live_webcam/` - live recordings with angles and joint scores per frame
-  but no landmarks; the parity harness needs a landmark dump added there
+- `scratch_output/` - live recordings with angles, joint scores, and `kp3d` (3D world
+  landmarks with scores, 16 joints, logged since 2026-07-24, the ankle since 2026-09-19); the
+  exam sitting at its top level is the parity harness's input
 
 ## Working rules
 
