@@ -64,11 +64,12 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   workout: every set, the repair sets, and the rest between them.
 - The engine seam of ADR-0002 is `lib/engine/types.ts`. The engine is Vern's TypeScript
   port of the research repo's rules and state machines (`lib/engine/engine.ts`, from
-  SeniorProject 2695984, now at 32168a5), configured from the row's `rule_based_logic`:
+  SeniorProject 2695984, now at 858b203), configured from the row's `rule_based_logic`:
   the T pose facing the camera starts a countdown, placement checks the exercise's angle
   during it, then real reps are counted and judged from the landmarks. For the curl only
-  the chosen arm counts, and placement wants that arm toward the camera. A known problem,
-  not yet fixed, at the top of the curl: `docs/bicep-curl-depth-error.md`. `lib/engine/parity.test.ts` proves
+  the chosen arm counts, and placement wants that arm toward the camera. Near the top of
+  the curl the elbow is re-read from the picture with the video's frame size, because
+  MediaPipe's depth is wrong there: `docs/bicep-curl-depth-error.md`. `lib/engine/parity.test.ts` proves
   it equals the Python engine on the exam recordings. `lib/live/session.ts` is the frame
   loop, outside React.
 - When a set ends it is saved at once: a `workouts` row with the first set, then a `sets`

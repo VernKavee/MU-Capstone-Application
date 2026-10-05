@@ -37,17 +37,18 @@ that plan and the Python disagree, the Python in `~/Documents/SeniorProject/src`
 |---|---|---|
 | `lib/engine/engine.ts` | `frame_processor.py`, `session_report.py` | `createEngine(logic, engineKey, {placement, ready, armed, side})`, the per-frame order, the warning hold, the report; `ENGINE_VERSION` |
 | `lib/engine/gates.ts` | `ready_pose.py`, `placement_guide.py` | the T or A pose, the ready gate, framing, distance, centring, facing |
-| `lib/engine/evaluator.ts` | `form_evaluator.py`, `exercise_session.py` | debounce streaks, show one and record all, the attempt records, the push-up floor bar |
+| `lib/engine/evaluator.ts` | `form_evaluator.py`, `exercise_session.py` | debounce streaks, show one and record all, the attempt records, the session that steps both |
 | `lib/engine/rules.ts` | `form_rules.py` | the check registry, one function per check name, and the per-rep statistics per engine key |
 | `lib/engine/fsm.ts` | `base_fsm.py`, `exercise_fsms.py` | the state machine and its four variants, chosen by engine key |
-| `lib/engine/angles.ts` | `angles.py` | the 3D geometry |
+| `lib/engine/angles.ts` | `angles.py`, `exercise_session.py` | the 3D geometry, the push-up floor bar, and the curl elbow rebuild (`CurlArmRebuild`) |
 
 The live screen is the only caller: `createEngine(exercise.logic, exercise.engineKey, { side })`
 in `live-screen.tsx`, with both gates on and the state machine unarmed until the countdown
 ends. `side` is the arm the user chose on the setup screen, for a row with
-`state_machine.chooses_side` (the curl), else null. `ENGINE_VERSION` is `32168a5`, the
-SeniorProject commit of the latest export (the port was made from `2695984`), and is stored
-on every set as `engine_version`.
+`state_machine.chooses_side` (the curl), else null. The frame loop in `lib/live/session.ts`
+calls `process` with the video's `videoWidth` and `videoHeight` as the frame size. `ENGINE_VERSION`
+is `858b203`, the SeniorProject commit of the latest export (the port was made from
+`2695984`), and is stored on every set as `engine_version`.
 
 ### Where each number lives
 
@@ -57,7 +58,7 @@ on every set as `engine_version`.
   `chooses_side`, and per
   rule the check name, threshold, priority, scope, debounce, message, and highlight
   joints. The rows are the output of `scratch/export_web_logic.py` in the latest
-  `rule_logic_<commit>` migration (`rule_logic_32168a5`).
+  `rule_logic_<commit>` migration (`rule_logic_858b203`).
 - **The numbers that define a measurement are constants** in the TypeScript files
   (WEB_APP_PORT.md 5.2): confidence bars, the profile ratio, the knee band, the lunge
   bottom window, arming frames, the ready pose angles and holds, the placement box, the
@@ -84,13 +85,16 @@ compares every frame's state, event, counters, and rule names, and the report wi
 1e-9, against what the Python engine produced from the same file. The rows come from the
 latest `rule_logic` migration, so the test runs on what the database holds.
 
-- `npm run test:unit` runs the four trimmed recordings in `lib/engine/fixtures/`.
+- `npm run test:unit` runs the five trimmed recordings in `lib/engine/fixtures/`, one per
+  exercise plus the curl with the left arm chosen. The curl ones carry image x, y and
+  `frame_size`, so the replay passes the frame size and the elbow rebuild is under test.
 - All 25 exam recordings: in SeniorProject,
   `.venv/bin/python3 -m scratch.eval.eval_web_parity` writes them to
   `scratch_output/web_parity/`, then here
   `PARITY_DIR=~/Documents/SeniorProject/scratch_output/web_parity npm run test:unit`.
   Adding `--fixtures ~/Documents/MU-Capstone-Application/lib/engine/fixtures` also
-  rewrites the four fixtures.
+  rewrites the fixtures. The curl goldens come from `scratch_output/rebuild_rerun/`, the
+  exam curl videos re-run with image x, y and `frame_size`.
   Recordings made without the ready gate (the four push-up phone files) replay unarmed.
 - Parity compares with today's Python replay, which matches `eval_live_rules` on every
   exam recording. If the two ever differ, report it; do not tune a number to hide it.
@@ -101,11 +105,19 @@ from the research repo's synthetic cases; a live run is their real check.
 
 ### The interface, `lib/engine/types.ts`
 
-- `process(keypoints, timestampMs): FrameResult`, once per camera frame.
+- `process(keypoints, timestampMs, frameSize?): FrameResult`, once per camera frame.
   `keypoints` holds the 33 MediaPipe landmarks by the research repo's names, each with
   `x`, `y`, `z` (image-normalised), `x_3d`, `y_3d`, `z_3d` (world metres), and `score`
   (MediaPipe's visibility). `timestampMs` is `performance.now()`. The image is not
   mirrored; only the stage the user sees is.
+- `frameSize` is `[width, height]` in pixels of the video MediaPipe saw (since `858b203`).
+  Only the curl reads it: near the top of the curl the elbow and shoulder angles are
+  re-read from the image x, y, because MediaPipe's world depth under-folds the elbow there
+  (WEB_APP_PORT.md section 9b, `docs/bicep-curl-depth-error.md`). The rebuild learns the
+  upper arm's image length from straight-arm frames during the set and needs ten before it
+  acts. Without a frame size, or before it has learnt, the raw angle is judged against the
+  same bars. A new frame size starts the learning over. The raw values stay in `angles`
+  as `left_elbow_raw`, `right_shoulder_angle_raw`, and so on; nothing reads them.
 - `getSessionReport(): SessionReport`, the research repo's schema version 4 report,
   read when the set ends and stored verbatim on the set (ADR-0003).
 - `reset()`, called once the camera and the pose model are up, before the first frame.
@@ -174,7 +186,12 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
   far ankle is guessed and the rule averages both sides. Evidence and options:
   `docs/sessions/2026-10-04.md`.
 - A live run on the laptop with real turns and real reps for all four exercises, then the
-  phone. The curl's turn direction in its guide text is geometry, unconfirmed.
+  phone. The curl's turn direction in its guide text is geometry, unconfirmed. Five
+  iPhone curl clips (2026-10-05, `docs/sessions/2026-10-05.md`) were replayed offline
+  through both engines, gates on: equal on every frame, and the rebuild counts both good
+  sets in full where the raw angle counts none. The app on the phone itself is not run.
+- The saved keypoint file does not carry the frame size yet, so a saved curl set replays
+  through the rebuild only with the size read from its video.
 - `e2e/workout.spec.ts` is skipped: the still T pose of `e2e/fixtures/` faces the camera,
   so it never passes placement and makes no reps. It needs a clip of real reps filmed at
   the exercise's angle, the T pose facing the camera first, and new expected counts.

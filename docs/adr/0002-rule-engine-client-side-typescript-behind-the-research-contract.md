@@ -56,3 +56,14 @@ Made in SeniorProject `32168a5` and ported here, at Vern's request: per-attempt 
 - A side for a machine that does not choose one throws (`BaseFSM.CHOOSES_SIDE`, `choosesSide` here).
 - Parity: the fixtures are regenerated at `32168a5`, and `dumbbell_biceps_curls_left.json.gz` replays the curl window with the side forced. All 25 exam recordings still match.
 - Found alongside, not fixed: MediaPipe's depth error at the top of the curl at 45 degrees, which splits reps and opens the elbow angle. `docs/bicep-curl-depth-error.md`.
+
+## Decided 2026-10-05: the curl elbow rebuild and the frame size
+
+Made in SeniorProject `858b203` (WEB_APP_PORT.md section 9b) and ported here, at Vern's request.
+
+- `process(keypoints, timestampMs, frameSize?)`: the seam gains an optional third argument, `[width, height]` in pixels of the video MediaPipe saw. The live loop passes `videoWidth` and `videoHeight` every frame (Vern: per frame rather than at construction, since the engine is built before the camera opens). Callers that pass nothing are unchanged.
+- `CurlArmRebuild` in `lib/engine/angles.ts`, built for the curl's engine key only, runs after the angles and before the session, as in the Python's `ExerciseFrameProcessor`. Near the top of the curl it re-reads the elbow and shoulder angles from the image x, y, with the upper arm's depth clipped to what its straight-arm image length allows. Without a frame size the raw angle is judged, as in the Python. One addition the Python lacks: a new frame size starts its calibration over, since that is in pixels.
+- The bars move with it, from the export `rule_logic_858b203`: curl `thr_inflection` and `partial_curl.flex_target` 55 -> 40, `hysteresis_buffer` 30.
+- The push-up floor bar moved beside it into `angles.ts` (Vern), no behaviour change.
+- Parity: the fixtures are regenerated at `858b203`; the curl ones carry image x, y and `frame_size`, and fail if the frame size is withheld. All 25 exam recordings match.
+- The keypoint file the app saves does not carry the frame size yet (see ADR-0007, 2026-10-05).

@@ -143,7 +143,7 @@ similarity and feedback contracts are in ADR-0007.
 - **Show one, record all.** Display the single highest priority violation to the user
   while recording every violation in the attempt record.
 - **The engine seam is the research repo's contract (ADR-0002).** `process(keypoints,
-  timestampMs)` returns the FrameResult fields and `getSessionReport()` returns the
+  timestampMs, frameSize?)` returns the FrameResult fields and `getSessionReport()` returns the
   schema version 4 report. The UI never re-derives counters, states, or warnings. The
   port satisfies it, and `lib/engine/parity.test.ts` holds it equal to the Python.
 - **Adding an exercise built from existing checks is a data change (ADR-0006).**
@@ -352,6 +352,22 @@ Decided 2026-10-04 (later), the chosen curl arm, recorded in ADR-0002, 0006 and 
 - An exercise's active side is never guessed from the more-bent elbow when reading saved
   sets: it is in `engine_report` per rep.
 
+Decided 2026-10-05, the curl elbow rebuild, recorded in ADR-0002 and the 2026-10-05
+session log:
+
+- SeniorProject `858b203`: migration `rule_logic_858b203` (curl `thr_inflection` and
+  `partial_curl.flex_target` 40, `hysteresis_buffer` 30) and `CurlArmRebuild` in
+  `lib/engine/angles.ts`, after the angles and before the session, curl only. The push-up
+  `FloorBar` moved beside it (Vern).
+- The frame size is the optional third argument of `process`, `[videoWidth, videoHeight]`
+  from `lib/live/session.ts` every frame (Vern). Without it the raw angle is judged; a new
+  size restarts the rebuild's calibration. Raw values stay in `angles` as `*_raw` keys.
+- The curl parity fixtures carry image x, y and `frame_size`; `parity.test.ts` passes it.
+- Five iPhone curl clips replayed offline through both engines with the gates on matched
+  on every frame (`docs/sessions/2026-10-05.md`).
+- Vern's Mac is also used for a corporate internship that forbids VPNs and tunnels, so it
+  never runs Funnel or any other tunnel (ADR-0001).
+
 Decided 2026-10-05, the similarity request, recorded in ADR-0007 and the 2026-10-05
 session log:
 
@@ -359,15 +375,18 @@ session log:
   `scratch/export_similarity.py`: `source` (the set id), `side` (the workout's arm or
   null), `totals`, attempts with `rep_number`, rule-name `violations`, and the engine's
   `side`, and each keypoint frame labelled with `attempt` and `rep` by `labelFrames`.
-  `rep_count` per frame is not sent (Vern); `frame_size` waits for the curl update.
+  `rep_count` per frame is not sent (Vern). `frame_size` in the keypoint file (schema
+  version 2) and the request was waiting for the curl update, which is now in; it is not
+  done yet (Vern: not now, during the curl update).
 
 Still open, outside the build plan:
 
-- The curl's bump at the top: MediaPipe's depth error at 45 degrees moves the elbow toward
-  the camera, which splits reps, opens the elbow angle, and nudges `elbow_flare`. Evidence,
-  a replay of hysteresis 30 (not accepted), and the Vicon plan are in
-  `docs/bicep-curl-depth-error.md`, a copy of SeniorProject's
-  `docs/rule_based/BICEP_CURL_DEPTH_ERROR.md`, which is the one to work from.
+- The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
+  (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
+  full bend. `docs/bicep-curl-depth-error.md` is a copy of SeniorProject's
+  `docs/rule_based/BICEP_CURL_DEPTH_ERROR.md`, which is the one to work from. A set that
+  never straightens the arm (the iPhone clip 8693) is one long attempt, and the rebuild
+  needs ten straight-arm frames in the set before it acts; both as in the Python.
 
 - Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
   2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75; the size on a
@@ -380,7 +399,9 @@ Still open, outside the build plan:
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
-- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5).
+- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5). Not
+  through Vern's Mac (no tunnels there): Funnel on another machine, Vern's PC a candidate,
+  or the rehearsal deploy.
 - Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
   skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
   facing the camera first.
@@ -392,8 +413,8 @@ Still open, outside the build plan:
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be
-  installed on the evaluation machine. Its request is agreed (above); `frame_size` joins it
-  with the curl update's frame size input.
+  installed on the evaluation machine. Its request is agreed (above); `frame_size` can now join it
+  and the keypoint file, not done yet.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
   the hosting.
