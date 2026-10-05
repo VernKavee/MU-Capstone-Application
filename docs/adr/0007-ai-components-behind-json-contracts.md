@@ -21,7 +21,7 @@ There is no chat. The feedback stub visibly echoes the medical history so the se
 
 ## Contract sketches
 
-Similarity in: `{ exercise_key, landmarks: { joints, fields, fps, frames }, attempts: [{ attempt_no, frame_start, frame_end, outcome }] }`. Out: `{ attempts: [{ attempt_no, similarity }], set: { overall, regions } }`.
+Similarity in: `{ exercise_key, landmarks: { joints, fields, fps, frames }, attempts: [{ attempt_no, frame_start, frame_end, outcome }] }`. Out: `{ attempts: [{ attempt_no, similarity }], set: { overall, regions } }`. The input was replaced on 2026-10-05, below.
 
 Feedback in: `{ profile, exercise: { name, rules }, workout: { target_reps, target_sets, earlier_sets }, set: { set_no, kind, totals, attempts }, history }`. Out: `{ feedback }`.
 
@@ -47,8 +47,16 @@ The exact TypeScript types are fixed in Phase 4, below.
 ## Decided 2026-09-29
 
 - Similarity is a Python service beside the stack on the team machine, Punnapat's choice. `scoreSimilarity` becomes an HTTP client that POSTs JSON to it.
-- The request's exact fields are still to be agreed with him. Until they are, `SimilarityInput` in `lib/analysis/contracts.ts` stands, and a change to it changes this record too.
+- The request's exact fields were agreed on 2026-10-05, below. A change to `SimilarityInput` in `lib/analysis/contracts.ts` changes this record too.
 - His component works on one array per rep of shape (15, 3, T): 15 joints, x, y, z, and the rep's frames. His service cuts these from the keypoint file's `frames` and each attempt's `frame_start` and `frame_end`, so the app writes no `.npy` files.
+
+## Decided 2026-10-05
+
+- Punnapat agreed the request layout of SeniorProject's `scratch/export_similarity.py`, whose sample files of the exam sitting he received first (format note: `scratch_output/similarity_export/README.md` there). The web request matches it:
+  `{ exercise_key, source, side, totals, attempts: [{ attempt_no, outcome, rep_number, frame_start, frame_end, violations, side }], landmarks: { schema_version, joints, fields, fps, frames: [{ t, state, event, attempt, rep, points }] } }`.
+- `source` is the set's id. `totals` are the set's. Top-level `side` is the workout's chosen arm, null when the exercise has no choice. Each attempt's `side` is the engine's `active_side` from the stored report, its `violations` are rule names, and `rep_number` is null for an abandoned attempt.
+- `landmarks` is the stored keypoint file plus two fields per frame, `attempt` and `rep`: the attempt and rep the frame is inside, from `frame_start..frame_end` inclusive, null outside, and `rep` null inside an abandoned attempt (`labelFrames` in `lib/set.ts`). The file in storage is unchanged.
+- Two fields of the sample are not sent, by Vern's choice or for now. `frames[].rep_count` is left out: it repeats what `attempt` and `rep` say, and the format note itself says to cut reps by those. `landmarks.frame_size` waits for the curl update that makes the frame size an engine input; it then goes into the keypoint file (schema version 2, ADR-0005) and the request. Until then a reader of the sample files must treat both as optional.
 
 ## Decided 2026-09-30
 

@@ -187,12 +187,11 @@ Compares the user's motion with the expert's and returns six numbers per rep: `o
 `head_neck`, `back_core`, `hips_pelvis`, `knees`, `ankles_feet` (REQUIREMENTS section 7).
 
 Punnapat writes it in Python as a service the app calls with JSON over HTTP (ADR-0007,
-2026-09-29). The exact fields are still to be agreed; open questions for him:
+2026-09-29). The request is the layout he agreed on 2026-10-05, the one of SeniorProject's
+`scratch/export_similarity.py`, so a reader written for those sample files reads the app's
+request, provided it treats `frames[].rep_count` and `landmarks.frame_size` as optional:
+the app sends neither yet (ADR-0007, 2026-10-05). Still open with him:
 
-- Which 15 joints, by MediaPipe index. They must cover the head and neck and the ankles
-  and feet, since those are regions of the output.
-- Image-normalised x, y, z (fields 0 to 2) or MediaPipe's world coordinates in metres
-  (fields 3 to 5).
 - Whether an attempt's frame range, from leaving Idle to returning to it, is trimmed
   enough or needs more trimming.
 - One expert rep per exercise, since `expert_motions` holds one `motion_data` each.
@@ -238,15 +237,23 @@ A server-only setting like that goes in `.env.local` and `.env.example`, without
   | `lunge` | `lunge` |
   | `bicep-curl` | `dumbbell_biceps_curls` |
 
-- `landmarks`: the set's keypoint file as stored (ADR-0005), already decompressed.
-  `joints` is the 33 landmark names in MediaPipe's order, `fields` is
-  `["x", "y", "z", "x_3d", "y_3d", "z_3d", "score"]`, and `fps` is the rate the device
-  managed, so it differs between sets. Each entry in `frames` has `t` (milliseconds since the recording
-  started), `state`, `event`, and `points`, one flat row of 231 numbers: field `f` of
-  joint `j` is `points[j * 7 + f]`. Not mirrored.
-- `attempts`: `attempt_no`, `outcome` (`correct`, `incorrect`, or `abandoned`), and
-  `frame_start` and `frame_end`, both inclusive indexes into `frames`. Both are null when
-  a low-confidence pause swallowed the attempt's events.
+- `source`: the set's id, for logs.
+- `side`: the workout's chosen arm, `left` or `right`, for the curl; null for the other
+  exercises.
+- `totals`: the set's `attempts`, `completed_reps`, `correct_reps`, `abandoned_attempts`.
+- `attempts`, in order: `attempt_no`, `outcome` (`correct`, `incorrect`, or `abandoned`),
+  `rep_number` (null for an abandoned attempt), `frame_start` and `frame_end`, both
+  inclusive indexes into `landmarks.frames` and both null when a low-confidence pause
+  swallowed the attempt's events, `violations` (the rule names that fired), and `side`
+  (the side the engine judged, its `active_side`, or null).
+- `landmarks`: the set's keypoint file as stored (ADR-0005), already decompressed, with
+  two fields added to each frame. `joints` is the 33 landmark names in MediaPipe's order,
+  `fields` is `["x", "y", "z", "x_3d", "y_3d", "z_3d", "score"]`, and `fps` is the rate
+  the device managed, so it differs between sets. Each entry in `frames` has `t`
+  (milliseconds since the recording started), `state`, `event`, `attempt` and `rep` (the
+  attempt and rep number the frame is inside; null between attempts, and `rep` null inside
+  an abandoned attempt; cut a rep's sequence by these), and `points`, one flat row of 231
+  numbers: field `f` of joint `j` is `points[j * 7 + f]`. Not mirrored.
 
 ### Output
 
@@ -383,8 +390,8 @@ camera with your whole body in view and hold your arms straight out until the co
 turn as the cue says, then do real reps; a T pose held for about a second ends the set. When the set ends, the set-complete screen shows similarity and
 feedback as they arrive. Supabase Studio at http://localhost:54323 shows the set's row
 (`attempts`, `similarity`, `llm_feedback`) and its two files in the `sets` bucket. The
-keypoint file there, once gunzipped, is exactly the `landmarks` value similarity receives,
-so one real set gives a test fixture for the components that run after it.
+keypoint file there, once gunzipped, is the `landmarks` value similarity receives, less
+the per-frame `attempt` and `rep` the app adds from the set's `attempts`, so one real set gives a test fixture for the components that run after it.
 
 `npm run test:e2e` runs the isolation test. The whole-workout test is skipped until a clip
 of real reps replaces its still camera frame (`e2e/fixtures/README.md`).

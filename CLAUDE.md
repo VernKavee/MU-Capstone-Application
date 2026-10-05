@@ -352,6 +352,15 @@ Decided 2026-10-04 (later), the chosen curl arm, recorded in ADR-0002, 0006 and 
 - An exercise's active side is never guessed from the more-bent elbow when reading saved
   sets: it is in `engine_report` per rep.
 
+Decided 2026-10-05, the similarity request, recorded in ADR-0007 and the 2026-10-05
+session log:
+
+- `SimilarityInput` is the layout Punnapat agreed, SeniorProject's
+  `scratch/export_similarity.py`: `source` (the set id), `side` (the workout's arm or
+  null), `totals`, attempts with `rep_number`, rule-name `violations`, and the engine's
+  `side`, and each keypoint frame labelled with `attempt` and `rep` by `labelFrames`.
+  `rep_count` per frame is not sent (Vern); `frame_size` waits for the curl update.
+
 Still open, outside the build plan:
 
 - The curl's bump at the top: MediaPipe's depth error at 45 degrees moves the elbow toward
@@ -382,8 +391,9 @@ Still open, outside the build plan:
   the first laptop run: evidence and options in `docs/sessions/2026-10-04.md`. Vern's call. `docs/HANDOVER.md` section 1 describes the port.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
-- Similarity is a Python service over JSON (ADR-0007, 2026-09-29); its exact fields are
-  pending with Punnapat, and Python must be installed on the evaluation machine.
+- Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be
+  installed on the evaluation machine. Its request is agreed (above); `frame_size` joins it
+  with the curl update's frame size input.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
   the hosting.
