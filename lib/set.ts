@@ -154,3 +154,15 @@ export function toKeypointFile(frames: KeypointFrame[]): KeypointFile {
     })),
   };
 }
+
+// The similarity request's per-frame labels (ADR-0007): the attempt and rep each frame is
+// inside, from frame_start..frame_end inclusive. Null between attempts; rep is null inside
+// an abandoned attempt.
+export function labelFrames<F>(frames: F[], attempts: Pick<Attempt, "attempt_no" | "rep_number" | "frame_start" | "frame_end">[]): (F & { attempt: number | null; rep: number | null })[] {
+  const labelled = frames.map((f) => ({ ...f, attempt: null as number | null, rep: null as number | null }));
+  for (const a of attempts) {
+    if (a.frame_start === null || a.frame_end === null) continue;
+    for (let n = a.frame_start; n <= a.frame_end && n < labelled.length; n++) Object.assign(labelled[n], { attempt: a.attempt_no, rep: a.rep_number });
+  }
+  return labelled;
+}

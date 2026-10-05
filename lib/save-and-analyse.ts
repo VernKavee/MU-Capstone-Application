@@ -8,9 +8,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { HISTORY_WORKOUTS, type FeedbackInput, type SetSummary } from "./analysis/contracts.ts";
 import { writeFeedback } from "./analysis/feedback.ts";
 import { scoreSimilarity } from "./analysis/similarity.ts";
+import type { Side } from "./engine/rules.ts";
 import type { SessionReport } from "./engine/types.ts";
 import { ruleBasedLogic, type Setup } from "./exercise.ts";
-import { SETS_BUCKET, type Attempt, type KeypointFile, type Similarity, type Totals } from "./set.ts";
+import { labelFrames, SETS_BUCKET, type Attempt, type KeypointFile, type Similarity, type Totals } from "./set.ts";
 import type { Database, Json } from "./supabase/database.types.ts";
 
 type Client = SupabaseClient<Database>;
@@ -116,11 +117,23 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
 
   if (set.keypoints_url && !similarity) {
     try {
-      const landmarks = await readKeypointFile(supabase, set.keypoints_url);
+      const file = await readKeypointFile(supabase, set.keypoints_url);
+      // The engine's side per attempt: completed reps by rep number, abandoned attempts in
+      // order, the same order buildAttempts consumed them in.
+      const report = set.engine_report as unknown as SessionReport;
+      const repSide = new Map(report.reps.map((r) => [r.rep_number, r.active_side]));
+      let abandonedNo = 0;
       const scored = await scoreSimilarity({
         exercise_key: exercise.engine_key,
-        landmarks,
-        attempts: attempts.map(({ attempt_no, frame_start, frame_end, outcome }) => ({ attempt_no, frame_start, frame_end, outcome })),
+        source: set.id,
+        side: workout.side as Side | null,
+        totals: set.totals as Totals,
+        attempts: attempts.map(({ attempt_no, outcome, rep_number, frame_start, frame_end, violations }) => ({
+          attempt_no, outcome, rep_number, frame_start, frame_end,
+          violations: violations.map((v) => v.rule),
+          side: (outcome === "abandoned" ? report.abandoned_attempts[abandonedNo++]?.active_side : repSide.get(rep_number!)) ?? null,
+        })),
+        landmarks: { ...file, frames: labelFrames(file.frames, attempts) },
       });
       const byNo = new Map(scored.attempts.map((a) => [a.attempt_no, a.similarity]));
       attempts = attempts.map((a) => ({ ...a, similarity: byNo.get(a.attempt_no) ?? null }));

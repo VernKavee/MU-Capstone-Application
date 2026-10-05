@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { emptyKeypoints, type SessionReport } from "./engine/types.ts";
 import type { Rule } from "./exercise";
 import type { KeypointFrame } from "./live/session.ts";
-import { afterSet, buildAttempts, hasViolation, toKeypointFile, totalsOf } from "./set.ts";
+import { afterSet, buildAttempts, hasViolation, labelFrames, toKeypointFile, totalsOf } from "./set.ts";
 
 const rules: Rule[] = [
   { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
@@ -77,6 +77,20 @@ test("the keypoint file is one flat row of 231 numbers per frame at capture rate
   assert.equal(file.frames[0].points.length, 33 * 7);
   assert.equal(file.joints.length, 33);
   assert.deepEqual(file.frames[13], { t: 1300, state: "Idle", event: "rep_completed", points: file.frames[13].points });
+});
+
+test("each frame is labelled with the attempt and rep it is inside", () => {
+  const attempts = buildAttempts(frames, report, rules);
+  const labelled = labelFrames(toKeypointFile(frames).frames, attempts);
+  assert.deepEqual(labelled.map((f) => [f.attempt, f.rep]), [
+    [null, null],
+    [1, 1], [1, 1], [1, 1], [1, 1], [1, 1],
+    [2, null], [2, null], [2, null],
+    [3, 2], [3, 2], [3, 2], [3, 2], [3, 2],
+  ]);
+  assert.equal(labelled[1].points.length, 33 * 7, "the stored frame is kept");
+  const noRange = buildAttempts(frames.slice(0, 9), report, rules);
+  assert.deepEqual(labelFrames(frames.slice(0, 9), noRange).map((f) => f.attempt), [null, 1, 1, 1, 1, 1, 2, 2, 2], "an attempt without a frame range labels nothing");
 });
 
 test("one repair set follows an initial set with any violation, then the rest or the end", () => {
