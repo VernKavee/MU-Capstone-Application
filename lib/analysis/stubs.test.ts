@@ -18,8 +18,9 @@ test("similarity: six numbers per completed attempt, none for abandoned", async 
   let seed = 1;
   const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const out = await scoreSimilarity(
-    { exercise_key: "squat", landmarks: { schema_version: 1, joints: [], fields: ["x", "y", "z", "x_3d", "y_3d", "z_3d", "score"], fps: 30, frames: [] },
-      attempts: [attempt(1, "correct"), attempt(2, "abandoned"), attempt(3, "incorrect")] },
+    { exercise_key: "squat", source: "set", side: null, totals: { attempts: 3, completed_reps: 2, correct_reps: 1, abandoned_attempts: 1 },
+      landmarks: { schema_version: 1, joints: [], fields: ["x", "y", "z", "x_3d", "y_3d", "z_3d", "score"], fps: 30, frames: [] },
+      attempts: [attempt(1, "correct"), attempt(2, "abandoned"), attempt(3, "incorrect")].map((a) => ({ ...a, violations: a.violations.map((v) => v.rule), side: null })) },
     random,
   );
   assert.deepEqual(out.attempts.map((a) => a.attempt_no), [1, 3]);
