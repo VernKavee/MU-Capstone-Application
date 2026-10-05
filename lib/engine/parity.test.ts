@@ -18,7 +18,7 @@ import { gunzipSync } from "node:zlib";
 import type { RuleBasedLogic } from "../exercise";
 import { createEngine, ENGINE_VERSION } from "./engine.ts";
 import type { Side } from "./rules.ts";
-import { LANDMARK_NAMES, type FrameResult, type Keypoint, type Keypoints } from "./types.ts";
+import { LANDMARK_NAMES, type FrameResult, type FrameSize, type Keypoint, type Keypoints } from "./types.ts";
 
 type GoldenFrame = {
   state: string;
@@ -36,7 +36,9 @@ type Recording = {
   armed: boolean;
   side?: Side | null; // the arm the user chose; absent before 2026-10-04's goldens
   source: string;
-  keypoints: { joints: string[]; fields: string[]; frames: { t: number; points: number[] }[] };
+  // frame_size: the video's width and height, on recordings with image x, y (the curl's,
+  // since 858b203), so the curl elbow rebuild runs (WEB_APP_PORT.md section 9b).
+  keypoints: { joints: string[]; fields: string[]; frame_size?: FrameSize; frames: { t: number; points: number[] }[] };
   golden: { frames: GoldenFrame[]; report: Record<string, unknown> };
 };
 
@@ -117,7 +119,7 @@ function replay(file: string) {
   const engine = createEngine(logic, rec.engine_key, { placement: false, ready: false, armed: rec.armed, side: rec.side ?? null });
   let prev: FrameResult | null = null;
   rec.keypoints.frames.forEach((row, i) => {
-    const r = engine.process(keypoints(rec, row.points), row.t);
+    const r = engine.process(keypoints(rec, row.points), row.t, rec.keypoints.frame_size ?? null);
     const diff = same(frameView(r), rec.golden.frames[i], ruleNames, `${path.basename(file)} frame ${i}`);
     assert.equal(diff, null, diff ?? "");
 
