@@ -1,11 +1,13 @@
 // Run with `npm run test:unit`. Hand-checked geometry, plus four values printed by the
-// research repo's angles.py at 2695984 for the same arbitrary points.
+// research repo's angles.py at 2695984 for the same arbitrary points. The floor bar cases
+// are ported from tests/test_exercise_session.py (test_floor_bar_*).
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   bodyYaw,
   calculateAngle,
   extractAngles,
+  FloorBar,
   hasWorld3d,
   horizontalOffsetAlongAxis,
   keypointBbox,
@@ -14,7 +16,7 @@ import {
   trunkTiltFromVertical,
   type Vec,
 } from "./angles.ts";
-import { emptyKeypoints, type LandmarkName } from "./types.ts";
+import { emptyKeypoints, type Keypoints, type LandmarkName } from "./types.ts";
 
 const close = (actual: number | null, expected: number, tol = 1e-9) =>
   assert.ok(actual !== null && Math.abs(actual - expected) <= tol, `${actual} != ${expected}`);
@@ -68,4 +70,35 @@ test("world 3D, bounding box, yaw, and the extracted keys", () => {
   ]);
   kp.left_knee = { ...kp.left_hip }; // a zero-length thigh: thigh_split is absent, not 0
   assert.equal("thigh_split" in extractAngles(kp), false);
+});
+
+// Both arms: shoulders at shoulderY, wrists at wristY (world y points down), each elbow
+// bent out sideways so both segments stay 0.5 long: arm length 1 at any depth.
+function arms(shoulderY: number, wristY: number, rightWristScore = 1, rightWristY: number | null = null): Keypoints {
+  const kp = emptyKeypoints();
+  const put = (name: LandmarkName, y: number, x: number, z = 0, score = 1) => (kp[name] = { x: 0, y: 0, z: 0, x_3d: x, y_3d: y, z_3d: z, score });
+  const half = (wristY - shoulderY) / 2;
+  for (const [side, x] of [["left", -0.2], ["right", 0.2]] as const) {
+    put(`${side}_shoulder`, shoulderY, x);
+    put(`${side}_elbow`, shoulderY + half, x, Math.sqrt(0.25 - half ** 2));
+    const right = side === "right";
+    put(`${side}_wrist`, right && rightWristY !== null ? rightWristY : wristY, x, 0, right ? rightWristScore : 1);
+  }
+  return kp;
+}
+
+test("floor bar: mid-shoulder height above the wrists, in arm lengths", () => {
+  close(new FloorBar().update(arms(0, 1)), 1);
+  close(new FloorBar().update(arms(0.6, 1)), 0.4);
+});
+
+test("floor bar: a hidden wrist is held where the hands were last seen", () => {
+  const bar = new FloorBar();
+  bar.update(arms(0, 1));
+  close(bar.update(arms(0.6, 1, 0.1, 0.7)), 0.4);
+  close(new FloorBar().update(arms(0.6, 1, 0.1, 0.7)), 0.25); // no held vector: the guess as read
+});
+
+test("floor bar: zeroed 3D gives no reading", () => {
+  assert.equal(new FloorBar().update(emptyKeypoints()), null);
 });

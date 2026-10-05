@@ -1,45 +1,14 @@
-// Run with `npm run test:unit`. The floor bar cases are ported from the research repo's
-// tests/test_exercise_session.py (test_floor_bar_*); the evaluator cases pin the
-// orderings of WEB_APP_PORT.md section 10 and the rule-named values of section 8.
+// Run with `npm run test:unit`. The evaluator cases pin the orderings of
+// WEB_APP_PORT.md section 10 and the rule-named values of section 8; the floor bar's
+// own cases are in angles.test.ts.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Rule } from "../exercise";
-import { ExerciseSession, FloorBar, FormEvaluator } from "./evaluator.ts";
+import { ExerciseSession, FormEvaluator } from "./evaluator.ts";
 import { accumulatorFor } from "./rules.ts";
 import { emptyKeypoints, type Keypoints, type LandmarkName } from "./types.ts";
 
-const close = (actual: number | null | undefined, expected: number) =>
-  assert.ok(typeof actual === "number" && Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
-
-// Both arms: shoulders at shoulderY, wrists at wristY (world y points down), each elbow
-// bent out sideways so both segments stay 0.5 long: arm length 1 at any depth.
-function arms(shoulderY: number, wristY: number, rightWristScore = 1, rightWristY: number | null = null): Keypoints {
-  const kp = emptyKeypoints();
-  const put = (name: LandmarkName, y: number, x: number, z = 0, score = 1) => (kp[name] = { x: 0, y: 0, z: 0, x_3d: x, y_3d: y, z_3d: z, score });
-  const half = (wristY - shoulderY) / 2;
-  for (const [side, x] of [["left", -0.2], ["right", 0.2]] as const) {
-    put(`${side}_shoulder`, shoulderY, x);
-    put(`${side}_elbow`, shoulderY + half, x, Math.sqrt(0.25 - half ** 2));
-    const right = side === "right";
-    put(`${side}_wrist`, right && rightWristY !== null ? rightWristY : wristY, x, 0, right ? rightWristScore : 1);
-  }
-  return kp;
-}
-
-test("floor bar: mid-shoulder height above the wrists, in arm lengths", () => {
-  close(new FloorBar().update(arms(0, 1)), 1);
-  close(new FloorBar().update(arms(0.6, 1)), 0.4);
-});
-
-test("floor bar: a hidden wrist is held where the hands were last seen", () => {
-  const bar = new FloorBar();
-  bar.update(arms(0, 1));
-  close(bar.update(arms(0.6, 1, 0.1, 0.7)), 0.4);
-  close(new FloorBar().update(arms(0.6, 1, 0.1, 0.7)), 0.25); // no held vector: the guess as read
-});
-
-test("floor bar: zeroed 3D gives no reading, and the session reset clears the held wrist", () => {
-  assert.equal(new FloorBar().update(emptyKeypoints()), null);
+test("floor bar: the session reset clears the held wrist", () => {
   const session = new ExerciseSession(
     {
       source: "test",
@@ -55,7 +24,9 @@ test("floor bar: zeroed 3D gives no reading, and the session reset clears the he
     },
     "pushup",
   );
-  session.floorBar!.update(arms(0, 1));
+  const kp = emptyKeypoints();
+  kp.left_wrist.score = kp.right_wrist.score = 1;
+  session.floorBar!.update(kp);
   assert.notEqual(session.floorBar!.wristVec, null);
   session.reset();
   assert.equal(session.floorBar!.wristVec, null);

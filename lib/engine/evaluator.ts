@@ -1,10 +1,10 @@
 // Port of src/rule_based/form_evaluator.py and exercise_session.py (WEB_APP_PORT.md
-// sections 4, 8, 9a, 10): streaks, show one and record all, the attempt records, the
-// push-up floor bar, and the session that steps the state machine and the rules
-// together on one frame.
+// sections 4, 8, 9a, 10): streaks, show one and record all, the attempt records, and
+// the session that steps the state machine and the rules together on one frame. The
+// push-up floor bar the session adds to the angles is in angles.ts.
 
 import type { Rule, RuleBasedLogic } from "../exercise";
-import { dist, hasWorld3d, trunkTiltFromVertical, world, type Angles } from "./angles.ts";
+import { dist, FloorBar, hasWorld3d, trunkTiltFromVertical, type Angles } from "./angles.ts";
 import { createFsm, type BaseFsm } from "./fsm.ts";
 import { accumulatorFor, CHECKS, farSideAtStrongProfile, point3d, type Accumulator, type Side, type Stats } from "./rules.ts";
 import { LANDMARK_NAMES, type AbandonedRecord, type Keypoints, type RepEvent, type RepRecord, type RepStats, type RuleRef } from "./types.ts";
@@ -163,36 +163,6 @@ export function trunkTiltDeg(kp: Keypoints): number | null {
     tilts.push(trunkTiltFromVertical(shoulder, hip));
   }
   return tilts.length ? Math.min(...tilts) : null;
-}
-
-const SEEN_SCORE = 0.5;
-
-// Push-up depth: mean wrist height above the mid-shoulder, in arm lengths (section 9a).
-// A hidden wrist is held where the last left->right wrist vector puts it. Reads the raw
-// scores, not the far-side-masked copy the state machine gets.
-export class FloorBar {
-  wristVec: [number, number, number] | null = null;
-
-  reset() {
-    this.wristVec = null;
-  }
-
-  update(kp: Keypoints): number | null {
-    let lw = world(kp, "left_wrist");
-    let rw = world(kp, "right_wrist");
-    const leftSeen = kp.left_wrist.score >= SEEN_SCORE;
-    const rightSeen = kp.right_wrist.score >= SEEN_SCORE;
-    const v = this.wristVec;
-    if (leftSeen && rightSeen) this.wristVec = [rw[0] - lw[0], rw[1] - lw[1], rw[2] - lw[2]];
-    else if (v && leftSeen) rw = [lw[0] + v[0], lw[1] + v[1], lw[2] + v[2]];
-    else if (v && rightSeen) lw = [rw[0] - v[0], rw[1] - v[1], rw[2] - v[2]];
-    const side = kp.right_elbow.score > kp.left_elbow.score ? "right" : "left"; // a tie goes to left
-    const arm =
-      dist(world(kp, `${side}_shoulder`), world(kp, `${side}_elbow`)) + dist(world(kp, `${side}_elbow`), world(kp, `${side}_wrist`));
-    if (arm <= 1e-6) return null;
-    const shoulderY = (kp.left_shoulder.y_3d + kp.right_shoulder.y_3d) / 2;
-    return ((lw[1] + rw[1]) / 2 - shoulderY) / arm;
-  }
 }
 
 // ExerciseSession: one step of both layers. The caller guarantees world 3D.

@@ -1,5 +1,6 @@
 // Port of the research repo's src/kinematics_engine/angles.py, 3D world branch only
-// (WEB_APP_PORT.md section 4). Norms are sqrt(x*x + y*y + z*z), never Math.hypot, and
+// (WEB_APP_PORT.md section 4), and the measurements exercise_session.py reads from the
+// keypoints: the push-up floor bar (section 9a). Norms are sqrt(x*x + y*y + z*z), never Math.hypot, and
 // every epsilon sits where the Python puts it (section 10), so numbers match to 1e-9.
 
 import type { Keypoints, LandmarkName } from "./types.ts";
@@ -119,4 +120,34 @@ export function extractAngles(kp: Keypoints): Record<string, number> {
   const split = thighSplit(p("left_hip"), p("left_knee"), p("right_hip"), p("right_knee"));
   if (split !== null) angles.thigh_split = split;
   return angles;
+}
+
+const SEEN_SCORE = 0.5;
+
+// Push-up depth: mean wrist height above the mid-shoulder, in arm lengths (section 9a).
+// A hidden wrist is held where the last left->right wrist vector puts it. Reads the raw
+// scores, not the far-side-masked copy the state machine gets.
+export class FloorBar {
+  wristVec: [number, number, number] | null = null;
+
+  reset() {
+    this.wristVec = null;
+  }
+
+  update(kp: Keypoints): number | null {
+    let lw = world(kp, "left_wrist");
+    let rw = world(kp, "right_wrist");
+    const leftSeen = kp.left_wrist.score >= SEEN_SCORE;
+    const rightSeen = kp.right_wrist.score >= SEEN_SCORE;
+    const v = this.wristVec;
+    if (leftSeen && rightSeen) this.wristVec = [rw[0] - lw[0], rw[1] - lw[1], rw[2] - lw[2]];
+    else if (v && leftSeen) rw = [lw[0] + v[0], lw[1] + v[1], lw[2] + v[2]];
+    else if (v && rightSeen) lw = [rw[0] - v[0], rw[1] - v[1], rw[2] - v[2]];
+    const side = kp.right_elbow.score > kp.left_elbow.score ? "right" : "left"; // a tie goes to left
+    const arm =
+      dist(world(kp, `${side}_shoulder`), world(kp, `${side}_elbow`)) + dist(world(kp, `${side}_elbow`), world(kp, `${side}_wrist`));
+    if (arm <= 1e-6) return null;
+    const shoulderY = (kp.left_shoulder.y_3d + kp.right_shoulder.y_3d) / 2;
+    return ((lw[1] + rw[1]) / 2 - shoulderY) / arm;
+  }
 }
