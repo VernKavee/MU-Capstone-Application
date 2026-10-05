@@ -1,14 +1,15 @@
 // Port of src/pipeline/frame_processor.py and session_report.py: the Engine of
 // types.ts (ADR-0002). Per frame (WEB_APP_PORT.md section 3): placement, the ready gate,
-// the confidence guard, angles, one step of the state machine and the rules, and the
+// the confidence guard, angles (the curl's elbow rebuilt from the picture when the frame
+// size is given, section 9b), one step of the state machine and the rules, and the
 // one-second warning hold. Configured from the row, chosen by engine key.
 
 import type { RuleBasedLogic } from "../exercise";
-import { extractAngles, hasWorld3d } from "./angles.ts";
+import { CurlArmRebuild, extractAngles, hasWorld3d } from "./angles.ts";
 import { ExerciseSession } from "./evaluator.ts";
 import { COUNTDOWN_S, PlacementGuide, placementStatus, ReadyPoseGate, type PlacementStatus, type ReadyStatus } from "./gates.ts";
 import { MIN_LM_SCORE, type Side } from "./rules.ts";
-import type { Engine, FrameResult, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
+import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
 export const ENGINE_VERSION = "858b203";
@@ -31,6 +32,7 @@ export function createEngine(
   const session = new ExerciseSession(logic, engineKey, side);
   const guide = placement ? new PlacementGuide(logic.placement, side) : null;
   const gate = ready ? new ReadyPoseGate() : null;
+  const rebuild = engineKey === "dumbbell_biceps_curls" ? new CurlArmRebuild() : null;
   let lastAngles: Record<string, number> = {};
   let held: RuleRef[] = [];
   let heldUntilMs: number | null = null;
@@ -39,6 +41,7 @@ export function createEngine(
     session.reset();
     guide?.reset();
     gate?.reset();
+    rebuild?.reset();
     lastAngles = {};
     held = [];
     heldUntilMs = null;
@@ -83,7 +86,7 @@ export function createEngine(
     };
   }
 
-  function process(kp: Keypoints, timestampMs: number): FrameResult {
+  function process(kp: Keypoints, timestampMs: number, frameSize: FrameSize | null = null): FrameResult {
     // Placement is not ticked while the ready gate waits for the T pose facing the
     // camera; it reports guiding with no cues. From the countdown on it runs every frame.
     let place: PlacementStatus;
@@ -103,7 +106,8 @@ export function createEngine(
     const low = lowConfidence(kp) || !hasWorld3d(kp);
     if (!counting || low) return result(kp, timestampMs, place, readyStatus, low);
 
-    const angles = extractAngles(kp);
+    const extracted = extractAngles(kp);
+    const angles = rebuild && frameSize ? rebuild.update(kp, extracted, frameSize) : extracted;
     const step = session.update(angles, kp);
     const warningsAll = session.evaluator.lastViolations();
     lastAngles = angles;

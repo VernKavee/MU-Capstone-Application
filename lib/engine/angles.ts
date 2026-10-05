@@ -1,9 +1,11 @@
 // Port of the research repo's src/kinematics_engine/angles.py, 3D world branch only
 // (WEB_APP_PORT.md section 4), and the measurements exercise_session.py reads from the
-// keypoints: the push-up floor bar (section 9a). Norms are sqrt(x*x + y*y + z*z), never Math.hypot, and
-// every epsilon sits where the Python puts it (section 10), so numbers match to 1e-9.
+// keypoints: the push-up floor bar (section 9a) and the curl elbow rebuild (section 9b).
+// Norms are sqrt(x*x + y*y + z*z), never Math.hypot, except in the rebuild, whose Python
+// uses math.hypot. Every epsilon sits where the Python puts it (section 10), so numbers
+// match to 1e-9.
 
-import type { Keypoints, LandmarkName } from "./types.ts";
+import type { FrameSize, Keypoints, LandmarkName } from "./types.ts";
 
 export type Vec = [number, number, number];
 // A frame's angles. Every key the engine computes is a number; only the push-up's
@@ -150,4 +152,85 @@ export class FloorBar {
     const shoulderY = (kp.left_shoulder.y_3d + kp.right_shoulder.y_3d) / 2;
     return ((lw[1] + rw[1]) / 2 - shoulderY) / arm;
   }
+}
+
+// The curl elbow near the top of the curl, re-read from the picture (section 9b, Python
+// CurlArmRebuild in exercise_session.py). MediaPipe's world depth under-folds the elbow
+// there, its image x, y do not: the upper arm keeps MediaPipe's depth clipped to what its
+// straight-arm image length allows, the forearm gets none. Blended in by the raw angle, so
+// the straight-arm end reads as before. Raw values stay as `*_raw` keys. Calibration is
+// in pixels, so a new frame size starts it over (the Python fixes the size at start).
+export class CurlArmRebuild {
+  static BLEND_RAW = 130;
+  static BLEND_REBUILT = 110;
+  static STRAIGHT_MIN = 140; // calibrate on frames where the raw elbow reads this straight
+  static CALIB_SCORE = 0.5;
+  static CALIB_SAMPLES = 150;
+  static CALIB_MIN = 10;
+
+  size: FrameSize | null = null;
+  calib = { left: { lengths: [] as number[], scales: [] as number[] }, right: { lengths: [] as number[], scales: [] as number[] } };
+
+  reset() {
+    this.size = null;
+    this.calib = { left: { lengths: [], scales: [] }, right: { lengths: [], scales: [] } };
+  }
+
+  update(kp: Keypoints, angles: Record<string, number>, size: FrameSize): Record<string, number> {
+    if (!this.size || this.size[0] !== size[0] || this.size[1] !== size[1]) {
+      this.reset();
+      this.size = size;
+    }
+    const [width, height] = size;
+    const px = (j: LandmarkName): [number, number] => [kp[j].x * width, kp[j].y * height];
+    const C = CurlArmRebuild;
+    const out = { ...angles };
+    for (const side of ["left", "right"] as const) {
+      const [S, E, W, H] = (["shoulder", "elbow", "wrist", "hip"] as const).map((j) => `${side}_${j}` as LandmarkName);
+      const raw = angles[`${side}_elbow`];
+      const rawSh = angles[`${side}_shoulder_angle`];
+      if (raw === undefined) continue;
+      out[`${side}_elbow_raw`] = raw;
+      out[`${side}_shoulder_angle_raw`] = rawSh;
+      const score = Math.min(kp[S].score, kp[E].score, kp[W].score);
+      if (score < 0.3) continue;
+      const [sx, sy] = px(S);
+      const [ex, ey] = px(E);
+      const [wx, wy] = px(W);
+      const u = [ex - sx, ey - sy];
+      const f = [wx - ex, wy - ey];
+      const lu = Math.hypot(u[0], u[1]);
+      const worldU = Math.hypot(kp[E].x_3d - kp[S].x_3d, kp[E].y_3d - kp[S].y_3d, kp[E].z_3d - kp[S].z_3d);
+      const { lengths, scales } = this.calib[side];
+      if (raw >= C.STRAIGHT_MIN && score >= C.CALIB_SCORE && lu > 0 && worldU > 0) {
+        lengths.push(lu);
+        scales.push(worldU / lu);
+        if (lengths.length > C.CALIB_SAMPLES) lengths.shift();
+        if (scales.length > C.CALIB_SAMPLES) scales.shift();
+      }
+      const w = Math.min(1, Math.max(0, (C.BLEND_RAW - raw) / (C.BLEND_RAW - C.BLEND_REBUILT)));
+      if (w === 0 || lengths.length < C.CALIB_MIN) continue;
+      const ref = [...lengths].sort((a, b) => a - b)[Math.trunc(0.9 * (lengths.length - 1))]; // 90th percentile
+      const mPerPx = [...scales].sort((a, b) => a - b)[Math.floor(scales.length / 2)];
+      const bound = Math.sqrt(Math.max(ref * ref - lu * lu, 0));
+      const dz = Math.max(-bound, Math.min(bound, (kp[E].z_3d - kp[S].z_3d) / mPerPx));
+      const rebuilt = vectorAngle([-u[0], -u[1], -dz], [f[0], f[1], 0]);
+      if (rebuilt === null) continue;
+      out[`${side}_elbow`] = w * rebuilt + (1 - w) * raw;
+      if (rawSh !== undefined && kp[H].score >= 0.3) {
+        const [hx, hy] = px(H);
+        const sh = vectorAngle([u[0], u[1], dz], [hx - sx, hy - sy, (kp[H].z_3d - kp[S].z_3d) / mPerPx]);
+        if (sh !== null) out[`${side}_shoulder_angle`] = w * sh + (1 - w) * rawSh;
+      }
+    }
+    return out;
+  }
+}
+
+// The angle between u and v in degrees, or null when either has no length.
+function vectorAngle(u: Vec, v: Vec): number | null {
+  const nu = Math.hypot(...u);
+  const nv = Math.hypot(...v);
+  if (nu < 1e-9 || nv < 1e-9) return null;
+  return Math.acos(clamp((u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv), -1, 1)) * DEG;
 }

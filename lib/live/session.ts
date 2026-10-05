@@ -149,7 +149,8 @@ export class LiveSession {
   // landmark stream, can call it directly. Frames after the set has ended are ignored.
   feed(keypoints: Keypoints, now: number) {
     if (this.ended) return;
-    const frame = this.opts.engine.process(keypoints, now);
+    const { videoWidth, videoHeight } = this.opts.video;
+    const frame = this.opts.engine.process(keypoints, now, videoWidth && videoHeight ? [videoWidth, videoHeight] : null);
     this.draw(frame);
     this.capture(frame, now);
     this.announce(frame);

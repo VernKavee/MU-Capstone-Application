@@ -80,8 +80,13 @@ export type SessionReport = {
   abandoned_attempts: AbandonedRecord[];
 };
 
+// The width and height in pixels of the video MediaPipe saw (videoWidth, videoHeight).
+export type FrameSize = [width: number, height: number];
+
 export interface Engine {
-  process(keypoints: Keypoints, timestampMs: number): FrameResult;
+  // frameSize lets the curl re-read its elbow from the picture (WEB_APP_PORT.md section
+  // 9b); without it the raw angle is judged.
+  process(keypoints: Keypoints, timestampMs: number, frameSize?: FrameSize | null): FrameResult;
   getSessionReport(): SessionReport;
   reset(): void;
 }
