@@ -78,6 +78,16 @@ test("ready gate: the pose is held 8 frames, and a break restarts the hold", () 
   assert.equal(gate.update(standing("t"), 800, true).phase, "countdown");
 });
 
+test("ready gate: the pose counts only while framed", () => {
+  const gate = new ReadyPoseGate();
+  let status = gate.update(standing("t"), 0, false, false);
+  for (let i = 1; i < 24; i++) status = gate.update(standing("t"), i * 50, false, false);
+  assert.deepEqual([status.phase, status.pose], ["waiting", "t_pose"]);
+  hold(gate, standing("t"), 7, 1200);
+  gate.update(standing("t"), 1600, false, false); // a frame out of frame breaks the hold
+  assert.equal(hold(gate, standing("t"), 8, 1650).phase, "countdown");
+});
+
 test("ready gate: the countdown runs on the wall clock, survives a dropped pose, and holds at 0 until placed", () => {
   const gate = new ReadyPoseGate();
   const start = hold(gate, standing("t"), 8, 0);
@@ -237,6 +247,17 @@ test("engine: the T pose facing the camera starts the countdown, which holds at 
   assert.equal(r.placement_cues[0], "Turn to your right");
   for (let i = 0; i < 8; i++) r = step(turned(45)); // placed on the eighth frame: the set starts
   assert.deepEqual([r.placement_phase, r.ready_phase, r.armed], ["placed", "active", true]);
+});
+
+test("engine: a T pose from too far, or off centre, does not start the countdown", () => {
+  const { step } = clocked();
+  let r = step(turned(0, "t", 0.5, 0.4));
+  for (let i = 1; i < 40; i++) r = step(turned(0, "t", 0.5, 0.4)); // a third of the frame tall
+  assert.deepEqual([r.ready_phase, r.placement_phase, r.placement_cues], ["waiting", "guiding", ["Move closer to the camera"]]);
+  for (let i = 0; i < 40; i++) r = step(turned(0, "t", 0.8));
+  assert.deepEqual([r.ready_phase, r.placement_ok, r.placement_cues], ["waiting", false, ["Move right to center yourself in frame"]]);
+  for (let i = 0; i < 8; i++) r = step(turned(0, "t")); // framed: starts on the eighth frame
+  assert.equal(r.ready_phase, "countdown");
 });
 
 test("engine: placed early still waits for the countdown", () => {

@@ -179,9 +179,9 @@ export function LiveScreen({ exercise, setup }: Props) {
   const frame = snap?.frame ?? null;
   const capture = snap?.status === "ended" ? snap.capture : null;
   const entry = capture ? entries.find((e) => e.capture === capture) : undefined;
-  // The ready gate leads: the T pose facing the camera, then placement during the
-  // countdown, which holds at 0 until placed. Placement reports guiding, with no cues,
-  // while the gate waits for the T pose.
+  // The ready gate leads: the T pose facing the camera, framed, then placement during the
+  // countdown, which holds at 0 until placed. While the gate waits for the T pose,
+  // placement reports guiding with the stand check's cues (distance, framing, centring).
   const phase = frame?.ready_phase ?? "starting";
   const turnCue = phase === "countdown" && frame?.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
   const warning = frame?.warning_display[0] ?? null;
@@ -296,9 +296,11 @@ function centreText(phase: string, frame: Snapshot["frame"]): string | null {
     case "starting":
       return "Starting the camera and loading the pose model";
     case "waiting":
-      return frame?.ready_pose
-        ? "Hold it"
-        : "Stand facing the camera with your whole body in view, then hold your arms straight out to the sides";
+      // The stand check's cue (distance, framing, centring) leads: the pose counts only once it clears.
+      return (
+        frame?.placement_cues[0] ??
+        (frame?.ready_pose ? "Hold it" : "Stand facing the camera with your whole body in view, then hold your arms straight out to the sides")
+      );
     case "countdown":
       return String(Math.ceil(frame?.countdown_s ?? 0));
     case "active":

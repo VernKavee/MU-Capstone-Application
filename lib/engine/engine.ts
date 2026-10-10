@@ -12,7 +12,7 @@ import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "858b203";
+export const ENGINE_VERSION = "9a377cd";
 
 const WARNING_HOLD_MS = 1000;
 
@@ -88,16 +88,17 @@ export function createEngine(
 
   function process(kp: Keypoints, timestampMs: number, frameSize: FrameSize | null = null): FrameResult {
     // Placement is not ticked while the ready gate waits for the T pose facing the
-    // camera; it reports guiding with no cues. From the countdown on it runs every frame.
+    // camera; its stand check (framing, distance, centring) runs instead, and the pose
+    // counts only while that passes. From the countdown on it runs every frame.
     let place: PlacementStatus;
-    if (gate && gate.phase === "waiting") place = guide ? placementStatus(guide.phase, false) : placementStatus("disabled", true);
+    if (gate && gate.phase === "waiting") place = guide ? guide.standCheck(kp) : placementStatus("disabled", true);
     else place = guide ? guide.update(kp) : placementStatus("disabled", true);
     const placed = place.phase !== "guiding";
     if (!gate && !placed) return result(kp, timestampMs, place, null, false);
 
     let readyStatus: ReadyStatus | null = null;
     if (gate) {
-      readyStatus = gate.update(kp, timestampMs, placed);
+      readyStatus = gate.update(kp, timestampMs, placed, place.ok);
       if (readyStatus.justActivated) session.fsm.forceArm();
       else if (readyStatus.justEnded) session.fsm.forceDisarm();
     }

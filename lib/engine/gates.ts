@@ -43,7 +43,7 @@ export type ReadyStatus = {
   justEnded: boolean;
 };
 
-// WAITING (a ready pose held 8 frames) -> COUNTDOWN (3 s, then held at 0 until placed)
+// WAITING (a ready pose held 8 frames, framed) -> COUNTDOWN (3 s, then held at 0 until placed)
 // -> ACTIVE -> ENDED (a T pose held 30 frames, after 3 s of the set). ENDED is terminal.
 export class ReadyPoseGate {
   phase: ReadyPhase = "waiting";
@@ -60,7 +60,9 @@ export class ReadyPoseGate {
     this.activeSinceMs = 0;
   }
 
-  update(kp: Keypoints, nowMs: number, placed: boolean): ReadyStatus {
+  // placed: placement's verdict, the countdown holds at 0 without it. framed: its stand
+  // check while waiting, the ready pose counts only with it. Both true without placement.
+  update(kp: Keypoints, nowMs: number, placed: boolean, framed = true): ReadyStatus {
     const pose = detectReadyPose(kp);
     const status = (countdownS: number | null = null, justActivated = false, justEnded = false): ReadyStatus => ({
       phase: this.phase, pose, countdownS, justActivated, justEnded,
@@ -68,7 +70,7 @@ export class ReadyPoseGate {
     const secondsLeft = () => Math.max(0, (this.deadlineMs - nowMs) / 1000);
 
     if (this.phase === "waiting") {
-      if (pose === null) {
+      if (pose === null || !framed) {
         this.holdStreak = 0;
       } else if (++this.holdStreak >= READY_HOLD_FRAMES) {
         this.holdStreak = 0;
@@ -195,10 +197,7 @@ export class PlacementGuide {
     if (yaw !== null && this.targetSign === null) this.targetSign = yaw >= 0 ? 1 : -1;
     const facing = facingCheck(yaw, this.target, this.targetSign, this.nearSign !== null);
     const ok = framing === "ok" && distance === "ok" && centering === "ok" && facing === "ok";
-    const cues = [`framing:${framing}`, `distance:${distance}`, `centering:${centering}`, `facing:${facing}`]
-      .map((key) => CUE[key])
-      .filter((text): text is string => text !== undefined);
-    if (!cues.length && !ok) cues.push(CUE_FALLBACK);
+    const cues = cuesOf(ok, `framing:${framing}`, `distance:${distance}`, `centering:${centering}`, `facing:${facing}`);
     const status = { phase: this.phase, ok, bodyYaw: yaw, targetYaw: this.target.yaw_center, distance, cues };
     if (!ok) {
       this.holdStreak = 0;
@@ -208,4 +207,21 @@ export class PlacementGuide {
     }
     return status;
   }
+
+  // Framing, distance, and centring only, while the ready gate waits for the T pose: the
+  // pose counts only once these pass, so the countdown's hold is left for the turn. Nothing
+  // is held or latched; the phase stays guiding.
+  standCheck(kp: Keypoints): PlacementStatus {
+    const [distance, centering, framing] = framingCheck(keypointBbox(kp, MIN_SCORE));
+    const ok = framing === "ok" && distance === "ok" && centering === "ok";
+    const cues = cuesOf(ok, `framing:${framing}`, `distance:${distance}`, `centering:${centering}`);
+    return { phase: this.phase, ok, bodyYaw: null, targetYaw: null, distance, cues };
+  }
+}
+
+// The cue text of every failed check, in the given order.
+function cuesOf(ok: boolean, ...keys: string[]): string[] {
+  const cues = keys.map((key) => CUE[key]).filter((text): text is string => text !== undefined);
+  if (!cues.length && !ok) cues.push(CUE_FALLBACK);
+  return cues;
 }
