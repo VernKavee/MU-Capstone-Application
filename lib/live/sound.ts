@@ -9,7 +9,11 @@ export const sound = {
     if (typeof AudioContext === "undefined") return;
     ctx ??= new AudioContext();
     void ctx.resume();
-    if ("speechSynthesis" in window) speechSynthesis.getVoices();
+    if (!("speechSynthesis" in window)) return;
+    // iOS Safari speaks nothing until one speak() runs inside a tap; a silent one unlocks it.
+    const silent = new SpeechSynthesisUtterance(" ");
+    silent.volume = 0;
+    speechSynthesis.speak(silent);
   },
 
   setMuted(muted: boolean) {
