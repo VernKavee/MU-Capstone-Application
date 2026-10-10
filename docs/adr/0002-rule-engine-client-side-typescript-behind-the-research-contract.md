@@ -44,7 +44,7 @@ The port follows the research repo's `docs/rule_based/WEB_APP_PORT.md`, made fro
 - The research repo's live recordings have logged `kp3d`, the 3D world landmarks with their scores for 16 joints, since 2026-07-24, and the ankle since 2026-09-19. The consequence above that they hold no landmarks is outdated: the parity harness replays them.
 - The seed is replaced by the export of `scratch/export_web_logic.py` in the migration `rule_logic_2695984`. Every row's `source` names the commit, and `ENGINE_VERSION` equals it.
 - The row gains `state_machine.confidence_joints` (the joints the low-confidence guard needs on one side) and `placement` (`yaw_center`, `yaw_tol`, in the engine's units, not camera degrees). Numbers that define a measurement stay constants in the TypeScript engine; only the bars Vern tunes are in the row.
-- The ready gate runs before placement: a T or A pose held facing the camera starts the countdown, placement is checked during it, and the countdown holds at 0 until the user is placed. A T pose held 30 frames, after 3 s of the set, ends it.
+- The ready gate runs before placement: a T or A pose held facing the camera starts the countdown, placement is checked during it, and the countdown holds at 0 until the user is placed. A T pose held 30 frames, after 3 s of the set, ends it. Since 2026-10-10 the pose counts only once the user is framed (below).
 - `RepRecord` and `AbandonedRecord` carry `active_side`, as the Python emits it, since the report is stored verbatim.
 
 ## Decided 2026-10-04 (later): the user chooses the curl arm
@@ -67,3 +67,12 @@ Made in SeniorProject `858b203` (WEB_APP_PORT.md section 9b) and ported here, at
 - The push-up floor bar moved beside it into `angles.ts` (Vern), no behaviour change.
 - Parity: the fixtures are regenerated at `858b203`; the curl ones carry image x, y and `frame_size`, and fail if the frame size is withheld. All 25 exam recordings match.
 - The keypoint file the app saves does not carry the frame size yet (see ADR-0007, 2026-10-05).
+
+## Decided 2026-10-10: the stand check before the T pose
+
+Made in SeniorProject `9a377cd` and ported here, at Vern's request after the first phone run: he held the T pose too far back, the countdown then waited at 0 on "Move closer to the camera", and when he came forward and turned the set started unnoticed, so his second T pose ended it.
+
+- While the ready gate waits, placement runs `standCheck`: framing, distance (45% to 95% of the frame's height), and centring, never facing, with nothing held or latched. The ready pose counts only while it passes; a frame that fails resets the 8-frame hold. `ReadyPoseGate.update` gains `framed`, true when placement is off.
+- The frame reports the stand check's cues while waiting, so the live screen shows "Move closer to the camera" and the like in place of the T-pose text, and the loop speaks them. The countdown's hold at 0 is left for the turn.
+- Migration `rule_logic_9a377cd`: the export, equal to `858b203`'s but for the source, plus guide step 1 rewritten. `ENGINE_VERSION` is `9a377cd`.
+- Parity runs with both gates off, so the goldens are unchanged; the fixtures are rewritten for the new source. All 25 exam recordings match. The gate order is tested in `gates.test.ts`, beside the Python's tests.

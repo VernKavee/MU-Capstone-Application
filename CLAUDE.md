@@ -74,7 +74,9 @@ Conventions the code follows, because the docs changed since the plan was writte
   `lib/live/session.ts` the frame loop outside React, and
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
   renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
-  the overlay, the recorder, and the keypoint capture.
+  the overlay, the recorder, and the keypoint capture. The overlay canvas draws the camera
+  frame under the skeleton, because iOS Safari drops `object-fit` on the video once
+  MediaRecorder starts; the `<video>` stays under it as the source.
 - The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
   client passed in, `live/actions.ts` wraps it as server actions, `lib/set-job.ts` runs
   save, uploads, and analyse for one set with that API passed in (`live/pipeline.ts`
@@ -325,7 +327,8 @@ Decided at the engine port (2026-10-04), recorded in ADR-0002, 0003, 0006 and th
   export of `scratch/export_web_logic.py` in the latest `rule_logic_<commit>` migration;
   never hand-edit them, re-run the export into a new migration.
 - Gate order: the T pose (or A pose) facing the camera starts the 3 s countdown, placement
-  checks the exercise's angle during it, and the countdown holds at 0 until placed. The
+  checks the exercise's angle during it, and the countdown holds at 0 until placed (since
+  2026-10-10 the pose counts only once the stand check passes, below). The
   live screen drives its centre text from `ready_phase` and shows the turn cue during the
   countdown, hiding the number at 0. A T pose held 30 frames ends the set.
 - The row carries `state_machine.confidence_joints` and `placement` beyond the Phase 2
@@ -366,7 +369,8 @@ session log:
 - Five iPhone curl clips replayed offline through both engines with the gates on matched
   on every frame (`docs/sessions/2026-10-05.md`).
 - Vern's Mac is also used for a corporate internship that forbids VPNs and tunnels, so it
-  never runs Funnel or any other tunnel (ADR-0001).
+  never runs Funnel or any other tunnel (ADR-0001). Superseded 2026-10-10: his manager
+  allowed it.
 
 Decided 2026-10-05, the similarity request, recorded in ADR-0007 and the 2026-10-05
 session log:
@@ -378,6 +382,21 @@ session log:
   `rep_count` per frame is not sent (Vern). `frame_size` in the keypoint file (schema
   version 2) and the request was waiting for the curl update, which is now in; it is not
   done yet (Vern: not now, during the curl update).
+
+Decided 2026-10-10, the first phone run, recorded in ADR-0001, 0002 and the 2026-10-10
+session log:
+
+- Vern's manager allowed tunnels on the Mac. Phone tests use two Cloudflare quick tunnels
+  (`cloudflared tunnel --url`, no account, no domain): the API on 54321 first, then
+  `npm run build` and `npm start` with `NEXT_PUBLIC_SUPABASE_URL` set to its address on
+  the command line, then the app on 3000. New addresses every run; all closed afterwards.
+- SeniorProject `9a377cd`, migration `rule_logic_9a377cd`, `ENGINE_VERSION` `9a377cd`:
+  while the ready gate waits, placement's `standCheck` (framing, distance, centring, never
+  facing) must pass for the T pose to count, and its cue replaces the T-pose text. Guide
+  step 1 says so. Gates-off parity unchanged.
+- The live picture is drawn into the overlay canvas (iOS Safari drops `object-fit` on the
+  video when MediaRecorder starts).
+- Sound respects the phone's silent switch (Vern): no `navigator.audioSession` change.
 
 Still open, outside the build plan:
 
@@ -399,9 +418,11 @@ Still open, outside the build plan:
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
-- A real camera run on a phone and iOS Safari (the laptop run happened in Phase 5). Not
-  through Vern's Mac (no tunnels there): Funnel on another machine, Vern's PC a candidate,
-  or the rehearsal deploy.
+- The phone run: the first, on an iPhone in iOS Safari through quick tunnels on the Mac
+  (2026-10-10), found the shrinking video and the T pose from too far, both fixed; a
+  second iPhone run checks them, sound with silent off, History replay, and which format
+  iOS recorded. Android Chrome is not tested. The frame rate fell from 42-48 fps in set 1
+  to 8-27 fps from set 2 on, already in set 2's countdown; cause unknown, watch it.
 - Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
   skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
   facing the camera first.
@@ -423,8 +444,8 @@ Still open, outside the build plan:
   Supabase's self-hosted Docker Compose with generated secrets, Caddy, and the two Python
   services. `npx supabase start` uses published demo secrets, so it never faces the
   internet with real testers' data; Funnel on a team machine is for supervised sessions.
-  Feedback is a Python service like similarity (ADR-0007). Bitrate cut done; next the
-  phone test, then a rehearsal deploy, then the real one. Not rehearsed.
+  Feedback is a Python service like similarity (ADR-0007). Bitrate cut done; the phone
+  test is under way (above), then a rehearsal deploy, then the real one. Not rehearsed.
 - Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
   is a draft awaiting review.
 - Whether `exercises.name` and `guide_text` should be locale-keyed like rule messages.

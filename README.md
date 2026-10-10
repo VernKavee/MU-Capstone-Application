@@ -64,8 +64,9 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   workout: every set, the repair sets, and the rest between them.
 - The engine seam of ADR-0002 is `lib/engine/types.ts`. The engine is Vern's TypeScript
   port of the research repo's rules and state machines (`lib/engine/engine.ts`, from
-  SeniorProject 2695984, now at 858b203), configured from the row's `rule_based_logic`:
-  the T pose facing the camera starts a countdown, placement checks the exercise's angle
+  SeniorProject 2695984, now at 9a377cd), configured from the row's `rule_based_logic`:
+  standing at the right distance, whole body in frame and centred, the T pose facing the
+  camera starts a countdown, placement checks the exercise's angle
   during it, then real reps are counted and judged from the landmarks. For the curl only
   the chosen arm counts, and placement wants that arm toward the camera. Near the top of
   the curl the elbow is re-read from the picture with the video's frame size, because
@@ -142,7 +143,9 @@ its wasm are fetched from Google's storage and jsdelivr on first use, about 10 M
 | `npx supabase stop` | stop the stack, data kept in the Docker volume |
 
 For the evaluation the same stack runs on a team machine and is reached through
-Tailscale Funnel: the app on port 443 and the Supabase API on 8443 (ADR-0001).
+Tailscale Funnel: the app on port 443 and the Supabase API on 8443 (ADR-0001). Supervised
+phone tests on Vern's Mac use two Cloudflare quick tunnels instead, one for the app and
+one for the API, with the app built against the API's address (ADR-0001, 2026-10-10).
 
 ## Deploying it
 

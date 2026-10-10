@@ -47,7 +47,7 @@ in `live-screen.tsx`, with both gates on and the state machine unarmed until the
 ends. `side` is the arm the user chose on the setup screen, for a row with
 `state_machine.chooses_side` (the curl), else null. The frame loop in `lib/live/session.ts`
 calls `process` with the video's `videoWidth` and `videoHeight` as the frame size. `ENGINE_VERSION`
-is `858b203`, the SeniorProject commit of the latest export (the port was made from
+is `9a377cd`, the SeniorProject commit of the latest export (the port was made from
 `2695984`), and is stored on every set as `engine_version`.
 
 ### Where each number lives
@@ -58,7 +58,7 @@ is `858b203`, the SeniorProject commit of the latest export (the port was made f
   `chooses_side`, and per
   rule the check name, threshold, priority, scope, debounce, message, and highlight
   joints. The rows are the output of `scratch/export_web_logic.py` in the latest
-  `rule_logic_<commit>` migration (`rule_logic_858b203`).
+  `rule_logic_<commit>` migration (`rule_logic_9a377cd`).
 - **The numbers that define a measurement are constants** in the TypeScript files
   (WEB_APP_PORT.md 5.2): confidence bars, the profile ratio, the knee band, the lunge
   bottom window, arming frames, the ready pose angles and holds, the placement box, the
@@ -154,10 +154,11 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
 ### What the engine returns
 
 - **The start**: a T pose (arms out) or an A pose (arms down and away from the body), both
-  arms straight, the whole body at a score of 0.5, held 8 frames facing the camera,
-  starts a 3 second countdown. Placement is not checked while waiting, so it reports
-  `guiding` with no cues. During the countdown it checks the whole body in frame, the
-  height in frame (45% to 95%), centring, and the turn: `body_yaw_deg` must sit in the
+  arms straight, the whole body at a score of 0.5, held 8 frames facing the camera while
+  the stand check passes, starts a 3 second countdown. The stand check (since `9a377cd`)
+  is the whole body in frame, the height in frame (45% to 95%), and centring; while
+  waiting placement reports `guiding` with its cues, such as "Move closer to the camera",
+  and never a turn cue. During the countdown it checks all of them again and the turn: `body_yaw_deg` must sit in the
   row's band (squat, push-up, curl 45, lunge 75), and the cue says "Turn to your left" or
   "Turn to your right", the side picked once from the first reading. The countdown holds
   at 0 until 8 placed frames in a row; then the set is `active` and the state machine is
@@ -403,7 +404,8 @@ npm run dev
 `.env.local` comes from `.env.example` plus the publishable key printed by
 `npx supabase status -o env`. At http://localhost:3000, register, accept the three
 consents, fill in the profile, pick an exercise, and open the camera. Stand back facing the
-camera with your whole body in view and hold your arms straight out until the countdown,
+camera with your whole body in view, where the screen stops asking you to move, and hold
+your arms straight out until the countdown,
 turn as the cue says, then do real reps; a T pose held for about a second ends the set. When the set ends, the set-complete screen shows similarity and
 feedback as they arrive. Supabase Studio at http://localhost:54323 shows the set's row
 (`attempts`, `similarity`, `llm_feedback`) and its two files in the `sets` bucket. The
@@ -424,7 +426,7 @@ machine behind Funnel is for supervised sessions with the tunnel closed afterwar
 
 | Task | Owner | Notes |
 |---|---|---|
-| Tunnel | | Install Tailscale on the team machine and open Funnel: the app on 443, the Supabase API on 8443. `NEXT_PUBLIC_SUPABASE_URL` must be the 8443 address, because browsers upload straight to storage (NFR3). The camera needs https, which Funnel gives. |
+| Tunnel | | Install Tailscale on the team machine and open Funnel: the app on 443, the Supabase API on 8443. `NEXT_PUBLIC_SUPABASE_URL` must be the 8443 address, because browsers upload straight to storage (NFR3). The camera needs https, which Funnel gives. Or, as for the 2026-10-10 phone test: two Cloudflare quick tunnels, `cloudflared tunnel --url http://127.0.0.1:54321` then the build with `NEXT_PUBLIC_SUPABASE_URL` set to its address, then `cloudflared tunnel --url http://127.0.0.1:3000` (ADR-0001). |
 | Run the app | | `npm run build`, then `npm run start` rather than the dev server. Keep the machine awake and the stack up for the whole evaluation. Testers' devices need the internet: the pose model and its wasm come from Google's storage and jsdelivr. |
 | Supervised or unsupervised | | Not decided, and no longer decides the hosting: the Google Cloud VM of [DEPLOY.md](DEPLOY.md) stays up either way (ADR-0001). |
 | Before the evaluation | | A camera run on a real phone and on iOS Safari has not happened yet. Guide videos and thumbnails do not exist (the UI labels the gap) and the guide text awaits the physiotherapy experts' review; both are data changes in Studio. |

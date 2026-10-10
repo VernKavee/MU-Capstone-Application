@@ -64,8 +64,10 @@ So:
 Decided: the VM. The professor requires a published site, similarity and feedback are
 both Python services that need a host beside the app, and the site must stay up without
 Vern's laptop. AWS Lightsail and EC2 were the alternatives; the setup on the machine is
-the same, so moving later changes only the console steps. The Mac with Funnel stays for
-supervised phone tests during development.
+the same, so moving later changes only the console steps. The Mac with a tunnel stays for
+supervised phone tests during development: Cloudflare quick tunnels since 2026-10-10, two
+random `trycloudflare.com` addresses on 443, so the 8443 limit above does not apply
+(ADR-0001).
 
 ## The VM layout
 
@@ -131,8 +133,11 @@ in the compose `.env`. The exact key names are checked against that file at the 
    is 2.5 Mbit/s in `lib/live/session.ts`, about 19 MB per minute instead of 75, chosen
    by eye from a side by side recording at 10, 2.5, and 1.5 Mbit/s. It changes only the
    file the replay plays; scoring reads the live frames and the keypoint file.
-   Then a phone test through Funnel on the Mac, on Android Chrome and iOS Safari, with a
-   test account and the tunnel closed afterwards.
+   Then a phone test through a tunnel on the Mac, on Android Chrome and iOS Safari, with a
+   test account and the tunnel closed afterwards. Since 2026-10-10 the tunnel is two
+   Cloudflare quick tunnels (ADR-0001). The first iPhone run was that day
+   (`docs/sessions/2026-10-10.md`): its two bugs are fixed and await a second run; Android
+   Chrome is not yet tested.
 2. **Mid-project, one afternoon.** A rehearsal deploy on a VM that is deleted afterwards.
    The deploy files (`deploy/Caddyfile`, the systemd unit, the env examples) are written
    and tested then, and this document loses its "not rehearsed" mark.
