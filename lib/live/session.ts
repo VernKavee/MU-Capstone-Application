@@ -180,7 +180,9 @@ export class LiveSession {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const lit = new Set(frame.warning_display_rules.flatMap((r) => this.highlight.get(r.name) ?? []));
-    drawSkeleton(ctx, (i) => frame.keypoints[LANDMARK_NAMES[i]], lit);
+    // The camera frame is drawn here too: iOS Safari drops object-fit on the video once
+    // MediaRecorder starts and shows it at native pixels, while the canvas stays fitted.
+    drawSkeleton(ctx, (i) => frame.keypoints[LANDMARK_NAMES[i]], lit, video);
   }
 
   // Recording and keypoint capture both run from the end of the countdown to the end of

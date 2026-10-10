@@ -15,10 +15,12 @@ const BONES = [
 
 export type Point = { x: number; y: number; score: number }; // image-normalised; score is visibility
 
-// Landmark i comes from at(i); the joints in lit are drawn in tape yellow.
-export function drawSkeleton(ctx: CanvasRenderingContext2D, at: (i: number) => Point, lit: Set<number>) {
+// Landmark i comes from at(i); the joints in lit are drawn in tape yellow. A background,
+// when given, is drawn under the skeleton instead of clearing the canvas.
+export function drawSkeleton(ctx: CanvasRenderingContext2D, at: (i: number) => Point, lit: Set<number>, background?: CanvasImageSource) {
   const { width: w, height: h } = ctx.canvas;
-  ctx.clearRect(0, 0, w, h);
+  if (background) ctx.drawImage(background, 0, 0, w, h);
+  else ctx.clearRect(0, 0, w, h);
   ctx.lineWidth = Math.max(2, w / 400);
   ctx.lineCap = "round";
   for (const [start, end] of BONES) {
