@@ -136,8 +136,8 @@ in the compose `.env`. The exact key names are checked against that file at the 
    Then a phone test through a tunnel on the Mac, on Android Chrome and iOS Safari, with a
    test account and the tunnel closed afterwards. Since 2026-10-10 the tunnel is two
    Cloudflare quick tunnels (ADR-0001). The first iPhone run was that day
-   (`docs/sessions/2026-10-10.md`): its two bugs are fixed and await a second run; Android
-   Chrome is not yet tested.
+   (`docs/sessions/2026-10-10.md`). Its bugs were fixed, and a second run the same day
+   worked with all sound. Android Chrome is not yet tested.
 2. **Mid-project, one afternoon.** A rehearsal deploy on a VM that is deleted afterwards.
    The deploy files (`deploy/Caddyfile`, the systemd unit, the env examples) are written
    and tested then, and this document loses its "not rehearsed" mark.

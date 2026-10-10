@@ -397,6 +397,8 @@ session log:
 - The live picture is drawn into the overlay canvas (iOS Safari drops `object-fit` on the
   video when MediaRecorder starts).
 - Sound respects the phone's silent switch (Vern): no `navigator.audioSession` change.
+  `sound.unlock()` speaks one silent utterance in the Start camera tap, because iOS Safari
+  speaks nothing until a `speak()` runs inside a tap.
 
 Still open, outside the build plan:
 
@@ -418,11 +420,14 @@ Still open, outside the build plan:
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
-- The phone run: the first, on an iPhone in iOS Safari through quick tunnels on the Mac
-  (2026-10-10), found the shrinking video and the T pose from too far, both fixed; a
-  second iPhone run checks them, sound with silent off, History replay, and which format
-  iOS recorded. Android Chrome is not tested. The frame rate fell from 42-48 fps in set 1
-  to 8-27 fps from set 2 on, already in set 2's countdown; cause unknown, watch it.
+- The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found
+  the shrinking video, the T pose from too far, and no sound on silent. Run 2 found no
+  speech, fixed by a silent utterance in the Start camera tap. After that Vern reported it
+  working, with all sound. iOS records webm VP9; run 2 held 35 fps in every set (run 1 fell
+  to 8-27 fps from set 2, cause unknown). Not confirmed item by item: the full-screen
+  picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
+  the frame height on a portrait phone, in the session log), and History replay. Android
+  Chrome is not tested.
 - Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
   skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
   facing the camera first.
