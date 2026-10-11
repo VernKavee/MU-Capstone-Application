@@ -64,3 +64,9 @@ JSON rather than a binary format because the similarity contract of ADR-0007 alr
 
 - The recorder asks for 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`), about 19 MB per minute instead of the 75 measured in Phase 5. Vern chose it by eye from one 15 second recording through three recorders at once, at Chrome's default, 2.5, and 1.5 Mbit/s. Scoring and the replay's skeleton come from the keypoint file and are unaffected.
 - `e2e/workout.spec.ts` passes with the change, so a set still records, uploads, and replays. The rate through the app on a real camera is not measured yet; the phone test of `docs/DEPLOY.md` stage 1 reads it from storage.
+
+## Amended 2026-10-11: the video starts after the keypoint clock
+
+- The recorder starts when the first active frame is processed, but its first video frame lands a little later, so the video is shorter than the keypoint file by that start-up delay and the replayed skeleton trailed the picture on the phone. Read from two iPhone push-up sets: the keypoint file ran about 1.27 s past the start of the video's last one second cluster in both, a constant gap.
+- `replay.tsx` measures the video's real length once its metadata is in (seeking a webm to the end gives its duration), takes `offset = last keypoint t - video length`, capped to 0 to 2 s, and maps video time to keypoint time with it. The recording and the file format are unchanged, so saved sets are fixed too. Vern confirmed the skeleton in sync on the phone.
+- Not done: storing the offset at save time. A drift, not a constant, would need a scale instead of a shift.
