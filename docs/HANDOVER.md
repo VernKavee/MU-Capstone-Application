@@ -47,7 +47,7 @@ in `live-screen.tsx`, with both gates on and the state machine unarmed until the
 ends. `side` is the arm the user chose on the setup screen, for a row with
 `state_machine.chooses_side` (the curl), else null. The frame loop in `lib/live/session.ts`
 calls `process` with the video's `videoWidth` and `videoHeight` as the frame size. `ENGINE_VERSION`
-is `9a377cd`, the SeniorProject commit of the latest export (the port was made from
+is `5eccc55`, the SeniorProject commit of the latest export (the port was made from
 `2695984`), and is stored on every set as `engine_version`.
 
 ### Where each number lives
@@ -58,7 +58,7 @@ is `9a377cd`, the SeniorProject commit of the latest export (the port was made f
   `chooses_side`, and per
   rule the check name, threshold, priority, scope, debounce, message, and highlight
   joints. The rows are the output of `scratch/export_web_logic.py` in the latest
-  `rule_logic_<commit>` migration (`rule_logic_9a377cd`).
+  `rule_logic_<commit>` migration (`rule_logic_5eccc55`).
 - **The numbers that define a measurement are constants** in the TypeScript files
   (WEB_APP_PORT.md 5.2): confidence bars, the profile ratio, the knee band, the lunge
   bottom window, arming frames, the ready pose angles and holds, the placement box, the

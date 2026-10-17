@@ -400,6 +400,16 @@ session log:
   `sound.unlock()` speaks one silent utterance in the Start camera tap, because iOS Safari
   speaks nothing until a `speak()` runs inside a tap.
 
+Decided 2026-10-17, the push-up body alignment, recorded in ADR-0002 and the 2026-10-17
+session log:
+
+- SeniorProject `5eccc55`: `hip_sag_or_pike` and `min_body_alignment` read the
+  shoulder-hip-ankle angle of the trusted side (the higher of each side's lowest shoulder,
+  hip, and ankle score; a tie goes to left), not the mean of both. The bar stays 160.
+  Migration `rule_logic_5eccc55`, `ENGINE_VERSION` `5eccc55`, parity 96 of 96.
+- The push-up camera stays at 45 degrees (Vern asked about 90): the floor bar holds the
+  hidden far wrist and was calibrated at 45 and 30 only; nothing was ever measured at 90.
+
 Still open, outside the build plan:
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
@@ -434,8 +444,10 @@ Still open, outside the build plan:
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
   pinned to `float16/1`, byte for byte the research repo's model, and real keypoint files
   carry real visibility scores (both 2026-10-04).
-- Push-up `hip_sag_or_pike` false warnings from the hidden far ankle at 45 degrees, found on
-  the first laptop run: evidence and options in `docs/sessions/2026-10-04.md`. Vern's call. `docs/HANDOVER.md` section 1 describes the port.
+- Push-up `hip_sag_or_pike`: fixed for the hidden far ankle (2026-10-17, below), but a real
+  pike on the near side still fires. Today's round 2 (10-17 set 2) reads the hip about 10 cm
+  above the line on the trusted side; the video in History would confirm. `docs/HANDOVER.md`
+  section 1 describes the port.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be

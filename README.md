@@ -64,7 +64,7 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   workout: every set, the repair sets, and the rest between them.
 - The engine seam of ADR-0002 is `lib/engine/types.ts`. The engine is Vern's TypeScript
   port of the research repo's rules and state machines (`lib/engine/engine.ts`, from
-  SeniorProject 2695984, now at 9a377cd), configured from the row's `rule_based_logic`:
+  SeniorProject 2695984, now at 5eccc55), configured from the row's `rule_based_logic`:
   standing at the right distance, whole body in frame and centred, the T pose facing the
   camera starts a countdown, placement checks the exercise's angle
   during it, then real reps are counted and judged from the landmarks. For the curl only

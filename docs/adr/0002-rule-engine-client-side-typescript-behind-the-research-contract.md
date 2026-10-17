@@ -76,3 +76,12 @@ Made in SeniorProject `9a377cd` and ported here, at Vern's request after the fir
 - The frame reports the stand check's cues while waiting, so the live screen shows "Move closer to the camera" and the like in place of the T-pose text, and the loop speaks them. The countdown's hold at 0 is left for the turn.
 - Migration `rule_logic_9a377cd`: the export, equal to `858b203`'s but for the source, plus guide step 1 rewritten. `ENGINE_VERSION` is `9a377cd`.
 - Parity runs with both gates off, so the goldens are unchanged; the fixtures are rewritten for the new source. All 25 exam recordings match. The gate order is tested in `gates.test.ts`, beside the Python's tests.
+
+## Decided 2026-10-17: push-up body alignment reads the trusted side
+
+Made in SeniorProject `5eccc55` and ported here (Vern). `hip_sag_or_pike` and the stored
+`min_body_alignment` use the shoulder-hip-ankle angle of the side whose shoulder, hip, and ankle
+score best (the lowest of the three decides a side, a tie goes to left), not the mean of both:
+the hidden far ankle at 45 degrees is guessed 8 to 10 degrees low and pulled the mean onto the
+bar. Without keypoints both sides are averaged. The bar stays 160. Migration
+`rule_logic_5eccc55` (source only), `ENGINE_VERSION` `5eccc55`, goldens regenerated.
