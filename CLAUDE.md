@@ -460,7 +460,12 @@ Still open, outside the build plan:
 - Push-up at 90 degrees: checked on two live sets of one sitting only. Not measured yet: a
   calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
   holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
-  (up to 27% on the left arm), the likely cause of any false "Lower your chest". `docs/HANDOVER.md`
+  (up to 27% on the left arm), the likely cause of any false "Lower your chest".
+- Push-up framing at 90 degrees on a portrait phone: the plank is about as long as the frame
+  is wide, so the head or the feet leave the frame (55% and 99% of frames in two sets). The
+  stand check (0.45 to 0.95 of the frame height) cannot guarantee a fit. Options in the
+  2026-10-17 session log: a push-up stand-check band of about 0.30 to 0.42 (about 3.5 m, near
+  the model's 4 m limit), or landscape for the push-up only. Later (Vern). `docs/HANDOVER.md`
   section 1 describes the port.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
