@@ -73,8 +73,16 @@ const minTrunkTilt = (kp: Keypoints | null) => {
   const t = trunkTilts(kp);
   return t.length ? Math.min(...t) : null;
 };
-const meanBodyAlignment = (angles: Angles) =>
-  (angleOr180(angles, "left_body_alignment") + angleOr180(angles, "right_body_alignment")) / 2;
+// Push-up: the shoulder-hip-ankle angle of the side whose three joints score best (the
+// lowest of the three decides a side, a tie goes to left). The hidden far ankle is guessed
+// low at the 45 degree camera. Without keypoints both sides are averaged.
+function trustedBodyAlignment(angles: Angles, kp: Keypoints | null): number {
+  const left = angleOr180(angles, "left_body_alignment");
+  const right = angleOr180(angles, "right_body_alignment");
+  if (!kp) return (left + right) / 2;
+  const trust = (side: Side) => Math.min(...(["shoulder", "hip", "ankle"] as const).map((j) => kp[`${side}_${j}`].score));
+  return trust("right") > trust("left") ? right : left;
+}
 
 // [angle between the two knee->ankle lines, signed frontal convergence], or null.
 function kneeParallelism(kp: Keypoints | null): [number, number] | null {
@@ -145,7 +153,7 @@ export const CHECKS: Record<string, Check> = {
   },
   hip_sag_or_pike: {
     requiresKeypoints: false,
-    check: (angles, kp, side, stats, t) => meanBodyAlignment(angles) < t.align_min,
+    check: (angles, kp, side, stats, t) => trustedBodyAlignment(angles, kp) < t.align_min,
     value: (stats) => stats.min_body_alignment ?? null,
   },
   partial_pushup: {
@@ -268,12 +276,12 @@ function squat(rules: Rule[]): Accumulator {
 
 const pushup: Accumulator = {
   init: () => ({ min_floor_bar: Infinity, min_elbow: Infinity, min_body_alignment: Infinity }),
-  accumulate(stats, angles) {
+  accumulate(stats, angles, kp) {
     const floorBar = angles.floor_bar ?? null;
     if (floorBar !== null) stats.min_floor_bar = Math.min(stat(stats, "min_floor_bar", Infinity), floorBar);
     const avgElbow = (angleOr180(angles, "left_elbow") + angleOr180(angles, "right_elbow")) / 2;
     stats.min_elbow = Math.min(stat(stats, "min_elbow", Infinity), avgElbow);
-    stats.min_body_alignment = Math.min(stat(stats, "min_body_alignment", Infinity), meanBodyAlignment(angles));
+    stats.min_body_alignment = Math.min(stat(stats, "min_body_alignment", Infinity), trustedBodyAlignment(angles, kp));
   },
   pickActiveSide: null,
 };
