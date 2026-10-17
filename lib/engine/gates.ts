@@ -14,6 +14,9 @@ const READY_MIN_SCORE = 0.5;
 const READY_ELBOW_MIN = 150;
 const T_POSE: [number, number] = [65, 115]; // shoulder abduction, degrees
 const A_POSE: [number, number] = [25, 55];
+// Standing: mid-hip below mid-shoulder by this fraction of the trunk (y down). A push-up
+// plank with straight arms is a T pose by the arm angles alone and ended sets.
+const READY_UPRIGHT_MIN = 0.7;
 const READY_HOLD_FRAMES = 8;
 const END_HOLD_FRAMES = 30;
 const END_GRACE_S = 3;
@@ -23,6 +26,11 @@ export const COUNTDOWN_S = 3;
 export function detectReadyPose(kp: Keypoints): "t_pose" | "a_pose" | null {
   if (!READY_REQUIRED_JOINTS.every((n) => kp[n].score >= READY_MIN_SCORE)) return null;
   if (!hasWorld3d(kp)) return null;
+  const mid = (a: LandmarkName, b: LandmarkName) => world(kp, a).map((v, i) => (v + world(kp, b)[i]) / 2);
+  const shoulder = mid("left_shoulder", "right_shoulder");
+  const hip = mid("left_hip", "right_hip");
+  const trunk = Math.hypot(hip[0] - shoulder[0], hip[1] - shoulder[1], hip[2] - shoulder[2]);
+  if (!(trunk > 1e-6 && (hip[1] - shoulder[1]) / trunk >= READY_UPRIGHT_MIN)) return null;
   const abductions: number[] = [];
   for (const side of ["left", "right"] as const) {
     const [hip, shoulder, elbow, wrist] = (["hip", "shoulder", "elbow", "wrist"] as const).map((j) => world(kp, `${side}_${j}`));

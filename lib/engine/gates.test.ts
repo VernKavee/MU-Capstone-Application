@@ -38,6 +38,11 @@ function standing(arms: Arms = "t", score = 1, leftArms?: Arms): Keypoints {
 
 test("ready pose: T and A detected, a relaxed stand, bent or uneven arms are not", () => {
   assert.equal(detectReadyPose(standing("t")), "t_pose");
+  // A push-up plank: the T pose turned 90 degrees, trunk horizontal, arms straight down.
+  const plank = Object.fromEntries(
+    Object.entries(standing("t")).map(([n, p]) => [n, { ...p, x_3d: -p.y_3d, y_3d: p.x_3d }]),
+  ) as Keypoints;
+  assert.equal(detectReadyPose(plank), null);
   assert.equal(detectReadyPose(standing("a")), "a_pose");
   assert.equal(detectReadyPose(standing("down")), null);
   assert.equal(detectReadyPose(standing("bent_t")), null);
