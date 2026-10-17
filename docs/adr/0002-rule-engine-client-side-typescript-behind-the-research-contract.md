@@ -85,3 +85,13 @@ score best (the lowest of the three decides a side, a tie goes to left), not the
 the hidden far ankle at 45 degrees is guessed 8 to 10 degrees low and pulled the mean onto the
 bar. Without keypoints both sides are averaged. The bar stays 160. Migration
 `rule_logic_5eccc55` (source only), `ENGINE_VERSION` `5eccc55`, goldens regenerated.
+
+## Decided 2026-10-17 (later): the push-up camera at 90 degrees
+
+SeniorProject `5a7e835` (Vern). At 45 degrees the body-alignment angle dipped under 160 at the
+bottom of straight reps because MediaPipe's z, fitted from synthetic data per the BlazePose
+GHUM model card, moved the hip toward the camera. At a 90 degree side view the body lies in the
+picture and the full 3D, x-y, and picture angles agree within 1-3 degrees. Placement 82 +/- 12
+(two live sets read 81-89), guide text side-on. The rules, the floor bar, and its 0.54 bar are
+unchanged; the near elbow in the picture separated better at 90 on one sitting and stays a
+fallback.

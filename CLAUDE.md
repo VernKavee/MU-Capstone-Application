@@ -407,16 +407,21 @@ session log:
   shoulder-hip-ankle angle of the trusted side (the higher of each side's lowest shoulder,
   hip, and ankle score; a tie goes to left), not the mean of both. The bar stays 160.
   Migration `rule_logic_5eccc55`, `ENGINE_VERSION` `5eccc55`, parity 96 of 96.
-- The push-up camera stays at 45 degrees (Vern asked about 90): the floor bar holds the
-  hidden far wrist and was calibrated at 45 and 30 only; nothing was ever measured at 90.
 - SeniorProject `d6053af`: the ready pose also needs an upright trunk (mid-hip below the
   mid-shoulder by 0.7 of the trunk length), because a push-up plank passed as a T pose and
   ended sets. `ENGINE_VERSION` `d6053af`, migration `rule_logic_d6053af`.
 - Speech: one phrase at a time (a new one waits, only the latest), rate 0.95, no repeat
   within 3 s, a warning wins over a placement cue on the same frame.
 - MediaPipe's world z is fitted from synthetic data per the BlazePose GHUM model card, not
-  measured. Push-up body alignment without z is pending Vern's 90 degree recording; the
-  options and numbers are in the 2026-10-17 session log.
+  measured, so rules that lean on depth are the least trustworthy.
+- The push-up camera moves to a 90 degree side view (Vern, after two live sets at 90):
+  SeniorProject `5a7e835`, placement 82 +/- 12 (was 45 +/- 25), guide text "side-on ...
+  about 90 degrees", migration `rule_logic_5a7e835`, `ENGINE_VERSION` `5a7e835`. Every rule
+  is unchanged: the body line agrees in every measure at 90, and the floor bar stays (one
+  false shallow in 22 good reps there, from the bent arm's length under-reading). The
+  near elbow in the picture separated better at 90 and is the fallback if false shallow
+  warnings recur; changing to it needs the expert again. The no-z body line is stashed in
+  SeniorProject, not shipped.
 
 Still open, outside the build plan:
 
@@ -452,9 +457,10 @@ Still open, outside the build plan:
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
   pinned to `float16/1`, byte for byte the research repo's model, and real keypoint files
   carry real visibility scores (both 2026-10-04).
-- Push-up `hip_sag_or_pike`: the full 3D angle dips under 160 at the bottom of straight reps
-  because MediaPipe's z moves the hip toward the camera. Without z fixes it from the side and
-  over-reads at 30 degrees; waiting on Vern's 90 degree recording (2026-10-17 session log). `docs/HANDOVER.md`
+- Push-up at 90 degrees: checked on two live sets of one sitting only. Not measured yet: a
+  calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
+  holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
+  (up to 27% on the left arm), the likely cause of any false "Lower your chest". `docs/HANDOVER.md`
   section 1 describes the port.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
