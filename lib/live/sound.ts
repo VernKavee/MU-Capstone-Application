@@ -3,11 +3,13 @@
 let ctx: AudioContext | null = null;
 
 // One phrase at a time: a new phrase waits for the current one to finish (only the latest
-// waits), and the same phrase is not repeated within REPEAT_MS.
+// waits, and is dropped once it has waited STALE_MS, since the moment has passed), and the
+// same phrase is not repeated within REPEAT_MS.
 const RATE = 0.95;
 const GAP_MS = 300;
 const REPEAT_MS = 3000;
-let pending: string | null = null;
+const STALE_MS = 1500;
+let pending: { text: string; at: number } | null = null;
 let last = { text: "", at: 0 };
 
 // After any utterance ends, the phrase that waited is spoken.
@@ -15,7 +17,7 @@ const drain = () =>
   setTimeout(() => {
     const next = pending;
     pending = null;
-    if (next && !sound.muted) speakNow(next);
+    if (next && !sound.muted && Date.now() - next.at <= STALE_MS) speakNow(next.text);
   }, GAP_MS);
 
 function speakNow(text: string) {
@@ -65,7 +67,7 @@ export const sound = {
   say(text: string) {
     if (this.muted || !("speechSynthesis" in window)) return;
     if (text === last.text && Date.now() - last.at < REPEAT_MS) return;
-    if (speechSynthesis.speaking || speechSynthesis.pending) pending = text;
+    if (speechSynthesis.speaking || speechSynthesis.pending) pending = { text, at: Date.now() };
     else speakNow(text);
   },
 };
