@@ -2,6 +2,31 @@
 // mute toggle. unlock() must run inside a user gesture, or browsers keep audio silent.
 let ctx: AudioContext | null = null;
 
+// One phrase at a time: a new phrase waits for the current one to finish (only the latest
+// waits), and the same phrase is not repeated within REPEAT_MS.
+const RATE = 0.95;
+const GAP_MS = 300;
+const REPEAT_MS = 3000;
+let pending: string | null = null;
+let last = { text: "", at: 0 };
+
+// After any utterance ends, the phrase that waited is spoken.
+const drain = () =>
+  setTimeout(() => {
+    const next = pending;
+    pending = null;
+    if (next && !sound.muted) speakNow(next);
+  }, GAP_MS);
+
+function speakNow(text: string) {
+  last = { text, at: Date.now() };
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = RATE;
+  utterance.onend = drain;
+  utterance.onerror = drain;
+  speechSynthesis.speak(utterance);
+}
+
 export const sound = {
   muted: false,
 
@@ -13,12 +38,16 @@ export const sound = {
     // iOS Safari speaks nothing until one speak() runs inside a tap; a silent one unlocks it.
     const silent = new SpeechSynthesisUtterance(" ");
     silent.volume = 0;
+    silent.onend = drain;
     speechSynthesis.speak(silent);
   },
 
   setMuted(muted: boolean) {
     this.muted = muted;
-    if (muted && "speechSynthesis" in window) speechSynthesis.cancel();
+    if (muted && "speechSynthesis" in window) {
+      pending = null;
+      speechSynthesis.cancel();
+    }
   },
 
   beep(seconds = 0.12, hz = 880) {
@@ -35,9 +64,8 @@ export const sound = {
 
   say(text: string) {
     if (this.muted || !("speechSynthesis" in window)) return;
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.1;
-    speechSynthesis.speak(utterance);
+    if (text === last.text && Date.now() - last.at < REPEAT_MS) return;
+    if (speechSynthesis.speaking || speechSynthesis.pending) pending = text;
+    else speakNow(text);
   },
 };

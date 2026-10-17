@@ -225,10 +225,11 @@ export class LiveSession {
     if (second !== null && second !== prevSecond) sound.beep(0.08, 660);
     if (frame.ready_phase === "active" && prev?.ready_phase === "countdown") sound.beep(0.3, 880);
     const warning = frame.warning_display[0] ?? null;
-    if (warning && warning !== (prev?.warning_display[0] ?? null)) sound.say(warning);
     const cue = frame.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
     const prevCue = prev?.placement_phase === "guiding" ? (prev.placement_cues[0] ?? null) : null;
-    if (cue && cue !== prevCue) sound.say(cue);
+    // One phrase per frame: the warning wins over a placement cue.
+    if (warning && warning !== (prev?.warning_display[0] ?? null)) sound.say(warning);
+    else if (cue && cue !== prevCue) sound.say(cue);
   }
 
   // Only what the HUD shows; identical frames do not reach React.
