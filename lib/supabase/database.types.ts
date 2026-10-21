@@ -61,6 +61,7 @@ export type Database = {
           guide_text: string
           guide_video_url: string | null
           id: string
+          landscape: boolean
           name: string
           rule_based_logic: Json
           sort_order: number
@@ -71,6 +72,7 @@ export type Database = {
           guide_text: string
           guide_video_url?: string | null
           id: string
+          landscape?: boolean
           name: string
           rule_based_logic: Json
           sort_order: number
@@ -81,6 +83,7 @@ export type Database = {
           guide_text?: string
           guide_video_url?: string | null
           id?: string
+          landscape?: boolean
           name?: string
           rule_based_logic?: Json
           sort_order?: number

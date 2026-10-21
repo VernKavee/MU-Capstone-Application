@@ -1,7 +1,7 @@
 -- Run with `npm run test:db`. The catalogue is readable by signed-in users only, never
 -- writable through the API, and expert motions are unreachable through the API.
 begin;
-select plan(9);
+select plan(10);
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
@@ -9,6 +9,8 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 select is((select count(*) from public.exercises), 4::bigint, 'a signed-in user sees the four exercises');
 select is((select string_agg(id, ',' order by sort_order) from public.exercises),
   'squat,push-up,lunge,bicep-curl', 'in the order the requirements list them');
+select is((select string_agg(id, ',') from public.exercises where landscape), 'push-up',
+  'only the push-up is filmed with the phone sideways');
 select throws_ok(
   $$ insert into public.exercises (id, name, sort_order, guide_text, engine_key, rule_based_logic)
      values ('x', 'X', 9, 'x', 'x', '{"state_machine":{"states":[],"thresholds":{}},"rules":[]}') $$,
