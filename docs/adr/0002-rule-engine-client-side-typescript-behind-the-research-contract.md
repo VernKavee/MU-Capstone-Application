@@ -106,3 +106,7 @@ knee its ankle's z and must pass `converge_min` 0.028 m (both legs added), a new
 on `knee_valgus` and `knee_varus`. Exam counts unchanged; turned-in feet 5/5 to 2/5. Migration
 `rule_logic_eddf6f1`, `ENGINE_VERSION` `eddf6f1`, parity 96 of 96. Evidence in the 2026-10-21
 session log.
+
+Later the same day the bar went to 0.020 (SeniorProject `50e4692`, ported in `241b57a`): on
+Vern's labelled live workout it caught as many knees-in reps as the sign-only rule (21 of 29) and
+more knees-out (8 of 11, was 6), with no good rep warned and no wrong cue. Threshold only.

@@ -431,6 +431,10 @@ session log:
   direction past `converge_min` 0.028 m, read with each knee given its ankle's z (x only).
   The angle keeps z because on the mirrored 45 degree side the error moves into x. Vern's 11
   false "Push knees out" in 31 good reps go to 0; exam unchanged; turned-in feet 5/5 to 2/5.
+- Lowered to 0.020 the same evening (Vern): SeniorProject `50e4692`, migration
+  `rule_logic_50e4692`, `ENGINE_VERSION` `50e4692`. On his labelled live workout (88 attempts)
+  0.020 warned 0 of 31 good reps and caught 21 of 29 knees in and 8 of 11 knees out with no wrong
+  cue; 0.028 caught 17 and 6; the old rule warned 2 good reps and gave 2 wrong cues.
 - Camera angles stay (90 lunge and push-up, 45 curl and squat): changing them complicates
   explaining the stand (Vern), but they may change if the evidence is strong enough.
 - Revert steps are in the session log.
@@ -448,11 +452,11 @@ Decided 2026-10-21, push-up landscape, recorded in ADR-0006 and the 2026-10-21 s
 
 Still open, outside the build plan:
 
-- The squat knee rules: the live check of `eddf6f1` (normal reps quiet, knees pushed in and
-  out warned) is not done. An angle MediaPipe reads too low is still missed (LabMoCap
-  kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate knees-out
-  (9 to 13 degrees) is a fault. A calibration sitting at 45 degrees from both sides (good,
-  knees in, knees out, feet turned) would test the 0.028 bar beyond one subject.
+- The squat knee rules: no live check at 0.020 yet. An angle MediaPipe reads too low is still
+  missed (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1; 10 of 40 live faults). Ask the
+  physiotherapists whether a moderate knees-out (9 to 13 degrees) is a fault. A calibration
+  sitting at 45 degrees from both sides (good, knees in, knees out, feet turned) would test the
+  0.020 bar beyond one subject.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
