@@ -478,8 +478,8 @@ Still open, outside the build plan:
   2 of 6 knees-in on the mirrored side (right side toward the camera). Not the yaw's size: good form
   reads about 6 degrees lower there and the 11 bar is fixed (SeniorProject RULES_AND_FSM 5.16; at 45
   degrees MediaPipe pulls the frontal part 6 to 15 toward "in" and adds a false sagittal part).
-  Trying live: the knees-in bar lowered 11 to 8 (SeniorProject `c3a9129`, `ENGINE_VERSION`
-  `c3a9129`), revert steps in the session log. Still to choose: a per-person, per-side starting point, one camera side, the front
+  Trying live: the knees-in bar lowered 11 to 8 (SeniorProject `c3a9129`), then the direction bar
+  0.020 to 0.015 (`bfaa3dc`, `ENGINE_VERSION` `bfaa3dc`), revert steps in the session log. Still to choose: a per-person, per-side starting point, one camera side, the front
   camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
   (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
   knees-out (9 to 13 degrees) is a fault. Other people are not tested.
