@@ -25,3 +25,11 @@ A fifth exercise, plank, with the rule "hips must not sag". If it can be written
 
 - Whether an exercise asks the user for a working side is data: `state_machine.chooses_side`, written by the export from the Python FSM's `CHOOSES_SIDE` (true only for the bicep curl). The setup screen shows the Arm choice, and `parseSetup` requires the side, only where the row says so. Nothing branches on the exercise name.
 - The chosen side is stored on the workout (`workouts.side`, left, right, or null), fixed once saved like the targets.
+
+## The camera orientation, 2026-10-21
+
+- Whether an exercise is filmed with the phone sideways is data: `exercises.landscape`, true only
+  for the push-up, where a side-on plank does not fit a portrait frame. It is a camera field for
+  the app, not engine logic, so it is an ordinary column outside `rule_based_logic` and its
+  export. The live screen holds the start while the camera picture is portrait; nothing branches
+  on the exercise name.

@@ -435,6 +435,17 @@ session log:
   explaining the stand (Vern), but they may change if the evidence is strong enough.
 - Revert steps are in the session log.
 
+Decided 2026-10-21, push-up landscape, recorded in ADR-0006 and the 2026-10-21 session log:
+
+- The push-up is filmed with the phone sideways (Vern): a side-on plank does not fit a portrait
+  frame. `exercises.landscape` (migration `push_up_landscape`), true only for the push-up, an app
+  column outside the export. Guide text says to turn the phone sideways; the preflight says so too.
+- `LiveSession` takes `landscape`; before the set is active, a portrait picture (`videoHeight >
+  videoWidth`) is not fed to the engine, the engine is reset once, the picture is drawn without
+  the skeleton, and `TURN_CUE` is shown and spoken. Never held once active, so `t` still indexes
+  the video. A laptop camera is landscape and passes straight through.
+- The stand-check band is unchanged: 0.45 to 0.95 of the short side fits the plank at about 2 m.
+
 Still open, outside the build plan:
 
 - The squat knee rules: the live check of `eddf6f1` (normal reps quiet, knees pushed in and
@@ -479,11 +490,11 @@ Still open, outside the build plan:
   calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
   holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
   (up to 27% on the left arm), the likely cause of any false "Lower your chest".
-- Push-up framing at 90 degrees on a portrait phone: the plank is about as long as the frame
-  is wide, so the head or the feet leave the frame (55% and 99% of frames in two sets). The
-  stand check (0.45 to 0.95 of the frame height) cannot guarantee a fit. Options in the
-  2026-10-17 session log: a push-up stand-check band of about 0.30 to 0.42 (about 3.5 m, near
-  the model's 4 m limit), or landscape for the push-up only. Later (Vern).
+- Push-up landscape (2026-10-21): checked with Chrome's fake camera at 844 x 390 (portrait held,
+  landscape straight through), not on a phone. Not confirmed: the gate clears when the phone
+  turns; with the rotation lock on, whether the stream stays portrait; the standing T pose fits
+  the short side with the camera low; the whole plank stays in frame; set-complete and rest
+  sideways.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`
