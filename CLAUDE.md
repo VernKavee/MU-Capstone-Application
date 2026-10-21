@@ -479,7 +479,8 @@ Still open, outside the build plan:
   reads about 6 degrees lower there and the 11 bar is fixed (SeniorProject RULES_AND_FSM 5.16; at 45
   degrees MediaPipe pulls the frontal part 6 to 15 toward "in" and adds a false sagittal part).
   Trying live: the knees-in bar lowered 11 to 8 (SeniorProject `c3a9129`), then the direction bar
-  0.020 to 0.015 (`bfaa3dc`, `ENGINE_VERSION` `bfaa3dc`), revert steps in the session log.
+  0.020 to 0.015 (`bfaa3dc`), then knees in judged from the signed frontal part over 7, knees out
+  unchanged (`00437d1`, `ENGINE_VERSION` `00437d1`), revert steps in the session log.
   The good-rep check at 0.015 gave 18 of 56 false "Keep knees in line", 16 of them on the
   mirrored side, from a false sagittal part in the angle; the signed frontal part alone clears
   them but loses knees out. Still to choose: a per-person, per-side starting point, one camera side, the front

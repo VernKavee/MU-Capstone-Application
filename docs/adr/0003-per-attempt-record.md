@@ -63,7 +63,8 @@ The Python engine keeps its statistics under the measurement's name (`min_knee`,
 | Rule | Value |
 |---|---|
 | `partial_squat` | `min_knee` |
-| `knee_valgus`, `knee_varus` | `knee_parallel_deg` |
+| `knee_valgus` | `knee_frontal_deg` (since 2026-10-22; `knee_parallel_deg` before) |
+| `knee_varus` | `knee_parallel_deg` |
 | `rounded_back` | `max_back_tilt` |
 | `hip_sag_or_pike` | `min_body_alignment` |
 | `partial_pushup` | `min_floor_bar` |
