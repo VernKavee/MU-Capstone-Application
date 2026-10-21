@@ -7,10 +7,13 @@ import {
   angleOr180,
   calculateAngle,
   dist,
+  dot,
   horizontalOffsetAlongAxis,
+  norm,
   pickMoreBentSide,
   sub,
   trunkTiltFromVertical,
+  UP,
   type Angles,
   type Vec,
 } from "./angles.ts";
@@ -106,6 +109,26 @@ function kneeParallelism(kp: Keypoints | null): [number, number] | null {
   return [angle, direction];
 }
 
+// Signed frontal part of the shank angle (deg): each shank's medial tilt from UP, seen along
+// the body's forward axis (lateral = the hip line flattened onto the ground), both added,
+// positive = knees inside their ankles. Null wherever kneeParallelism abstains
+// (SeniorProject 00437d1, _knee_frontal_tilt).
+function kneeFrontalTilt(kp: Keypoints | null): number | null {
+  if (kneeParallelism(kp) === null) return null;
+  const p = (n: LandmarkName) => point3d(kp, n) as Vec;
+  const across = sub(p("right_hip"), p("left_hip"));
+  const along = dot(across, UP);
+  const flat: Vec = [across[0] - along * UP[0], across[1] - along * UP[1], across[2] - along * UP[2]];
+  const length = norm(flat);
+  if (length <= 1e-6) return null;
+  const lateral: Vec = [flat[0] / length, flat[1] / length, flat[2] / length];
+  const tilt = (side: Side, medial: Vec) => {
+    const shank = sub(p(`${side}_knee`), p(`${side}_ankle`));
+    return (Math.atan2(dot(shank, medial), dot(shank, UP)) * 180) / Math.PI;
+  };
+  return tilt("left", lateral) + tilt("right", [-lateral[0], -lateral[1], -lateral[2]]);
+}
+
 const stat = (stats: Stats, key: string, fallback: number) => stats[key] ?? fallback;
 
 function lungeFrontKnee(stats: Stats): number | null {
@@ -122,18 +145,6 @@ type Check = {
   value(stats: Stats, t: Threshold): number | null;
 };
 
-function kneesOutOfLine(inward: boolean): Check {
-  return {
-    requiresKeypoints: true,
-    check(angles, kp, side, stats, t) {
-      const angle = stats.knee_parallel_deg ?? null;
-      const direction = stats.knee_converge_sign ?? null;
-      if (angle === null || direction === null) return null;
-      return angle > t.parallel_max && (inward ? direction > t.converge_min : direction < -t.converge_min);
-    },
-    value: (stats) => stats.knee_parallel_deg ?? null,
-  };
-}
 
 export const CHECKS: Record<string, Check> = {
   partial_squat: {
@@ -144,8 +155,25 @@ export const CHECKS: Record<string, Check> = {
     },
     value: (stats) => stats.min_knee ?? null,
   },
-  knee_valgus: kneesOutOfLine(true),
-  knee_varus: kneesOutOfLine(false),
+  // Knees in from the signed frontal part alone; knees out from the angle and direction.
+  knee_valgus: {
+    requiresKeypoints: true,
+    check(angles, kp, side, stats, t) {
+      const frontal = stats.knee_frontal_deg ?? null;
+      return frontal === null ? null : frontal > t.frontal_min;
+    },
+    value: (stats) => stats.knee_frontal_deg ?? null,
+  },
+  knee_varus: {
+    requiresKeypoints: true,
+    check(angles, kp, side, stats, t) {
+      const angle = stats.knee_parallel_deg ?? null;
+      const direction = stats.knee_converge_sign ?? null;
+      if (angle === null || direction === null) return null;
+      return angle > t.parallel_max && direction < -t.converge_min;
+    },
+    value: (stats) => stats.knee_parallel_deg ?? null,
+  },
   rounded_back: {
     requiresKeypoints: true,
     check(angles, kp, side, stats, t) {
@@ -255,6 +283,9 @@ function squat(rules: Rule[]): Accumulator {
       _knee_converge_sum: 0,
       knee_parallel_deg: null,
       knee_converge_sign: null,
+      _knee_frontal_n: 0,
+      _knee_frontal_sum: 0,
+      knee_frontal_deg: null,
     }),
     accumulate(stats, angles, kp) {
       const avgKnee = (angleOr180(angles, "left_knee") + angleOr180(angles, "right_knee")) / 2;
@@ -270,6 +301,13 @@ function squat(rules: Rule[]): Accumulator {
           stats._knee_converge_sum = stat(stats, "_knee_converge_sum", 0) + reading[1];
           stats.knee_parallel_deg = num(stats, "_knee_parallel_sum") / n;
           stats.knee_converge_sign = num(stats, "_knee_converge_sum") / n;
+        }
+        const frontal = kneeFrontalTilt(kp);
+        if (frontal !== null) {
+          const n = stat(stats, "_knee_frontal_n", 0) + 1;
+          stats._knee_frontal_n = n;
+          stats._knee_frontal_sum = stat(stats, "_knee_frontal_sum", 0) + frontal;
+          stats.knee_frontal_deg = num(stats, "_knee_frontal_sum") / n;
         }
       }
     },

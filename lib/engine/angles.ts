@@ -13,7 +13,7 @@ export type Vec = [number, number, number];
 export type Angles = Record<string, number | null>;
 
 const DEG = 180 / Math.PI; // numpy's rad2deg multiplies by this constant
-const UP: Vec = [0, -1, 0]; // MediaPipe world y points down
+export const UP: Vec = [0, -1, 0]; // MediaPipe world y points down
 
 export const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 export const dot = (a: Vec, b: Vec) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
