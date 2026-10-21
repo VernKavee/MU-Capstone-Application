@@ -12,7 +12,7 @@ import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "eddf6f1";
+export const ENGINE_VERSION = "50e4692";
 
 const WARNING_HOLD_MS = 1000;
 
