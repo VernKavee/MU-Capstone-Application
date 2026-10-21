@@ -483,7 +483,11 @@ Still open, outside the build plan:
   unchanged (`00437d1`, `ENGINE_VERSION` `00437d1`), revert steps in the session log.
   The good-rep check at 0.015 gave 18 of 56 false "Keep knees in line", 16 of them on the
   mirrored side, from a false sagittal part in the angle; the signed frontal part alone clears
-  them but loses knees out. Still to choose: a per-person, per-side starting point, one camera side, the front
+  them but loses knees out.
+  The frontal-part trial failed live too (11 of 20 good reps warned on the mirrored side).
+  Stopped 2026-10-22: the error at 45 degrees is as large as the signal. Undecided: hide the knee
+  cues and run one front-camera test with an agreed pass bar, or revert to `50e4692` and document
+  (session log 2026-10-21, last section). Still to choose: a per-person, per-side starting point, one camera side, the front
   camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
   (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
   knees-out (9 to 13 degrees) is a fault. Other people are not tested.
