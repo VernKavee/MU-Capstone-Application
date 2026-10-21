@@ -84,7 +84,9 @@ function trustedBodyAlignment(angles: Angles, kp: Keypoints | null): number {
   return trust("right") > trust("left") ? right : left;
 }
 
-// [angle between the two knee->ankle lines, signed frontal convergence], or null.
+// [3D angle between the two knee->ankle lines, signed convergence along the hip line], or
+// null. The convergence gives each knee its ankle's z, so the guessed depth drops out of it
+// (SeniorProject eddf6f1, KNEE_CONVERGE_MIN).
 function kneeParallelism(kp: Keypoints | null): [number, number] | null {
   const names = ["left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"] as const;
   const p = Object.fromEntries(names.map((n) => [n, point3d(kp, n)])) as Record<(typeof names)[number], Vec | null>;
@@ -97,9 +99,10 @@ function kneeParallelism(kp: Keypoints | null): [number, number] | null {
   const angle = calculateAngle(shank.left, [0, 0, 0], shank.right);
   const leftToRight = sub(pt.right_hip, pt.left_hip);
   const rightToLeft: Vec = [-leftToRight[0], -leftToRight[1], -leftToRight[2]];
+  const flat = (knee: Vec, ankle: Vec): Vec => [knee[0], knee[1], ankle[2]];
   const direction =
-    horizontalOffsetAlongAxis(pt.left_knee, pt.left_ankle, leftToRight) +
-    horizontalOffsetAlongAxis(pt.right_knee, pt.right_ankle, rightToLeft);
+    horizontalOffsetAlongAxis(flat(pt.left_knee, pt.left_ankle), pt.left_ankle, leftToRight) +
+    horizontalOffsetAlongAxis(flat(pt.right_knee, pt.right_ankle), pt.right_ankle, rightToLeft);
   return [angle, direction];
 }
 
@@ -126,7 +129,7 @@ function kneesOutOfLine(inward: boolean): Check {
       const angle = stats.knee_parallel_deg ?? null;
       const direction = stats.knee_converge_sign ?? null;
       if (angle === null || direction === null) return null;
-      return angle > t.parallel_max && direction > 0 === inward;
+      return angle > t.parallel_max && (inward ? direction > t.converge_min : direction < -t.converge_min);
     },
     value: (stats) => stats.knee_parallel_deg ?? null,
   };
