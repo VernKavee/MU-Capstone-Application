@@ -487,7 +487,9 @@ Still open, outside the build plan:
   The frontal-part trial failed live too (11 of 20 good reps warned on the mirrored side).
   Stopped 2026-10-22: the error at 45 degrees is as large as the signal. Undecided: hide the knee
   cues and run one front-camera test with an agreed pass bar, or revert to `50e4692` and document
-  (session log 2026-10-21, last section). Still to choose: a per-person, per-side starting point, one camera side, the front
+  (session log 2026-10-21, last two sections). Vern, 2026-10-22: the check exists so the knee
+  travels the same way as the toes; the shin-to-shin vector may be the wrong idea (see the note
+  there and RULES_AND_FSM 5.7 and 5.8). Still to choose: a per-person, per-side starting point, one camera side, the front
   camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
   (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
   knees-out (9 to 13 degrees) is a fault. Other people are not tested.
