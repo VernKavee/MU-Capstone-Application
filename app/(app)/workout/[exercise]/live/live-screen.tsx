@@ -183,10 +183,11 @@ export function LiveScreen({ exercise, setup }: Props) {
   // The ready gate leads: the T pose facing the camera, framed, then placement during the
   // countdown, which holds at 0 until placed. While the gate waits for the T pose,
   // placement reports guiding with the stand check's cues (distance, framing, centring).
+  // A plank start is placed while waiting, facing included, so it shows no turn cue here.
   const phase = frame?.ready_phase ?? "starting";
   const turnCue = phase === "countdown" && frame?.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
   const warning = frame?.warning_display[0] ?? null;
-  const centre = snap?.turn ? TURN_CUE : centreText(phase, frame);
+  const centre = snap?.turn ? TURN_CUE : centreText(phase, frame, exercise.logic.state_machine.ready_pose);
 
   return (
     <main className="fixed inset-0 z-20 overflow-hidden bg-black text-ink">
@@ -292,16 +293,20 @@ export function LiveScreen({ exercise, setup }: Props) {
   );
 }
 
-function centreText(phase: string, frame: Snapshot["frame"]): string | null {
+// What to do while the gate waits, by the row's ready pose, never by exercise.
+const READY_TEXT: Record<RuleBasedLogic["state_machine"]["ready_pose"], string> = {
+  t_pose: "Stand facing the camera with your whole body in view, then hold your arms straight out to the sides",
+  plank: "Get into a plank at the top, arms straight, side-on to the camera, with your whole body in view",
+};
+
+function centreText(phase: string, frame: Snapshot["frame"], readyPose: RuleBasedLogic["state_machine"]["ready_pose"]): string | null {
   switch (phase) {
     case "starting":
       return "Starting the camera and loading the pose model";
     case "waiting":
-      // The stand check's cue (distance, framing, centring) leads: the pose counts only once it clears.
-      return (
-        frame?.placement_cues[0] ??
-        (frame?.ready_pose ? "Hold it" : "Stand facing the camera with your whole body in view, then hold your arms straight out to the sides")
-      );
+      // The placement cue (distance, framing, centring, and facing for a plank) leads: the
+      // pose counts only once it clears.
+      return frame?.placement_cues[0] ?? (frame?.ready_pose ? "Hold it" : READY_TEXT[readyPose]);
     case "countdown":
       return String(Math.ceil(frame?.countdown_s ?? 0));
     case "active":
