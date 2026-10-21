@@ -448,7 +448,29 @@ Decided 2026-10-21, push-up landscape, recorded in ADR-0006 and the 2026-10-21 s
   videoWidth`) is not fed to the engine, the engine is reset once, the picture is drawn without
   the skeleton, and `TURN_CUE` is shown and spoken. Never held once active, so `t` still indexes
   the video. A laptop camera is landscape and passes straight through.
-- The stand-check band is unchanged: 0.45 to 0.95 of the short side fits the plank at about 2 m.
+- The standing T pose could not work sideways (Vern's phone run): a landscape frame cannot hold a
+  standing body at plank distance. Replaced by the plank start below.
+
+Decided 2026-10-21 (later), the push-up plank start, recorded in ADR-0002, 0006 and the
+2026-10-21 session log:
+
+- SeniorProject `7420788` and `0cb8485`, migrations `rule_logic_7420788` and `rule_logic_0cb8485`,
+  `ENGINE_VERSION` `0cb8485`. `state_machine.ready_pose` (`t_pose` or `plank`, from the FSM's
+  `READY_POSE`) chooses the start; only the push-up is `plank`. The live screen's waiting text
+  is keyed by it, never by exercise.
+- The plank start: on the trusted side (the higher lowest score of shoulder, elbow, wrist, hip,
+  knee, ankle) all six at 0.5, elbow and knee 150 or more, trunk at the row's arming tilt (60)
+  or more from vertical, held 8 frames. Evidence: SeniorProject
+  `scratch/eval/eval_plank_gate.py`, 10 recordings at 90 degrees, the hold 0.7 to 6.4 s before
+  the first rep, never standing.
+- While waiting for a plank, placement runs in full (facing included) with the lying framing:
+  plank width 0.40 to 0.95 of the frame, nothing within 0.03 of an edge, cue "Move back --
+  your whole body must be in frame". Until the trunk lies it gives no cue, so a standing user
+  sees "Get into a plank at the top...". The countdown is a plain 3 s hold.
+- The set ends on getting up: the trunk under `thresholds.left_tilt_max` (30) held 30 frames,
+  after 3 s. A rest on hands and knees does not end it; a T pose does, being standing.
+- Parity: `lib/engine/fixtures/pushup_plank_gate.json.gz`, the cam90 good set with the ready gate
+  on (placement off), matches the Python's `ready_phase` frame by frame.
 
 Still open, outside the build plan:
 
@@ -497,11 +519,12 @@ Still open, outside the build plan:
   calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
   holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
   (up to 27% on the left arm), the likely cause of any false "Lower your chest".
-- Push-up landscape (2026-10-21): checked with Chrome's fake camera at 844 x 390 (portrait held,
-  landscape straight through), not on a phone. Not confirmed: the gate clears when the phone
-  turns; with the rotation lock on, whether the stream stays portrait; the standing T pose fits
-  the short side with the camera low; the whole plank stays in frame; set-complete and rest
-  sideways.
+- Push-up landscape and plank start (2026-10-21): checked offline on recordings and with Chrome's
+  fake camera (portrait held, a standing T pose waits with the plank text, the squat unchanged),
+  not on a phone. Not confirmed: the plank start and its cues heard from the floor; the lying
+  framing band (scaled from portrait sets); getting up ends the set and a rest on the knees does
+  not; the gate clears when the phone turns; with the rotation lock on, whether the stream stays
+  portrait; set-complete and rest sideways.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`

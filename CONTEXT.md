@@ -105,7 +105,7 @@ The research repo's session report, schema version 4, emitted at the end of a se
 _Avoid_: session report, summary
 
 **Ready gate**:
-The engine step that waits for a held T or A pose, runs the countdown, then lets attempts open.
+The engine step that waits for a held T or A pose (or, for an exercise whose row says so, the plank top), runs the countdown, then lets attempts open.
 _Avoid_: arming, start gate
 
 **Placement guide**:

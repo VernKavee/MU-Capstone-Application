@@ -110,3 +110,15 @@ session log.
 Later the same day the bar went to 0.020 (SeniorProject `50e4692`, ported in `241b57a`): on
 Vern's labelled live workout it caught as many knees-in reps as the sign-only rule (21 of 29) and
 more knees-out (8 of 11, was 6), with no good rep warned and no wrong cue. Threshold only.
+
+## Decided 2026-10-21 (later): the push-up starts on the plank and ends on getting up
+
+SeniorProject `7420788` and `0cb8485` (Vern), ported in `46f9c31` and `1fc1c5e`. Filmed with the
+phone sideways, the push-up cannot frame a standing T pose at plank distance. Its row says
+`ready_pose` `plank`: the plank top held side-on starts the countdown, judged on the trusted
+side with the row's arming tilt (60) and straight arm and leg (150); placement runs in full
+while waiting, facing included, with framing for a body lying across the frame, and gives no
+cue until the trunk lies; the countdown is a plain hold; the set ends on getting up, the trunk
+under `left_tilt_max` (30) for 30 frames. The other three keep the T pose. The 2026-07-16 risk
+that MediaPipe reads a plank as near vertical did not recur at 90 degrees (in-set tilt 66 or
+more on 10 recordings). Parity adds a gates-on golden; the evidence is in the 2026-10-21 session log.

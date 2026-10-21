@@ -33,3 +33,6 @@ A fifth exercise, plank, with the rule "hips must not sag". If it can be written
   the app, not engine logic, so it is an ordinary column outside `rule_based_logic` and its
   export. The live screen holds the start while the camera picture is portrait; nothing branches
   on the exercise name.
+- Which pose starts a set is engine logic, so it is in the export: `state_machine.ready_pose`,
+  from the Python FSM's `READY_POSE`, `plank` only for the push-up (SeniorProject `7420788`). Its
+  get-up bar is `thresholds.left_tilt_max`. The live screen's waiting text is keyed by the pose.

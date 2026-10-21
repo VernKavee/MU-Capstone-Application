@@ -169,6 +169,12 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
   attempt.
 - **The end**: a T pose held 30 frames, at least 3 seconds into the set, makes
   `ready_phase` `ended`. The A pose never ends a set.
+- **The push-up** (row `ready_pose` `plank`, since SeniorProject `7420788`): the start is the
+  plank top held side-on (trusted side, elbow and knee 150 or more, trunk 60 or more from
+  vertical), 8 frames, while placement passes in full, facing included, judged for a body lying
+  across the frame (width 0.40 to 0.95, nothing at an edge); no cue until the trunk lies. The
+  countdown is a plain 3 s hold. The end is getting up: the trunk under 30 degrees for 30
+  frames. The phone is held sideways; the live screen waits while the picture is portrait.
 - **The report**: `reps` and `abandoned_attempts` with `active_side` (the curl's working
   arm, else null) and `rep_stats`: the Python's statistics under their own names, an
   unseen one as null, plus each rule's compared number under the rule's name (ADR-0003),
@@ -406,7 +412,9 @@ npm run dev
 consents, fill in the profile, pick an exercise, and open the camera. Stand back facing the
 camera with your whole body in view, where the screen stops asking you to move, and hold
 your arms straight out until the countdown,
-turn as the cue says, then do real reps; a T pose held for about a second ends the set. When the set ends, the set-complete screen shows similarity and
+turn as the cue says, then do real reps; a T pose held for about a second ends the set. For
+the push-up, hold the phone sideways, get into the top of a plank side-on, follow the cues, hold
+through the countdown, and get up to end the set. When the set ends, the set-complete screen shows similarity and
 feedback as they arrive. Supabase Studio at http://localhost:54323 shows the set's row
 (`attempts`, `similarity`, `llm_feedback`) and its two files in the `sets` bucket. The
 keypoint file there, once gunzipped, is the `landmarks` value similarity receives, less
