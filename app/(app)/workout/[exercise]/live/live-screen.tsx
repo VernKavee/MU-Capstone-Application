@@ -6,7 +6,7 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createEngine, ENGINE_VERSION } from "@/lib/engine/engine";
 import { setupQuery, type RuleBasedLogic, type Setup } from "@/lib/exercise";
 import type { PoseModel } from "@/lib/live/pose";
-import { CameraError, LiveSession, type SetCapture, type Snapshot } from "@/lib/live/session";
+import { CameraError, LiveSession, TURN_CUE, type SetCapture, type Snapshot } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { buildAttempts, totalsOf } from "@/lib/set";
 import { endWorkout } from "./actions";
@@ -14,7 +14,7 @@ import { createJob, type Job } from "./pipeline";
 import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
 
 type Props = {
-  exercise: { id: string; name: string; engineKey: string; logic: RuleBasedLogic };
+  exercise: { id: string; name: string; engineKey: string; landscape: boolean; logic: RuleBasedLogic };
   setup: Setup;
 };
 
@@ -91,6 +91,7 @@ export function LiveScreen({ exercise, setup }: Props) {
       target: setup.reps,
       attemptCap,
       model,
+      landscape: exercise.landscape,
       video: videoRef.current,
       canvas: canvasRef.current,
       onChange: (next) => {
@@ -161,7 +162,7 @@ export function LiveScreen({ exercise, setup }: Props) {
           ) : (
             <p className="text-lg leading-snug">
               The camera and the pose model run on this device; frames never leave it. From the end of the countdown the set is
-              recorded, so you can review it later.
+              recorded, so you can review it later.{exercise.landscape && " Hold your phone sideways for this exercise."}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3">
@@ -185,7 +186,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   const phase = frame?.ready_phase ?? "starting";
   const turnCue = phase === "countdown" && frame?.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
   const warning = frame?.warning_display[0] ?? null;
-  const centre = centreText(phase, frame);
+  const centre = snap?.turn ? TURN_CUE : centreText(phase, frame);
 
   return (
     <main className="fixed inset-0 z-20 overflow-hidden bg-black text-ink">

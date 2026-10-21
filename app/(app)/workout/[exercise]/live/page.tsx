@@ -17,7 +17,7 @@ export default async function LivePage({ params, searchParams }: PageProps<"/wor
 
   return (
     <LiveScreen
-      exercise={{ id: exercise.id, name: exercise.name, engineKey: exercise.engine_key, logic }}
+      exercise={{ id: exercise.id, name: exercise.name, engineKey: exercise.engine_key, landscape: exercise.landscape, logic }}
       setup={setup}
     />
   );

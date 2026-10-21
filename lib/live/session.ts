@@ -7,7 +7,7 @@
 // every import that is not a type carries a .ts extension.
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { Rule } from "@/lib/exercise";
-import { LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "../engine/types.ts";
+import { emptyKeypoints, LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "../engine/types.ts";
 import type { PoseModel } from "./pose";
 import { drawSkeleton, jointIndices } from "./skeleton.ts";
 import { sound } from "./sound.ts";
@@ -36,7 +36,11 @@ export type Snapshot = {
   frame: FrameResult | null;
   fps: number;
   capture: SetCapture | null;
+  turn?: boolean; // the start is held until the phone is turned sideways
 };
+
+export const TURN_CUE = "Turn your phone sideways. If the picture does not turn, switch off the rotation lock.";
+const NO_KEYPOINTS = emptyKeypoints();
 
 // Plain fields rather than constructor parameter properties, which Node's type stripping
 // cannot run.
@@ -59,6 +63,7 @@ type SessionOptions = {
   target: number;
   attemptCap: number;
   model: PoseModel;
+  landscape: boolean; // the exercise row's camera orientation
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
   onChange: (snapshot: Snapshot) => void;
@@ -82,6 +87,7 @@ export class LiveSession {
   private t0 = 0;
   private ended: EndedBy | null = null;
   private stopped = false;
+  private turning = false;
   private highlight = new Map<string, number[]>();
 
   constructor(opts: SessionOptions) {
@@ -150,6 +156,21 @@ export class LiveSession {
   feed(keypoints: Keypoints, now: number) {
     if (this.ended) return;
     const { videoWidth, videoHeight } = this.opts.video;
+    // A landscape exercise on an upright phone: until the set starts, the engine sees
+    // nothing and restarts its gate, and the picture is drawn without the skeleton. Once
+    // the set is active nothing is held, so t keeps indexing the video.
+    if (this.opts.landscape && !this.startedAt && videoHeight > videoWidth) {
+      if (!this.turning) {
+        this.turning = true;
+        this.opts.engine.reset();
+        this.lastFrame = null;
+        sound.say(TURN_CUE);
+      }
+      this.draw(null);
+      this.emit({ status: "running", frame: null, fps: this.fps(now), capture: null, turn: true });
+      return;
+    }
+    this.turning = false;
     const frame = this.opts.engine.process(keypoints, now, videoWidth && videoHeight ? [videoWidth, videoHeight] : null);
     this.draw(frame);
     this.capture(frame, now);
@@ -171,7 +192,7 @@ export class LiveSession {
     return this.fpsWindow.length;
   }
 
-  private draw(frame: FrameResult) {
+  private draw(frame: FrameResult | null) {
     const { canvas, video } = this.opts;
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
       canvas.width = video.videoWidth;
@@ -179,10 +200,11 @@ export class LiveSession {
     }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const lit = new Set(frame.warning_display_rules.flatMap((r) => this.highlight.get(r.name) ?? []));
+    const lit = new Set(frame?.warning_display_rules.flatMap((r) => this.highlight.get(r.name) ?? []));
+    const keypoints = frame?.keypoints ?? NO_KEYPOINTS;
     // The camera frame is drawn here too: iOS Safari drops object-fit on the video once
     // MediaRecorder starts and shows it at native pixels, while the canvas stays fitted.
-    drawSkeleton(ctx, (i) => frame.keypoints[LANDMARK_NAMES[i]], lit, video);
+    drawSkeleton(ctx, (i) => keypoints[LANDMARK_NAMES[i]], lit, video);
   }
 
   // Recording and keypoint capture both run from the end of the countdown to the end of

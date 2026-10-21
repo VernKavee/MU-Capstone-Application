@@ -29,15 +29,17 @@ function frame(ready_phase: FrameResult["ready_phase"], over: Partial<FrameResul
 
 // A loop whose engine returns the script's frames in order, fed 1.1 s apart so the frame
 // rate stays at one and never changes what the HUD shows.
-function loop(script: FrameResult[], limits = { target: 2, attemptCap: 4 }) {
+function loop(script: FrameResult[], limits = { target: 2, attemptCap: 4 }, landscape = false) {
   const snapshots: Snapshot[] = [];
   const engine: Engine = { process: () => script.shift()!, getSessionReport: () => report, reset: () => {} };
+  const video = { videoWidth: 640, videoHeight: 480 };
   const session = new LiveSession({
     engine,
     rules: [],
     ...limits,
     model: "full",
-    video: { videoWidth: 640, videoHeight: 480 } as unknown as HTMLVideoElement,
+    landscape,
+    video: video as unknown as HTMLVideoElement,
     canvas: { width: 0, height: 0, getContext: () => null } as unknown as HTMLCanvasElement,
     onChange: (s) => snapshots.push(s),
   });
@@ -45,7 +47,7 @@ function loop(script: FrameResult[], limits = { target: 2, attemptCap: 4 }) {
   const feed = (frames: number) => {
     for (let i = 0; i < frames; i++) session.feed(emptyKeypoints(), (now += 1100));
   };
-  return { snapshots, feed };
+  return { snapshots, feed, video };
 }
 
 test("the capture starts on the first active frame and the set ends at the target", () => {
@@ -93,6 +95,21 @@ test("the engine's own end of the set counts as ended by the user", () => {
   const { snapshots, feed } = loop([frame("active"), frame("ended")]);
   feed(2);
   assert.equal(snapshots.at(-1)!.capture?.endedBy, "user_ended");
+});
+
+test("a landscape exercise holds the start while the picture is portrait, never once the set is active", () => {
+  const script = [frame("waiting"), frame("active"), frame("active")];
+  const { snapshots, feed, video } = loop(script, { target: 5, attemptCap: 10 }, true);
+  Object.assign(video, { videoWidth: 480, videoHeight: 640 });
+  feed(3);
+  assert.equal(script.length, 3, "the engine sees nothing while upright");
+  assert.deepEqual(snapshots.map((s) => [s.frame, s.turn]), [[null, true]]);
+  Object.assign(video, { videoWidth: 640, videoHeight: 480 });
+  feed(2);
+  assert.equal(snapshots.at(-1)!.frame?.ready_phase, "active");
+  Object.assign(video, { videoWidth: 480, videoHeight: 640 });
+  feed(1);
+  assert.equal(script.length, 0, "turned upright mid-set, the frame is still processed");
 });
 
 test("identical frames reach React once", () => {
