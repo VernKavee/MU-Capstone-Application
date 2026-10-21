@@ -479,7 +479,10 @@ Still open, outside the build plan:
   reads about 6 degrees lower there and the 11 bar is fixed (SeniorProject RULES_AND_FSM 5.16; at 45
   degrees MediaPipe pulls the frontal part 6 to 15 toward "in" and adds a false sagittal part).
   Trying live: the knees-in bar lowered 11 to 8 (SeniorProject `c3a9129`), then the direction bar
-  0.020 to 0.015 (`bfaa3dc`, `ENGINE_VERSION` `bfaa3dc`), revert steps in the session log. Still to choose: a per-person, per-side starting point, one camera side, the front
+  0.020 to 0.015 (`bfaa3dc`, `ENGINE_VERSION` `bfaa3dc`), revert steps in the session log.
+  The good-rep check at 0.015 gave 18 of 56 false "Keep knees in line", 16 of them on the
+  mirrored side, from a false sagittal part in the angle; the signed frontal part alone clears
+  them but loses knees out. Still to choose: a per-person, per-side starting point, one camera side, the front
   camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
   (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
   knees-out (9 to 13 degrees) is a fault. Other people are not tested.
@@ -498,6 +501,9 @@ Still open, outside the build plan:
   500 MiB, about 25 minutes of video.
 - A workout left part way cannot be opened in History; Level 3 has no paging; a set
   missing one file is not replayed.
+- Replay out of step (Vern, 2026-10-22): workout `44bd485d`, set 1's repair set (59 s, 1,639
+  frames at 28 fps) plays with the skeleton out of step with the video; set 1 (26 s) did not.
+  Not investigated (session log 2026-10-21, last section).
 - A failed first save, or a reload mid-workout, gives the next set a new workout row.
 - Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
