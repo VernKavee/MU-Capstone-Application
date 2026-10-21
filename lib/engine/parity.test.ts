@@ -5,7 +5,9 @@
 // names must match on every frame, and the report's numbers within 1e-9, ignoring the
 // rule-named rep_stats keys the port adds (section 8).
 //
-// lib/engine/fixtures holds one trimmed recording per exercise. PARITY_DIR, when set,
+// lib/engine/fixtures holds one trimmed recording per exercise, and pushup_plank_gate,
+// a whole push-up set at 90 degrees run with the ready gate on (placement off), whose
+// ready_phase must match too: the plank start and the get-up end. PARITY_DIR, when set,
 // adds every file there (scratch_output/web_parity in SeniorProject, all 25 recordings).
 // The settings are the four rows of the latest rule_logic migration, as the database has
 // them. Also the seam checks the stub's test made: the counter moves only on a correct
@@ -30,11 +32,13 @@ type GoldenFrame = {
   warnings_all: string[];
   warning_display: string[];
   low_confidence: boolean;
+  ready_phase?: string; // only on a recording run with the ready gate on
 };
 type Recording = {
   engine_key: string;
   armed: boolean;
   side?: Side | null; // the arm the user chose; absent before 2026-10-04's goldens
+  ready?: boolean; // the ready gate on (placement off); absent before 2026-10-21's goldens
   source: string;
   // frame_size: the video's width and height, on recordings with image x, y (the curl's,
   // since 858b203), so the curl elbow rebuild runs (WEB_APP_PORT.md section 9b).
@@ -96,8 +100,9 @@ function same(actual: unknown, expected: unknown, ruleNames: Set<string>, at: st
   return actual === expected ? null : `${at}: ${JSON.stringify(actual)} != ${JSON.stringify(expected)}`;
 }
 
-function frameView(r: FrameResult): GoldenFrame {
+function frameView(r: FrameResult, ready: boolean): GoldenFrame {
   return {
+    ...(ready ? { ready_phase: r.ready_phase } : {}),
     state: r.state,
     event: r.event,
     rep_count: r.rep_count,
@@ -116,11 +121,11 @@ function replay(file: string) {
   assert.ok(logic, `no row for ${rec.engine_key}`);
   const ruleNames = new Set(logic.rules.map((r) => r.name));
   const messages = new Set(logic.rules.map((r) => r.messages.en));
-  const engine = createEngine(logic, rec.engine_key, { placement: false, ready: false, armed: rec.armed, side: rec.side ?? null });
+  const engine = createEngine(logic, rec.engine_key, { placement: false, ready: rec.ready ?? false, armed: rec.armed, side: rec.side ?? null });
   let prev: FrameResult | null = null;
   rec.keypoints.frames.forEach((row, i) => {
     const r = engine.process(keypoints(rec, row.points), row.t, rec.keypoints.frame_size ?? null);
-    const diff = same(frameView(r), rec.golden.frames[i], ruleNames, `${path.basename(file)} frame ${i}`);
+    const diff = same(frameView(r, rec.ready ?? false), rec.golden.frames[i], ruleNames, `${path.basename(file)} frame ${i}`);
     assert.equal(diff, null, diff ?? "");
 
     // The seam.

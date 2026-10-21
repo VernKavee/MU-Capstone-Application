@@ -14,10 +14,11 @@ test("floor bar: the session reset clears the held wrist", () => {
       source: "test",
       state_machine: {
         states: ["Idle", "Concentric", "Inflection", "Eccentric"],
-        thresholds: { thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1, consecutive_frames_req: 3 },
+        thresholds: { thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1, consecutive_frames_req: 3, left_tilt_max: 30 },
         arming: { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null },
         confidence_joints: ["shoulder", "elbow", "wrist"],
         chooses_side: false,
+        ready_pose: "plank",
       },
       placement: { yaw_center: 45, yaw_tol: 25 },
       rules: [],

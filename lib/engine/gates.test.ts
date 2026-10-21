@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { RuleBasedLogic } from "../exercise";
 import { createEngine } from "./engine.ts";
-import { detectReadyPose, facingCheck, framingCheck, PlacementGuide, ReadyPoseGate } from "./gates.ts";
+import { detectPlank, detectReadyPose, facingCheck, framingCheck, lyingFramingCheck, PlacementGuide, ReadyPoseGate } from "./gates.ts";
 import { emptyKeypoints, type Keypoints, type LandmarkName } from "./types.ts";
 
 // Arm poses as (elbow, wrist) offsets from the shoulder, x away from the midline, y down.
@@ -229,6 +229,7 @@ const LOGIC: RuleBasedLogic = {
     arming: { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 },
     confidence_joints: ["hip", "knee", "ankle"],
     chooses_side: false,
+    ready_pose: "t_pose",
   },
   placement: SQUAT,
   rules: [{ name: "partial_squat", check: "partial_squat", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] }],
@@ -303,4 +304,90 @@ test("engine: without world 3D an active frame is low confidence, not a crash", 
   const r = engine.process(flat, 0);
   assert.deepEqual([r.low_confidence, r.ready_phase, r.event, r.state], [true, "disabled", "none", "Idle"]);
   assert.equal(engine.getSessionReport().ready_gate.enabled, false);
+});
+
+// The plank start (SeniorProject 7420788): a side-on plank top, the body along x, y down,
+// the sides apart in z (yaw 90). Arms straight down under the shoulders, legs straight
+// back; knee moves both knees to bend the legs. Image x, y place it across the middle of a
+// landscape frame.
+function plank(knee: [number, number] = [-0.5, -0.3], score = 1): Keypoints {
+  const kp = emptyKeypoints();
+  const put = (name: LandmarkName, x: number, y: number, z: number) =>
+    (kp[name] = { x: 0.5 + x * 0.35, y: 0.6 + y * 0.35, z: 0, x_3d: x, y_3d: y, z_3d: z, score });
+  put("nose", 0.7, -0.45, 0);
+  const joints = { shoulder: [0.5, -0.4], elbow: [0.5, -0.1], wrist: [0.5, 0.2], hip: [0, -0.35], knee, ankle: [-1, -0.25] } as const;
+  for (const [side, z] of [["left", -0.2], ["right", 0.2]] as const) {
+    for (const [name, [x, y]] of Object.entries(joints)) put(`${side}_${name}` as LandmarkName, x, y, z);
+  }
+  return kp;
+}
+const ALL_FOURS: [number, number] = [0, 0.2]; // knees on the floor under the hips
+const PLANK_KIND = { pose: "plank", tiltMin: 60, leftTiltMax: 30 } as const;
+
+test("plank: the plank top is one, standing, hands and knees, or a low score are not", () => {
+  assert.equal(detectPlank(plank(), 60), "plank");
+  assert.equal(detectPlank(standing("t"), 60), null);
+  assert.equal(detectPlank(plank(ALL_FOURS), 60), null);
+  assert.equal(detectPlank(plank(undefined, 0.4), 60), null);
+  const farGuessed = plank();
+  for (const j of ["right_elbow", "right_wrist", "right_knee"] as const) farGuessed[j] = { ...farGuessed[j], score: 0.1 };
+  assert.equal(detectPlank(farGuessed, 60), "plank");
+});
+
+test("plank gate: starts on the plank, not a T pose; getting up ends it, a rest on the knees does not", () => {
+  const gate = new ReadyPoseGate(PLANK_KIND);
+  let t = 0;
+  let s = gate.update(standing("t"), t, true);
+  for (let i = 0; i < 24; i++) s = gate.update(standing("t"), (t += 50), true);
+  assert.equal(s.phase, "waiting");
+  for (let i = 0; i < 8; i++) s = gate.update(plank(), (t += 50), true);
+  assert.deepEqual([s.phase, s.pose], ["countdown", "plank"]);
+  s = gate.update(plank(), (t += 3000), true);
+  assert.equal(s.phase, "active");
+  t += 3000;
+  for (let i = 0; i < 90; i++) s = gate.update(plank(ALL_FOURS), (t += 50), true);
+  assert.equal(s.phase, "active");
+  for (let i = 0; i < 30; i++) s = gate.update(standing("down"), (t += 50), true);
+  assert.deepEqual([s.phase, s.justEnded, gate.endedByPose], ["ended", true, true]);
+});
+
+test("lying framing: distance by width, cut at any edge", () => {
+  assert.deepEqual(lyingFramingCheck([0.2, 0.45, 0.75, 0.7]), ["ok", "ok", "ok"]);
+  assert.equal(lyingFramingCheck([0.35, 0.45, 0.65, 0.7])[0], "too_far");
+  for (const box of [[0.01, 0.45, 0.7, 0.7], [0.3, 0.45, 0.99, 0.7], [0.2, 0.45, 0.75, 0.99]] as const) {
+    assert.equal(lyingFramingCheck([...box])[2], "cut");
+  }
+  assert.equal(framingCheck([0.2, 0.45, 0.75, 0.7])[0], "too_far"); // a plank is short for a standing body
+});
+
+const PUSHUP: RuleBasedLogic = {
+  ...LOGIC,
+  state_machine: {
+    ...LOGIC.state_machine,
+    thresholds: { thr_standing: 0.9, thr_inflection: 0.58, thr_descending: 0.85, hysteresis_buffer: 0.1, consecutive_frames_req: 3, left_tilt_max: 30 },
+    arming: { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null },
+    confidence_joints: ["shoulder", "elbow", "wrist"],
+    ready_pose: "plank",
+  },
+  placement: { yaw_center: 82, yaw_tol: 12 },
+  rules: [],
+};
+
+test("engine: a plank start is placed while waiting, facing included, and ends on getting up", () => {
+  const engine = createEngine(PUSHUP, "pushup");
+  let t = 0;
+  let r = engine.process(standing("t"), t);
+  for (let i = 0; i < 24; i++) r = engine.process(standing("t"), (t += 25));
+  assert.equal(r.ready_phase, "waiting");
+  const cut = plank();
+  cut.left_ankle = { ...cut.left_ankle, x: 0.01 };
+  r = engine.process(cut, (t += 25));
+  assert.deepEqual([r.placement_ok, r.placement_cues[0]], [false, "Move back -- your whole body must be in frame"]);
+  for (let i = 0; i < 8; i++) r = engine.process(plank(), (t += 25));
+  assert.deepEqual([r.ready_phase, r.placement_phase], ["countdown", "placed"]);
+  r = engine.process(plank(), (t += 3000));
+  assert.deepEqual([r.ready_phase, r.armed], ["active", true]);
+  t += 3000;
+  for (let i = 0; i < 30; i++) r = engine.process(standing("down"), (t += 25));
+  assert.deepEqual([r.ready_phase, r.armed], ["ended", false]);
 });

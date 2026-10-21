@@ -26,6 +26,9 @@ export type RuleBasedLogic = {
     confidence_joints: string[];
     // The user chooses the working side before the workout (the curl's arm).
     chooses_side: boolean;
+    // The ready gate's start pose: a standing T pose facing the camera, or the plank top
+    // held side-on (the push-up, filmed with the phone sideways), which ends on getting up.
+    ready_pose: "t_pose" | "plank";
   };
   // The yaw the placement gate wants, in the engine's units, not camera degrees.
   placement: { yaw_center: number; yaw_tol: number };

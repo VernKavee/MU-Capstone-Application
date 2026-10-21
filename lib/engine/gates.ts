@@ -3,6 +3,7 @@
 // 2D fallback: without world 3D the ready pose and the yaw read null.
 
 import { bodyYaw, calculateAngle, hasWorld3d, keypointBbox, world } from "./angles.ts";
+import { trunkTiltDeg } from "./evaluator.ts";
 import type { DistanceState, Keypoints, LandmarkName, PlacementPhase, ReadyPhase } from "./types.ts";
 import type { Side } from "./rules.ts";
 
@@ -43,9 +44,33 @@ export function detectReadyPose(kp: Keypoints): "t_pose" | "a_pose" | null {
   return null;
 }
 
+// The plank top, side-on (SeniorProject 7420788, 2026-10-21). One side is judged, the one
+// whose lowest shoulder, elbow, wrist, hip, knee, and ankle score is higher (a tie goes to
+// left), since at a side view the far limbs are guessed. On it all six score 0.5 or more,
+// the arm is straight (the T pose's 150), the leg straight (so hands and knees is not a
+// plank), and the trunk is tiltMin or more from vertical (the row's arming tilt).
+const PLANK_KNEE_MIN = 150;
+const PLANK_SIDE_JOINTS = ["shoulder", "elbow", "wrist", "hip", "knee", "ankle"] as const;
+
+export function detectPlank(kp: Keypoints, tiltMin: number): "plank" | null {
+  if (!hasWorld3d(kp)) return null;
+  const low = (side: Side) => Math.min(...PLANK_SIDE_JOINTS.map((j) => kp[`${side}_${j}`].score));
+  const side: Side = low("left") >= low("right") ? "left" : "right";
+  if (low(side) < READY_MIN_SCORE) return null;
+  const [shoulder, elbow, wrist, hip, knee, ankle] = PLANK_SIDE_JOINTS.map((j) => world(kp, `${side}_${j}`));
+  if (calculateAngle(shoulder, elbow, wrist) < READY_ELBOW_MIN) return null;
+  if (calculateAngle(hip, knee, ankle) < PLANK_KNEE_MIN) return null;
+  const tilt = trunkTiltDeg(kp);
+  return tilt !== null && tilt >= tiltMin ? "plank" : null;
+}
+
+// The pose that starts a set, and for a plank the bars: tiltMin to start, leftTiltMax to
+// end on getting up.
+export type ReadyKind = { pose: "t_pose" } | { pose: "plank"; tiltMin: number; leftTiltMax: number };
+
 export type ReadyStatus = {
   phase: ReadyPhase;
-  pose: "t_pose" | "a_pose" | null;
+  pose: "t_pose" | "a_pose" | "plank" | null;
   countdownS: number | null;
   justActivated: boolean;
   justEnded: boolean;
@@ -53,12 +78,19 @@ export type ReadyStatus = {
 
 // WAITING (a ready pose held 8 frames, framed) -> COUNTDOWN (3 s, then held at 0 until placed)
 // -> ACTIVE -> ENDED (a T pose held 30 frames, after 3 s of the set). ENDED is terminal.
+// For a plank the ready pose is the plank top and ENDED is getting up: the trunk under
+// leftTiltMax held 30 frames, standing or kneeling upright.
 export class ReadyPoseGate {
+  kind: ReadyKind;
   phase: ReadyPhase = "waiting";
   endedByPose = false;
   holdStreak = 0;
   deadlineMs = 0;
   activeSinceMs = 0;
+
+  constructor(kind: ReadyKind = { pose: "t_pose" }) {
+    this.kind = kind;
+  }
 
   reset() {
     this.phase = "waiting";
@@ -71,8 +103,9 @@ export class ReadyPoseGate {
   // placed: placement's verdict, the countdown holds at 0 without it. framed: its stand
   // check while waiting, the ready pose counts only with it. Both true without placement.
   update(kp: Keypoints, nowMs: number, placed: boolean, framed = true): ReadyStatus {
-    const pose = detectReadyPose(kp);
-    const status = (countdownS: number | null = null, justActivated = false, justEnded = false): ReadyStatus => ({
+    const kind = this.kind;
+    const pose = kind.pose === "plank" ? detectPlank(kp, kind.tiltMin) : detectReadyPose(kp);
+    const status =(countdownS: number | null = null, justActivated = false, justEnded = false): ReadyStatus => ({
       phase: this.phase, pose, countdownS, justActivated, justEnded,
     });
     const secondsLeft = () => Math.max(0, (this.deadlineMs - nowMs) / 1000);
@@ -100,8 +133,16 @@ export class ReadyPoseGate {
       return status(left);
     }
     if (this.phase === "active") {
-      // Only the T pose ends a set; an A pose is too close to standing between reps.
-      if (pose === "t_pose" && (nowMs - this.activeSinceMs) / 1000 >= END_GRACE_S) {
+      // Only the T pose ends a set; an A pose is too close to standing between reps. A
+      // plank set ends on getting up; a rest on hands and knees keeps the trunk level.
+      let ending: boolean;
+      if (kind.pose === "plank") {
+        const tilt = trunkTiltDeg(kp);
+        ending = tilt !== null && tilt < kind.leftTiltMax;
+      } else {
+        ending = pose === "t_pose";
+      }
+      if (ending && (nowMs - this.activeSinceMs) / 1000 >= END_GRACE_S) {
         if (++this.holdStreak >= END_HOLD_FRAMES) {
           this.holdStreak = 0;
           this.phase = "ended";
@@ -121,10 +162,15 @@ const BBOX_HEIGHT_MIN = 0.45;
 const BBOX_HEIGHT_MAX = 0.95;
 const EDGE_MARGIN = 0.03;
 const CENTER_TOL = 0.15;
+// A body lying across the frame (the plank start): distance by the width. Scaled from
+// portrait phone sets, placeholders until a landscape run (SeniorProject 7420788).
+const PLANK_WIDTH_MIN = 0.4;
+const PLANK_WIDTH_MAX = 0.95;
 const PLACED_HOLD_FRAMES = 8;
 const CUE: Record<string, string> = {
   "framing:head_cut": "Step back -- your head is out of frame",
   "framing:feet_cut": "Step back -- your feet are out of frame",
+  "framing:cut": "Move back -- your whole body must be in frame",
   "distance:too_far": "Move closer to the camera",
   "distance:too_close": "Step back from the camera",
   "centering:move_left": "Move left to center yourself in frame",
@@ -148,6 +194,17 @@ export function framingCheck(bbox: [number, number, number, number] | null): [Di
   const distance = height < BBOX_HEIGHT_MIN ? "too_far" : height > BBOX_HEIGHT_MAX ? "too_close" : "ok";
   const centering = centerX < 0.5 - CENTER_TOL ? "move_left" : centerX > 0.5 + CENTER_TOL ? "move_right" : "ok";
   return [distance, centering, framing];
+}
+
+// framingCheck for a body lying across the frame: distance by the width, "cut" when the
+// box reaches any edge, centring as framingCheck.
+export function lyingFramingCheck(bbox: [number, number, number, number] | null): [DistanceState, Centering, string] {
+  if (bbox === null) return ["not_detected", "not_detected", "not_detected"];
+  const [xMin, yMin, xMax, yMax] = bbox;
+  const width = xMax - xMin;
+  const inside = xMin > EDGE_MARGIN && xMax < 1 - EDGE_MARGIN && yMin > EDGE_MARGIN && yMax < 1 - EDGE_MARGIN;
+  const distance = width < PLANK_WIDTH_MIN ? "too_far" : width > PLANK_WIDTH_MAX ? "too_close" : "ok";
+  return [distance, framingCheck(bbox)[1], inside ? "ok" : "cut"];
 }
 
 export type PlacementTarget = { yaw_center: number; yaw_tol: number };
@@ -185,9 +242,12 @@ export class PlacementGuide {
   phase: PlacementPhase = "guiding";
   holdStreak = 0;
   targetSign: number | null = null;
+  framing: typeof framingCheck;
 
-  constructor(target: PlacementTarget, nearSide: Side | null = null) {
+  // lying: the body lies across the frame (the plank start), so framing is lyingFramingCheck.
+  constructor(target: PlacementTarget, nearSide: Side | null = null, lying = false) {
     this.target = target;
+    this.framing = lying ? lyingFramingCheck : framingCheck;
     this.nearSign = nearSide === null ? null : nearSide === "left" ? -1 : 1;
     this.targetSign = this.nearSign;
   }
@@ -200,7 +260,7 @@ export class PlacementGuide {
 
   update(kp: Keypoints): PlacementStatus {
     if (this.phase === "placed") return placementStatus("placed", true);
-    const [distance, centering, framing] = framingCheck(keypointBbox(kp, MIN_SCORE));
+    const [distance, centering, framing] = this.framing(keypointBbox(kp, MIN_SCORE));
     const yaw = hasWorld3d(kp) ? bodyYaw(kp, MIN_SCORE) : null;
     if (yaw !== null && this.targetSign === null) this.targetSign = yaw >= 0 ? 1 : -1;
     const facing = facingCheck(yaw, this.target, this.targetSign, this.nearSign !== null);

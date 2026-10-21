@@ -16,7 +16,6 @@ export const ECCENTRIC = 3;
 const ARM_FRAMES_REQ = 10;
 const DISARM_FRAMES_REQ = 40;
 const ARM_MIN_SCORE = 0.5;
-const LEFT_TILT_MAX = 30; // PushUpFSM: leaving the plank
 const SIDE_JOINTS = ["shoulder", "elbow", "wrist"];
 
 export type JointScores = Record<string, number>;
@@ -229,6 +228,12 @@ class SquatFsm extends BaseFsm {
 
 // Counts on the two-hand floor bar in arm lengths (section 9a), not an angle.
 class PushUpFsm extends BaseFsm {
+  // Leaving the plank: the trunk up past this from vertical (PushUpFSM.LEFT_TILT_MAX).
+  readonly leftTiltMax: number;
+  constructor(sm: StateMachine) {
+    super(sm);
+    this.leftTiltMax = bar(sm, "left_tilt_max");
+  }
   primary(angles: Angles) {
     return angles.floor_bar as number;
   }
@@ -241,7 +246,7 @@ class PushUpFsm extends BaseFsm {
   }
   leftExercise(angles: Angles, primary: number) {
     const tilt = this.trunkTilt;
-    return primary < 0 || (tilt !== null && tilt < LEFT_TILT_MAX);
+    return primary < 0 || (tilt !== null && tilt < this.leftTiltMax);
   }
   startGateOk(angles: Angles, primary: number) {
     return !this.leftExercise(angles, primary);

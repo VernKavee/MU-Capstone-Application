@@ -157,6 +157,7 @@ const CURL: RuleBasedLogic = {
     arming: null,
     confidence_joints: ["shoulder", "elbow", "wrist"],
     chooses_side: true,
+    ready_pose: "t_pose",
   },
   placement: { yaw_center: 45, yaw_tol: 12 },
   rules: [],

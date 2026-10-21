@@ -12,9 +12,14 @@ import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "50e4692";
+export const ENGINE_VERSION = "7420788";
 
 const WARNING_HOLD_MS = 1000;
+
+const need = (value: number | null | undefined, name: string) => {
+  if (typeof value !== "number") throw new Error(`state_machine.${name} is missing`);
+  return value;
+};
 
 export type EngineOptions = { placement: boolean; ready: boolean; armed: boolean; side: Side | null };
 
@@ -30,8 +35,16 @@ export function createEngine(
   const states = logic.state_machine.states;
   const confidenceJoints = logic.state_machine.confidence_joints;
   const session = new ExerciseSession(logic, engineKey, side);
-  const guide = placement ? new PlacementGuide(logic.placement, side) : null;
-  const gate = ready ? new ReadyPoseGate() : null;
+  // A plank start (state_machine.ready_pose): placement runs in full while waiting, with
+  // the framing of a body lying across the frame, and the set ends on getting up.
+  const sm = logic.state_machine;
+  const plank = ready && sm.ready_pose === "plank";
+  const guide = placement ? new PlacementGuide(logic.placement, side, plank) : null;
+  const gate = !ready
+    ? null
+    : plank
+      ? new ReadyPoseGate({ pose: "plank", tiltMin: need(sm.arming?.ready_tilt_min, "arming.ready_tilt_min"), leftTiltMax: need(sm.thresholds.left_tilt_max, "thresholds.left_tilt_max") })
+      : new ReadyPoseGate();
   const rebuild = engineKey === "dumbbell_biceps_curls" ? new CurlArmRebuild() : null;
   let lastAngles: Record<string, number> = {};
   let held: RuleRef[] = [];
@@ -89,9 +102,10 @@ export function createEngine(
   function process(kp: Keypoints, timestampMs: number, frameSize: FrameSize | null = null): FrameResult {
     // Placement is not ticked while the ready gate waits for the T pose facing the
     // camera; its stand check (framing, distance, centring) runs instead, and the pose
-    // counts only while that passes. From the countdown on it runs every frame.
+    // counts only while that passes. From the countdown on it runs every frame. A plank
+    // start ticks it while waiting too, facing included, so nobody turns in a plank.
     let place: PlacementStatus;
-    if (gate && gate.phase === "waiting") place = guide ? guide.standCheck(kp) : placementStatus("disabled", true);
+    if (gate && gate.phase === "waiting" && !plank) place = guide ? guide.standCheck(kp) : placementStatus("disabled", true);
     else place = guide ? guide.update(kp) : placementStatus("disabled", true);
     const placed = place.phase !== "guiding";
     if (!gate && !placed) return result(kp, timestampMs, place, null, false);

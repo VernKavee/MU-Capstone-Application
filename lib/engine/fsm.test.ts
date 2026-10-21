@@ -8,15 +8,16 @@ import type { Angles } from "./angles.ts";
 import { CONCENTRIC, createFsm, ECCENTRIC, IDLE, INFLECTION, type BaseFsm } from "./fsm.ts";
 import type { RepEvent } from "./types.ts";
 
-const machine = (thresholds: Record<string, number>, arming: RuleBasedLogic["state_machine"]["arming"]) => ({
+const machine = (thresholds: Record<string, number>, arming: RuleBasedLogic["state_machine"]["arming"], readyPose: "t_pose" | "plank" = "t_pose") => ({
   states: ["Idle", "Concentric", "Inflection", "Eccentric"],
   thresholds: { consecutive_frames_req: 3, ...thresholds },
   arming,
   confidence_joints: [],
   chooses_side: false,
+  ready_pose: readyPose,
 });
 const SQUAT = machine({ thr_standing: 160, thr_inflection: 120, thr_descending: 150, hysteresis_buffer: 10 }, { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 });
-const PUSHUP = machine({ thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1 }, { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null });
+const PUSHUP = machine({ thr_standing: 0.9, thr_inflection: 0.54, thr_descending: 0.85, hysteresis_buffer: 0.1, left_tilt_max: 30 }, { joints: ["shoulder", "elbow", "wrist"], ready_tilt_min: 60, ready_tilt_max: null }, "plank");
 const LUNGE = machine({ thr_standing: 155, thr_inflection: 105, thr_descending: 145, hysteresis_buffer: 12, lunge_start_split_min: 58 }, { joints: ["hip", "knee", "ankle"], ready_tilt_min: null, ready_tilt_max: 30 });
 const CURL = machine({ thr_standing: 155, thr_inflection: 55, thr_descending: 140, hysteresis_buffer: 15, start_descent_delta: 25, min_side_score: 0.3 }, null);
 
