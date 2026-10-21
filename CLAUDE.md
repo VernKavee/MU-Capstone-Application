@@ -452,11 +452,14 @@ Decided 2026-10-21, push-up landscape, recorded in ADR-0006 and the 2026-10-21 s
 
 Still open, outside the build plan:
 
-- The squat knee rules: no live check at 0.020 yet. An angle MediaPipe reads too low is still
-  missed (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1; 10 of 40 live faults). Ask the
-  physiotherapists whether a moderate knees-out (9 to 13 degrees) is a fault. A calibration
-  sitting at 45 degrees from both sides (good, knees in, knees out, feet turned) would test the
-  0.020 bar beyond one subject.
+- The squat knee rules: the live check at 0.020 (2026-10-21) was right on the usual side but caught
+  2 of 6 knees-in on the mirrored side (right side toward the camera). Not the yaw's size: good form
+  reads about 6 degrees lower there and the 11 bar is fixed (SeniorProject RULES_AND_FSM 5.16; at 45
+  degrees MediaPipe pulls the frontal part 6 to 15 toward "in" and adds a false sagittal part).
+  Vern to choose, none built: a per-person, per-side starting point, one camera side, the front
+  camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
+  (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
+  knees-out (9 to 13 degrees) is a fault. Other people are not tested.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
