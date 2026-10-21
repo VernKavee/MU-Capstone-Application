@@ -6,13 +6,13 @@
 
 import type { RuleBasedLogic } from "../exercise";
 import { CurlArmRebuild, extractAngles, hasWorld3d } from "./angles.ts";
-import { ExerciseSession } from "./evaluator.ts";
+import { ExerciseSession, trunkTiltDeg } from "./evaluator.ts";
 import { COUNTDOWN_S, PlacementGuide, placementStatus, ReadyPoseGate, type PlacementStatus, type ReadyStatus } from "./gates.ts";
 import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "7420788";
+export const ENGINE_VERSION = "0cb8485";
 
 const WARNING_HOLD_MS = 1000;
 
@@ -40,11 +40,14 @@ export function createEngine(
   const sm = logic.state_machine;
   const plank = ready && sm.ready_pose === "plank";
   const guide = placement ? new PlacementGuide(logic.placement, side, plank) : null;
+  const tiltMin = plank ? need(sm.arming?.ready_tilt_min, "arming.ready_tilt_min") : 0;
   const gate = !ready
     ? null
     : plank
-      ? new ReadyPoseGate({ pose: "plank", tiltMin: need(sm.arming?.ready_tilt_min, "arming.ready_tilt_min"), leftTiltMax: need(sm.thresholds.left_tilt_max, "thresholds.left_tilt_max") })
+      ? new ReadyPoseGate({ pose: "plank", tiltMin, leftTiltMax: need(sm.thresholds.left_tilt_max, "thresholds.left_tilt_max") })
       : new ReadyPoseGate();
+  // Down for a plank: the trunk tiltMin or more from vertical.
+  const lying = (kp: Keypoints) => (trunkTiltDeg(kp) ?? -1) >= tiltMin;
   const rebuild = engineKey === "dumbbell_biceps_curls" ? new CurlArmRebuild() : null;
   let lastAngles: Record<string, number> = {};
   let held: RuleRef[] = [];
@@ -103,9 +106,13 @@ export function createEngine(
     // Placement is not ticked while the ready gate waits for the T pose facing the
     // camera; its stand check (framing, distance, centring) runs instead, and the pose
     // counts only while that passes. From the countdown on it runs every frame. A plank
-    // start ticks it while waiting too, facing included, so nobody turns in a plank.
+    // start ticks it while waiting too, facing included, so nobody turns in a plank, but
+    // only once the trunk lies: a standing body is narrow, and the lying framing would
+    // say "Move closer" when the user needs to get down. Until then, no cue.
     let place: PlacementStatus;
-    if (gate && gate.phase === "waiting" && !plank) place = guide ? guide.standCheck(kp) : placementStatus("disabled", true);
+    const waiting = gate?.phase === "waiting";
+    if (waiting && !plank) place = guide ? guide.standCheck(kp) : placementStatus("disabled", true);
+    else if (waiting && guide?.phase === "guiding" && !lying(kp)) place = placementStatus("guiding", false);
     else place = guide ? guide.update(kp) : placementStatus("disabled", true);
     const placed = place.phase !== "guiding";
     if (!gate && !placed) return result(kp, timestampMs, place, null, false);

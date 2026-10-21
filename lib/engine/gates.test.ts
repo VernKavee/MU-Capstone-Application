@@ -378,7 +378,8 @@ test("engine: a plank start is placed while waiting, facing included, and ends o
   let t = 0;
   let r = engine.process(standing("t"), t);
   for (let i = 0; i < 24; i++) r = engine.process(standing("t"), (t += 25));
-  assert.equal(r.ready_phase, "waiting");
+  // Standing: no cue (the lying framing would say "Move closer"), so the screen asks for the plank.
+  assert.deepEqual([r.ready_phase, r.placement_phase, r.placement_ok, r.placement_cues], ["waiting", "guiding", false, []]);
   const cut = plank();
   cut.left_ankle = { ...cut.left_ankle, x: 0.01 };
   r = engine.process(cut, (t += 25));
