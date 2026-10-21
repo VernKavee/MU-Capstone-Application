@@ -95,3 +95,14 @@ picture and the full 3D, x-y, and picture angles agree within 1-3 degrees. Place
 (two live sets read 81-89), guide text side-on. The rules, the floor bar, and its 0.54 bar are
 unchanged; the near elbow in the picture separated better at 90 on one sitting and stays a
 fallback.
+
+## Decided 2026-10-21: the squat knee direction reads x only and must pass 0.028
+
+SeniorProject `eddf6f1` (Vern), ported in `64c36cf`. On Vern's 2026-10-20 sets "Push knees
+out" fired on 11 of 31 good reps: the 3D shin angle and the knees-in direction both came from
+MediaPipe's guessed z. The 3D angle and its bars (11, 8) stay, because on the mirrored 45
+degree side the error moves into x and the 3D angle is what stays low. The direction gives each
+knee its ankle's z and must pass `converge_min` 0.028 m (both legs added), a new threshold key
+on `knee_valgus` and `knee_varus`. Exam counts unchanged; turned-in feet 5/5 to 2/5. Migration
+`rule_logic_eddf6f1`, `ENGINE_VERSION` `eddf6f1`, parity 96 of 96. Evidence in the 2026-10-21
+session log.

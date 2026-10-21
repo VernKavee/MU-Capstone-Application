@@ -423,7 +423,25 @@ session log:
   warnings recur; changing to it needs the expert again. The no-z body line is stashed in
   SeniorProject, not shipped.
 
+Decided 2026-10-21, the squat knee direction, recorded in ADR-0002 and the 2026-10-21
+session log:
+
+- SeniorProject `eddf6f1`, migration `rule_logic_eddf6f1`, `ENGINE_VERSION` `eddf6f1`:
+  `knee_valgus` and `knee_varus` keep the 3D shin angle (bars 11, 8) and now also need the
+  direction past `converge_min` 0.028 m, read with each knee given its ankle's z (x only).
+  The angle keeps z because on the mirrored 45 degree side the error moves into x. Vern's 11
+  false "Push knees out" in 31 good reps go to 0; exam unchanged; turned-in feet 5/5 to 2/5.
+- Camera angles stay (90 lunge and push-up, 45 curl and squat): changing them complicates
+  explaining the stand (Vern), but they may change if the evidence is strong enough.
+- Revert steps are in the session log.
+
 Still open, outside the build plan:
+
+- The squat knee rules: the live check of `eddf6f1` (normal reps quiet, knees pushed in and
+  out warned) is not done. An angle MediaPipe reads too low is still missed (LabMoCap
+  kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate knees-out
+  (9 to 13 degrees) is a fault. A calibration sitting at 45 degrees from both sides (good,
+  knees in, knees out, feet turned) would test the 0.028 bar beyond one subject.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
