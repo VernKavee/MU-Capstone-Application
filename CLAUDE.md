@@ -526,12 +526,14 @@ Still open, outside the build plan:
   calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
   holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
   (up to 27% on the left arm), the likely cause of any false "Lower your chest".
-- Push-up landscape and plank start (2026-10-21): checked offline on recordings and with Chrome's
-  fake camera (portrait held, a standing T pose waits with the plank text, the squat unchanged),
-  not on a phone. Not confirmed: the plank start and its cues heard from the floor; the lying
-  framing band (scaled from portrait sets); getting up ends the set and a rest on the knees does
-  not; the gate clears when the phone turns; with the rotation lock on, whether the stream stays
-  portrait; set-complete and rest sideways.
+- Push-up landscape and plank start (2026-10-21): on the phone the plank start and the countdown
+  work (Vern, 2026-10-22). To fix later (Vern): the push-up's waiting instruction should suit a
+  push-up and be spoken, not only shown (today `READY_TEXT.plank` in `live-screen.tsx` is screen
+  text, and the voice says only placement cues). Proposed wording, short enough to hear from the
+  floor: "Get into the push-up start position, arms straight, side-on to the camera", spoken
+  once when the wait begins and again if it lasts. Not confirmed yet: the lying framing band
+  (scaled from portrait sets); getting up ends the set and a rest on the knees does not; with
+  the rotation lock on, whether the stream stays portrait; set-complete and rest sideways.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`
