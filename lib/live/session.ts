@@ -259,7 +259,7 @@ export class LiveSession {
     const f = snapshot.frame;
     const key = f
       ? [snapshot.status, f.rep_count, f.correct_rep_count, f.attempt_count, f.state, f.event === "rep_completed" || f.event === "rep_abandoned" ? f.event : "", f.warning_display[0] ?? "", f.ready_phase, f.countdown_s === null ? "" : Math.ceil(f.countdown_s), f.placement_phase, f.placement_cues[0] ?? "", f.low_confidence, Math.round(snapshot.fps / 5)].join("|")
-      : snapshot.status;
+      : [snapshot.status, snapshot.turn, Math.round(snapshot.fps / 5)].join("|");
     if (key === this.lastKey) return;
     this.lastKey = key;
     this.opts.onChange(snapshot);
