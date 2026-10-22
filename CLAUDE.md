@@ -217,7 +217,7 @@ Decided in Phase 2, recorded in the Phase 2 session log:
 - `rule_based_logic` shape, enforced by the `exercise_logic_valid()` check constraint:
   `source`, `state_machine` (`states`, `thresholds` keyed by the Python FSM attribute
   names, `arming` or null), and `rules[]` each with `name`, `check`, `priority`, `scope`
-  (`frame` or `rep`), `debounce_frames`, `threshold` (keys named per check), `messages`
+  (`frame` or `rep`), `debounce_frames` (`debounce_s` since 2026-10-23), `threshold` (keys named per check), `messages`
   keyed by locale, `highlight_joints`. `lib/exercise.ts` holds the TypeScript type.
 - Rule name and check name are separate fields, so a new exercise can reuse a check under
   its own rule name. Reads of the catalogue never branch on the exercise name.
@@ -502,27 +502,37 @@ Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 
     lunge `forward_trunk_lean`, curl `elbow_flare`, push-up `hip_sag_or_pike`. The other eight
     rules are judged once per rep. Why: with the phone raised the rate fell to 13 to 22 fps (24 to
     35 on the floor), and real sags held 4 to 8 frames went unwarned (repair set `6a302107`: 1 of
-    7, now 7 of 7).
+    7, now 7 of 7). A wait in seconds since 2026-10-23, below.
   - The plank start's framing cues move the phone (above).
+
+Decided 2026-10-23, frame rules wait 0.15 s, recorded in ADR-0002 and the 2026-10-23 session log:
+
+- SeniorProject `450da34` to `d7aa1ef`, migration `rule_logic_d7aa1ef`, `ENGINE_VERSION` `d7aa1ef`
+  (Vern). A frame rule fires once violated for its row's
+  `debounce_s` (0.15) from the first violated frame of an unbroken run, timed by each frame's
+  timestamp: 3 frames at 13 fps, 7 at 35, 10 at 58. Five frames lasted 0.38 s at 13 fps and 0.09 s
+  at 58. Rows carry `debounce_s` in place of `debounce_frames` (0 for rep rules), and
+  `exercise_logic_valid()` changed with them.
+- A gap longer than the wait between two frames the evaluator sees (low-confidence frames, which
+  never reach it, or a stalled tab) starts the run over (Vern): the run is 0.15 s of frames
+  actually judged. A short drop of 1 or 2 frames keeps it.
+- Evidence: SeniorProject `scratch/eval/eval_frame_wait.py` on all 903 saved attempts (exported to
+  `scratch_output/app_all_2026-10-23`): squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88 at
+  5 frames / 0.15 s; the same 10 changed attempts Vern labelled, 6 better, 1 worse, no labelled
+  real fault lost (session log 2026-10-22, last section). The gap rule changes none of them.
+- Python: a violated frame rule with no timestamp raises; the frame processor without timestamps
+  times the rules at its ctor fps, as its warning hold already did. Evals pass each frame's time.
+- Other waits stay counted in frames, deliberately: the counter's state change 3
+  (`consecutive_frames_req`), arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds
+  8, the set's end 30, the curl rebuild's 10 straight-arm frames. The warning's 1 s hold was
+  already a time.
 
 Still open, outside the build plan:
 
-- A wait in time instead of frames, for Vern to discuss with his friend (2026-10-22, labelled
-  2026-10-23). Live is 5 frames: 0.38 s at 13 fps, 0.14 s at 35, 0.09 s at 58. 0.15 s is 3 frames
-  at 13 fps, 7 at 35, 10 at 58, so the two agree near 30 fps. Replayed on all 903 saved attempts
-  (current bars): only 10 change, every gain on a slow phone (13 to 19 fps), every loss on a fast
-  one (34 to 58). Squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88. Vern's labels:
-  0.15 s is better on 6 (catches the sags 10-21 22:33 set 1 #9 and 10-22 23:01 repair set 1 #7;
-  silences the good reps 10-17 13:39 set 1 #10, 12:37 set 2 #2, 12:42 set 1 #5, and curl 10-22
-  22:33 set 2 #16), 5 frames on 1 (0.15 s warns 10-22 23:01 set 3 #5, getting up from an
-  abandoned attempt); no labelled real fault lost. Unlabelled: 10-11 21:39 set 1 #7 (45 degree
-  camera, ignore) and two attempts on another tester's account. Risk: at 13 fps 3 glitch frames
-  fire; few slow-phone good reps exist to check. Cost: the Python evaluator and the TS evaluator
-  take each frame's time, the row carries a wait in seconds (`exercise_logic_valid()` changes),
-  fixtures and scorecards re-run. Other waits stay counted in frames: the counter's state change 3
-  (`consecutive_frames_req`), arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds
-  8, the set's end 30, the curl rebuild's 10 straight-arm frames; the warning's 1 s hold is a time.
-  Next: the sag pass bar sitting, raised and on the floor, watching slow-phone good reps.
+- The 0.15 s wait (2026-10-23): not tested live. Checked by the push-up sag sitting below, once
+  with the phone raised and once on the floor, watching slow-phone good reps; at 13 fps 3 glitch
+  frames are enough to warn. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
+  import `FRAME_RULE_MIN_FRAMES` and say "N frames in a row"; they need new wording before use.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
   elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject

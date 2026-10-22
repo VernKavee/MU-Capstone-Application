@@ -202,8 +202,9 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
 - `e2e/workout.spec.ts` is skipped: the still T pose of `e2e/fixtures/` faces the camera,
   so it never passes placement and makes no reps. It needs a clip of real reps filmed at
   the exercise's angle, the T pose facing the camera first, and new expected counts.
-- Every debounce counts frames, tuned at about 44 fps; a 60 fps laptop shortens them and a
-  30 fps phone lengthens them (WEB_APP_PORT.md section 12, open item 14).
+- The frame rules wait 0.15 s, a time (since 2026-10-23). The other debounces and holds count
+  frames, tuned at about 44 fps; a 60 fps laptop shortens them and a 30 fps phone lengthens them
+  (WEB_APP_PORT.md section 12, open item 14).
 
 ## 2. Similarity: Punnapat
 
