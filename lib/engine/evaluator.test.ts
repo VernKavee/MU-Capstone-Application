@@ -120,11 +120,19 @@ test("evaluator: the wait is the same time at any frame rate", () => {
   assert.equal(firesOn(58), 10);
 });
 
-test("evaluator: a gap longer than the wait starts the run over, a short one does not", () => {
+test("evaluator: a gap over the 0.3 s limit starts the run over", () => {
   const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
   const flared = (event: "none" | "rep_started", ms: number) => ev.process(...curlFrame(120, 60), event, "left", ms);
   flared("rep_started", 0);
   assert.deepEqual(flared("none", 333), []); // 333 ms unseen: the run restarts here
   assert.deepEqual(flared("none", 450), []);
-  assert.deepEqual(flared("none", 483), ["elbow_flare"]); // 150 ms since 333, gaps under 150
+  assert.deepEqual(flared("none", 483), ["elbow_flare"]); // 150 ms since 333
+});
+
+test("evaluator: one dropped frame at 13 fps keeps the run", () => {
+  const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
+  const flared = (event: "none" | "rep_started", ms: number) => ev.process(...curlFrame(120, 60), event, "left", ms);
+  flared("rep_started", 0);
+  assert.deepEqual(flared("none", 77), []);
+  assert.deepEqual(flared("none", 231), ["elbow_flare"]); // a 154 ms gap, under 300
 });

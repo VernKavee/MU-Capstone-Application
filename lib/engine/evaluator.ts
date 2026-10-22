@@ -11,6 +11,10 @@ import { LANDMARK_NAMES, type AbandonedRecord, type Keypoints, type RepEvent, ty
 
 type BoundRule = { rule: Rule; message: string; check: (typeof CHECKS)[string] };
 
+// A gap longer than this between two frames seen here starts every frame rule's run over
+// (FRAME_RULE_MAX_GAP_S): one dropped frame at 13 fps is 154 ms and keeps the run.
+const FRAME_RULE_MAX_GAP_MS = 300;
+
 const byPriority = (rules: BoundRule[]) => [...rules].sort((a, b) => a.rule.priority - b.rule.priority);
 
 export class FormEvaluator {
@@ -49,11 +53,11 @@ export class FormEvaluator {
   }
 
   // Returns the show-one message for this frame, zero or one item. nowMs times the
-  // frame rules' runs; frames the engine skips never arrive, so a gap longer than a
-  // rule's wait starts its run over.
+  // frame rules' runs; frames the engine skips never arrive, so a gap over
+  // FRAME_RULE_MAX_GAP_MS starts every run over.
   process(angles: Angles, keypoints: Keypoints | null, event: RepEvent, activeSide: Side | null, nowMs: number): string[] {
     const kp = keypoints && hasWorld3d(keypoints) ? keypoints : null;
-    const gapMs = this.lastMs === null ? null : nowMs - this.lastMs;
+    if (this.lastMs !== null && nowMs - this.lastMs > FRAME_RULE_MAX_GAP_MS) this.streaks = new Map();
     this.lastMs = nowMs;
 
     if (event === "rep_started") {
@@ -84,7 +88,6 @@ export class FormEvaluator {
       for (const bound of this.rules) {
         if (bound.rule.scope !== "frame") continue;
         const holdMs = bound.rule.debounce_s * 1000;
-        if (gapMs !== null && gapMs > holdMs) this.streaks.delete(bound.rule.name);
         // No keypoints: skipped WITHOUT resetting the run. A null verdict resets it.
         if (bound.check.requiresKeypoints && kp === null) continue;
         if (bound.check.check(angles, kp, this.activeSide, this.stats, bound.rule.threshold) === true) {
