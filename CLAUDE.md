@@ -500,9 +500,10 @@ Still open, outside the build plan:
   travels the same way as the toes; the shin-to-shin vector may be the wrong idea (see the note
   there and RULES_AND_FSM 5.7 and 5.8). Each knee against its own foot, both legs summed, was
   measured offline on 2026-10-22 and fails (5.17): the thigh fails the side gate, the shank does
-  not separate knees in from good, and a 30 degree turn moves the foot further into depth. Being tried (5.18): from the front, a
-  vertical toe line per leg, read at the rep's deepest frame; a labelled calibration sitting,
-  then a test sitting with its bar agreed (session log 2026-10-22). Still to choose: a per-person, per-side starting point, one camera side, the front
+  not separate knees in from good, and a 30 degree turn moves the foot further into depth. Being tried (5.18): a vertical toe line per leg
+  in the picture, both legs summed at the rep's deepest frame; it works at 45 degrees with no side
+  offset. Bars fixed: knees in below -0.30, out above +0.35. Next: one new labelled 45 degree
+  sitting, pass bar agreed (session log 2026-10-22); then Python, export, port. Still to choose: a per-person, per-side starting point, one camera side, the front
   camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
   (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
   knees-out (9 to 13 degrees) is a fault. Other people are not tested.
