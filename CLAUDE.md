@@ -472,6 +472,15 @@ Decided 2026-10-21 (later), the push-up plank start, recorded in ADR-0002, 0006 
 - Parity: `lib/engine/fixtures/pushup_plank_gate.json.gz`, the cam90 good set with the ready gate
   on (placement off), matches the Python's `ready_phase` frame by frame.
 
+Decided 2026-10-22, the push-up sag bar, recorded in ADR-0002 and the 2026-10-22 session log:
+
+- Vern's live set warned 0 of 5 sags and 4 of 4 pikes (confirmed in the replay): good form reads
+  up to 20 degrees on the pike side, so one bar at 160 needed about 30 degrees of sag.
+- SeniorProject `ded29a2`, migration `rule_logic_ded29a2`, `ENGINE_VERSION` `ded29a2`:
+  `hip_sag_or_pike` warns under `sag_align_min` 170 when the trusted side's hip is below its
+  shoulder-ankle line (world y), under `align_min` 160 otherwise. One message, "Body not
+  straight" (Vern). That set now: sags 4 of 5, pikes 4 of 4, no good rep. Exam good 2 of 10.
+
 Still open, outside the build plan:
 
 - The squat knee rules: the live check at 0.020 (2026-10-21) was right on the usual side but caught
@@ -541,16 +550,10 @@ Still open, outside the build plan:
   once when the wait begins and again if it lasts. Not confirmed yet: the lying framing band
   (scaled from portrait sets); getting up ends the set and a rest on the knees does not; with
   the rotation lock on, whether the stream stays portrait; set-complete and rest sideways.
-- Push-up sag is missed, pike is caught (Vern, 2026-10-22, the sags confirmed by him in the
-  replay; session log 2026-10-22). To fix.
-  `hip_sag_or_pike` is one unsigned bar, 160, so about 20 degrees either side of straight. In
-  workout `15558b94` set 1 his good reps read about 10 degrees on the pike side, so a pike needed
-  about 10 more degrees and a sag about 30: pikes (-28 to -37) were all caught, sags (+15 to +25
-  at their peak) none. One crossed for 3 frames against a debounce of 10 frames (0.6 s at 16
-  fps). The neutral moves with the setup (-1 to -4 in the later sets). Options, not chosen: a
-  neutral per set from the plank start hold, signed sag and pike bars (possibly own messages,
-  ask the physiotherapists), a debounce in time. SeniorProject first, then export, then port.
-  Agree the pass bar before the live retest.
+- Push-up sag bar (2026-10-22, above): not tested live yet. Pass bar agreed: one sitting at 90
+  degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
+  5 of 5, at most 1 of 10 good warned. A small sag where good form reads near straight is still
+  missed. Ask the physiotherapists whether 10 degrees of sag is the right line.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`

@@ -122,3 +122,16 @@ cue until the trunk lies; the countdown is a plain hold; the set ends on getting
 under `left_tilt_max` (30) for 30 frames. The other three keep the T pose. The 2026-07-16 risk
 that MediaPipe reads a plank as near vertical did not recur at 90 degrees (in-set tilt 66 or
 more on 10 recordings). Parity adds a gates-on golden; the evidence is in the 2026-10-21 session log.
+
+## Decided 2026-10-22: push-up sag has its own bar, 170
+
+SeniorProject `ded29a2` (Vern). `hip_sag_or_pike` keeps one message, "Body not straight", and
+now takes the hip's side of the trusted side's shoulder-ankle line (world y, down) into
+account: a hip below the line (sag) warns under `sag_align_min` 170, a hip above it (pike) under
+`align_min` 160, a frame without the three joints under 160 as before. Good form reads up to 20
+degrees on the pike side, so the single bar caught pikes after about 10 degrees and sags only
+after about 30; Vern's set of 2026-10-21 warned 0 of 5 sags. Through this engine that set now
+warns 4 of 5 sags, 4 of 4 pikes, and no good rep. The research set: exam good warned 2 of 10, a
+small sag where good form reads near straight is still missed. Migration `rule_logic_ded29a2`,
+`ENGINE_VERSION` `ded29a2`, fixtures regenerated, parity 102 of 102. Evidence and the agreed live
+pass bar in the 2026-10-22 session log.

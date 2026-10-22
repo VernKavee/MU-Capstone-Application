@@ -83,8 +83,26 @@ function trustedBodyAlignment(angles: Angles, kp: Keypoints | null): number {
   const left = angleOr180(angles, "left_body_alignment");
   const right = angleOr180(angles, "right_body_alignment");
   if (!kp) return (left + right) / 2;
+  return trustedBodySide(kp) === "right" ? right : left;
+}
+
+function trustedBodySide(kp: Keypoints): Side {
   const trust = (side: Side) => Math.min(...(["shoulder", "hip", "ankle"] as const).map((j) => kp[`${side}_${j}`].score));
-  return trust("right") > trust("left") ? right : left;
+  return trust("right") > trust("left") ? "right" : "left";
+}
+
+// The trusted side's hip below its shoulder-ankle line in world y (down): a sag, judged
+// against the tighter sag bar. False for a pike or a missing joint (SeniorProject ded29a2).
+function hipSags(kp: Keypoints | null): boolean {
+  if (!kp) return false;
+  const side = trustedBodySide(kp);
+  const [s, h, a] = (["shoulder", "hip", "ankle"] as const).map((j) => point3d(kp, `${side}_${j}`));
+  if (!s || !h || !a) return false;
+  const d = sub(a, s);
+  const dd = dot(d, d);
+  if (dd <= 1e-12) return false;
+  const t = dot(sub(h, s), d) / dd;
+  return h[1] - (s[1] + t * d[1]) > 0;
 }
 
 // [3D angle between the two knee->ankle lines, signed convergence along the hip line], or
@@ -184,7 +202,7 @@ export const CHECKS: Record<string, Check> = {
   },
   hip_sag_or_pike: {
     requiresKeypoints: false,
-    check: (angles, kp, side, stats, t) => trustedBodyAlignment(angles, kp) < t.align_min,
+    check: (angles, kp, side, stats, t) => trustedBodyAlignment(angles, kp) < (hipSags(kp) ? t.sag_align_min : t.align_min),
     value: (stats) => stats.min_body_alignment ?? null,
   },
   partial_pushup: {
