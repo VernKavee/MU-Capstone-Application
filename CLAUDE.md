@@ -515,7 +515,9 @@ Decided 2026-10-23, frame rules wait 0.15 s, recorded in ADR-0002 and the 2026-1
   `exercise_logic_valid()` changed with them.
 - A gap longer than the wait between two frames the evaluator sees (low-confidence frames, which
   never reach it, or a stalled tab) starts the run over (Vern): the run is 0.15 s of frames
-  actually judged. A short drop of 1 or 2 frames keeps it.
+  actually judged. How many dropped frames a run survives depends on the rate: up to 7 at 58
+  fps, 4 at 35, 3 at 30, 1 at 15, none at 13. Under about 6.7 fps every gap is over 0.15 s, so no
+  frame rule can fire (5 frames still could); phone run 1 of 2026-10-10 fell to 8 fps.
 - Evidence: SeniorProject `scratch/eval/eval_frame_wait.py` on all 903 saved attempts (exported to
   `scratch_output/app_all_2026-10-23`): squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88 at
   5 frames / 0.15 s; the same 10 changed attempts Vern labelled, 6 better, 1 worse, no labelled
@@ -531,7 +533,8 @@ Still open, outside the build plan:
 
 - The 0.15 s wait (2026-10-23): not tested live. Checked by the push-up sag sitting below, once
   with the phone raised and once on the floor, watching slow-phone good reps; at 13 fps 3 glitch
-  frames are enough to warn. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
+  frames are enough to warn, and one dropped frame restarts a run. Open (Vern): keep the gap
+  limit equal to the wait, or give it its own number so slow phones keep runs across a drop. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
   import `FRAME_RULE_MIN_FRAMES` and say "N frames in a row"; they need new wording before use.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the

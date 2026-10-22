@@ -36,3 +36,6 @@ A fifth exercise, plank, with the rule "hips must not sag". If it can be written
 - Which pose starts a set is engine logic, so it is in the export: `state_machine.ready_pose`,
   from the Python FSM's `READY_POSE`, `plank` only for the push-up (SeniorProject `7420788`). Its
   get-up bar is `thresholds.left_tilt_max`. The live screen's waiting text is keyed by the pose.
+- 2026-10-23: a rule's debounce is `debounce_s`, a wait in seconds from the first violated frame
+  (0.15 for the frame rules, 0 for rep rules), in place of `debounce_frames`;
+  `exercise_logic_valid()` requires it (migration `rule_logic_d7aa1ef`).
