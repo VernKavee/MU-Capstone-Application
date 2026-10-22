@@ -12,7 +12,7 @@ import { MIN_LM_SCORE, type Side } from "./rules.ts";
 import type { Engine, FrameResult, FrameSize, Keypoints, LandmarkName, RuleRef, SessionReport } from "./types.ts";
 
 // The SeniorProject commit the port was made from; equals the commit in the rows' source.
-export const ENGINE_VERSION = "c4ee786";
+export const ENGINE_VERSION = "d7aa1ef";
 
 const WARNING_HOLD_MS = 1000;
 
@@ -130,7 +130,7 @@ export function createEngine(
 
     const extracted = extractAngles(kp);
     const angles = rebuild && frameSize ? rebuild.update(kp, extracted, frameSize) : extracted;
-    const step = session.update(angles, kp);
+    const step = session.update(angles, kp, timestampMs);
     const warningsAll = session.evaluator.lastViolations();
     lastAngles = angles;
     if (warningsAll.length) {

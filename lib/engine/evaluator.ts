@@ -23,7 +23,8 @@ export class FormEvaluator {
   reps: RepRecord[] = [];
   abandoned: AbandonedRecord[] = [];
   last: BoundRule[] = [];
-  streaks = new Map<string, number>();
+  streaks = new Map<string, number>(); // the start ms of each frame rule's violated run
+  lastMs: number | null = null; // the last frame seen here
 
   constructor(rules: Rule[], acc: Accumulator) {
     this.rules = rules.map((rule) => {
@@ -44,11 +45,16 @@ export class FormEvaluator {
     this.abandoned = [];
     this.last = [];
     this.streaks = new Map();
+    this.lastMs = null;
   }
 
-  // Returns the show-one message for this frame, zero or one item.
-  process(angles: Angles, keypoints: Keypoints | null, event: RepEvent, activeSide: Side | null): string[] {
+  // Returns the show-one message for this frame, zero or one item. nowMs times the
+  // frame rules' runs; frames the engine skips never arrive, so a gap longer than a
+  // rule's wait starts its run over.
+  process(angles: Angles, keypoints: Keypoints | null, event: RepEvent, activeSide: Side | null, nowMs: number): string[] {
     const kp = keypoints && hasWorld3d(keypoints) ? keypoints : null;
+    const gapMs = this.lastMs === null ? null : nowMs - this.lastMs;
+    this.lastMs = nowMs;
 
     if (event === "rep_started") {
       this.activeSide = activeSide ?? (this.acc.pickActiveSide ? this.acc.pickActiveSide(angles) : null);
@@ -77,17 +83,18 @@ export class FormEvaluator {
       this.acc.accumulate(this.stats, angles, kp, this.activeSide);
       for (const bound of this.rules) {
         if (bound.rule.scope !== "frame") continue;
-        // No keypoints: skipped WITHOUT resetting the streak. A null verdict resets it.
+        const holdMs = bound.rule.debounce_s * 1000;
+        if (gapMs !== null && gapMs > holdMs) this.streaks.delete(bound.rule.name);
+        // No keypoints: skipped WITHOUT resetting the run. A null verdict resets it.
         if (bound.check.requiresKeypoints && kp === null) continue;
         if (bound.check.check(angles, kp, this.activeSide, this.stats, bound.rule.threshold) === true) {
-          const streak = (this.streaks.get(bound.rule.name) ?? 0) + 1;
-          this.streaks.set(bound.rule.name, streak);
-          if (streak >= bound.rule.debounce_frames) {
+          if (!this.streaks.has(bound.rule.name)) this.streaks.set(bound.rule.name, nowMs);
+          if (nowMs - this.streaks.get(bound.rule.name)! >= holdMs) {
             this.record(bound);
             violated.push(bound);
           }
         } else {
-          this.streaks.set(bound.rule.name, 0);
+          this.streaks.delete(bound.rule.name);
         }
       }
     }
@@ -178,7 +185,7 @@ export class ExerciseSession {
     this.floorBar = engineKey === "pushup" ? new FloorBar() : null;
   }
 
-  update(extracted: Record<string, number>, kp: Keypoints) {
+  update(extracted: Record<string, number>, kp: Keypoints, nowMs: number) {
     // The far side's scores are zeroed at a strong profile, in the copy the FSM gets.
     const far = farSideAtStrongProfile(kp);
     const scores = Object.fromEntries(LANDMARK_NAMES.map((n) => [n, far && n.startsWith(`${far}_`) ? 0 : kp[n].score]));
@@ -186,7 +193,7 @@ export class ExerciseSession {
     const angles: Angles = this.floorBar ? { ...extracted, floor_bar: this.floorBar.update(kp) } : extracted;
     const step = this.fsm.update(angles, scores, tilt);
     this.lastEvent = step.event;
-    const warning = this.evaluator.process(angles, kp, step.event, this.fsm.activeSideHint as Side | null);
+    const warning = this.evaluator.process(angles, kp, step.event, this.fsm.activeSideHint as Side | null, nowMs);
     return { ...step, warning };
   }
 

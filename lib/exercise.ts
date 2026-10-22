@@ -10,7 +10,7 @@ export type Rule = {
   check: string;
   priority: number;
   scope: "frame" | "rep";
-  debounce_frames: number;
+  debounce_s: number; // a frame rule's wait from its first violated frame; 0 for rep rules
   threshold: Record<string, number>;
   messages: Record<string, string>;
   highlight_joints: string[];

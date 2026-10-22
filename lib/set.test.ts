@@ -10,8 +10,8 @@ import type { KeypointFrame } from "./live/session.ts";
 import { afterSet, buildAttempts, hasViolation, labelFrames, toKeypointFile, totalsOf } from "./set.ts";
 
 const rules: Rule[] = [
-  { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
-  { name: "back_straight", check: "back_straight", priority: 3, scope: "frame", debounce_frames: 10, threshold: { tilt_max: 55 }, messages: { en: "Keep back straight" }, highlight_joints: [] },
+  { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_s: 0, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
+  { name: "back_straight", check: "back_straight", priority: 3, scope: "frame", debounce_s: 0.15, threshold: { tilt_max: 55 }, messages: { en: "Keep back straight" }, highlight_joints: [] },
 ];
 
 // Frames at 100 ms: one correct rep, one abandoned attempt, one incorrect rep.

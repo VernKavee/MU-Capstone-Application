@@ -35,7 +35,7 @@ test("floor bar: the session reset clears the held wrist", () => {
 
 const rule = (r: Partial<Rule> & Pick<Rule, "name" | "priority" | "scope" | "threshold">): Rule => ({
   check: r.name,
-  debounce_frames: r.scope === "frame" ? 10 : 1,
+  debounce_s: r.scope === "frame" ? 0.15 : 0,
   messages: { en: r.name },
   highlight_joints: [],
   ...r,
@@ -57,14 +57,15 @@ function curlFrame(elbow: number, flare = 20): [Record<string, number>, Keypoint
   return [{ left_elbow: elbow, right_elbow: 175, left_shoulder_angle: flare, right_shoulder_angle: 10 }, kp];
 }
 
-test("evaluator: a frame rule needs its debounce, records once, and shows the top priority", () => {
+test("evaluator: a frame rule needs its wait, records once, and shows the top priority", () => {
   const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
+  let ms = 0;
   const step = (elbow: number, flare: number, event: "none" | "rep_started" | "rep_completed" = "none") =>
-    ev.process(...curlFrame(elbow, flare), event, "left");
-  assert.deepEqual(step(150, 60, "rep_started"), []); // streak 1
-  for (let i = 0; i < 8; i++) assert.deepEqual(step(120, 60), []);
-  assert.deepEqual(step(100, 60), ["elbow_flare"]); // the tenth frame
-  step(50, 20); // streak broken
+    ev.process(...curlFrame(elbow, flare), event, "left", (ms += 40));
+  assert.deepEqual(step(150, 60, "rep_started"), []); // the run starts
+  for (let i = 0; i < 3; i++) assert.deepEqual(step(120, 60), []);
+  assert.deepEqual(step(100, 60), ["elbow_flare"]); // 160 ms in, the fifth frame
+  step(50, 20); // run broken
   // Completed at 150 after a top of 50: partial_curl passes, elbow_flare stays recorded.
   assert.deepEqual(step(150, 20, "rep_completed"), []);
   const [rep] = ev.reps;
@@ -79,9 +80,9 @@ test("evaluator: a frame rule needs its debounce, records once, and shows the to
 
 test("evaluator: an abandoned attempt runs the rep rules on stats without that frame", () => {
   const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
-  ev.process(...curlFrame(130), "rep_started", "left");
-  ev.process(...curlFrame(90), "none", "left");
-  assert.deepEqual(ev.process(...curlFrame(10), "rep_abandoned", "left"), ["partial_curl"]);
+  ev.process(...curlFrame(130), "rep_started", "left", 0);
+  ev.process(...curlFrame(90), "none", "left", 33);
+  assert.deepEqual(ev.process(...curlFrame(10), "rep_abandoned", "left", 67), ["partial_curl"]);
   const [attempt] = ev.abandoned;
   assert.equal(attempt.attempt_number, 1);
   assert.equal(attempt.rep_stats.min_elbow, 90); // the abandoning frame's 10 is not accumulated
@@ -92,13 +93,38 @@ test("evaluator: an abandoned attempt runs the rep rules on stats without that f
 test("evaluator: an infinite stat is null, a null one is omitted", () => {
   const rules = [rule({ name: "partial_squat", priority: 1, scope: "rep", threshold: { depth_target: 100 } })];
   const ev = new FormEvaluator(rules, accumulatorFor("squat", rules));
-  ev.process({}, null, "rep_abandoned", null); // not in a rep: nothing recorded
+  ev.process({}, null, "rep_abandoned", null, 0); // not in a rep: nothing recorded
   assert.equal(ev.abandoned.length, 0);
-  ev.process({ left_knee: 140, right_knee: 140 }, null, "rep_started", null);
-  ev.process({}, null, "rep_abandoned", null);
+  ev.process({ left_knee: 140, right_knee: 140 }, null, "rep_started", null, 33);
+  ev.process({}, null, "rep_abandoned", null, 67);
   const stats = ev.abandoned[0].rep_stats;
   assert.equal(stats.max_back_tilt, null); // -inf: no keypoints all attempt
   assert.equal("knee_parallel_deg" in stats, false); // never in the depth band
   assert.equal(stats.min_knee, 140);
   assert.equal(stats.partial_squat, 140);
+});
+
+// The frame on which elbow_flare fires, with frames 1000 / fps ms apart.
+function firesOn(fps: number) {
+  const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
+  for (let n = 0; n < 30; n++) {
+    if (ev.process(...curlFrame(120, 60), n === 0 ? "rep_started" : "none", "left", (n * 1000) / fps).length) return n + 1;
+  }
+  return null;
+}
+
+test("evaluator: the wait is the same time at any frame rate", () => {
+  // 0.15 s from the first violated frame: 3 frames at 13 fps, 7 at 35, 10 at 58.
+  assert.equal(firesOn(13), 3);
+  assert.equal(firesOn(35), 7);
+  assert.equal(firesOn(58), 10);
+});
+
+test("evaluator: a gap longer than the wait starts the run over, a short one does not", () => {
+  const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
+  const flared = (event: "none" | "rep_started", ms: number) => ev.process(...curlFrame(120, 60), event, "left", ms);
+  flared("rep_started", 0);
+  assert.deepEqual(flared("none", 333), []); // 333 ms unseen: the run restarts here
+  assert.deepEqual(flared("none", 450), []);
+  assert.deepEqual(flared("none", 483), ["elbow_flare"]); // 150 ms since 333, gaps under 150
 });

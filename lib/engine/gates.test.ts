@@ -236,7 +236,7 @@ const LOGIC: RuleBasedLogic = {
     ready_pose: "t_pose",
   },
   placement: SQUAT,
-  rules: [{ name: "partial_squat", check: "partial_squat", priority: 1, scope: "rep", debounce_frames: 1, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] }],
+  rules: [{ name: "partial_squat", check: "partial_squat", priority: 1, scope: "rep", debounce_s: 0, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] }],
 };
 
 // 40 frames a second, as in the Python gate-order tests.
