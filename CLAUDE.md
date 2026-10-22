@@ -507,17 +507,19 @@ Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 
 
 Decided 2026-10-23, frame rules wait 0.15 s, recorded in ADR-0002 and the 2026-10-23 session log:
 
-- SeniorProject `450da34` to `d7aa1ef`, migration `rule_logic_d7aa1ef`, `ENGINE_VERSION` `d7aa1ef`
-  (Vern). A frame rule fires once violated for its row's
+- SeniorProject `450da34` to `e4594df`, migrations `rule_logic_d7aa1ef` and `rule_logic_e4594df`,
+  `ENGINE_VERSION` `e4594df` (Vern). A frame rule fires once violated for its row's
   `debounce_s` (0.15) from the first violated frame of an unbroken run, timed by each frame's
   timestamp: 3 frames at 13 fps, 7 at 35, 10 at 58. Five frames lasted 0.38 s at 13 fps and 0.09 s
   at 58. Rows carry `debounce_s` in place of `debounce_frames` (0 for rep rules), and
   `exercise_logic_valid()` changed with them.
-- A gap longer than the wait between two frames the evaluator sees (low-confidence frames, which
-  never reach it, or a stalled tab) starts the run over (Vern): the run is 0.15 s of frames
-  actually judged. How many dropped frames a run survives depends on the rate: up to 7 at 58
-  fps, 4 at 35, 3 at 30, 1 at 15, none at 13. Under about 6.7 fps every gap is over 0.15 s, so no
-  frame rule can fire (5 frames still could); phone run 1 of 2026-10-10 fell to 8 fps.
+- A gap over 0.3 s between two frames the evaluator sees (low-confidence frames, which never
+  reach it, or a stalled tab) starts every run over (Vern): a warning never rests on two bad
+  frames either side of a blind stretch. `FRAME_RULE_MAX_GAP_S` in the Python and
+  `FRAME_RULE_MAX_GAP_MS` in `evaluator.ts`, a constant, not a row field. First built equal to
+  the 0.15 s wait (`d7aa1ef`), where one dropped frame at 13 fps (154 ms) restarted a run and
+  under about 6.7 fps no frame rule could fire; at 0.3 s a 13 fps run survives one drop and the
+  floor is about 3.3 fps (phone run 1 of 2026-10-10 fell to 8 fps).
 - Evidence: SeniorProject `scratch/eval/eval_frame_wait.py` on all 903 saved attempts (exported to
   `scratch_output/app_all_2026-10-23`): squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88 at
   5 frames / 0.15 s; the same 10 changed attempts Vern labelled, 6 better, 1 worse, no labelled
@@ -533,8 +535,8 @@ Still open, outside the build plan:
 
 - The 0.15 s wait (2026-10-23): not tested live. Checked by the push-up sag sitting below, once
   with the phone raised and once on the floor, watching slow-phone good reps; at 13 fps 3 glitch
-  frames are enough to warn, and one dropped frame restarts a run. Open (Vern): keep the gap
-  limit equal to the wait, or give it its own number so slow phones keep runs across a drop. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
+  frames are enough to warn. Migration `rule_logic_e4594df` is not applied to the local stack
+  yet: `npx supabase migration up` after the next `npx supabase start`. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
   import `FRAME_RULE_MIN_FRAMES` and say "N frames in a row"; they need new wording before use.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
