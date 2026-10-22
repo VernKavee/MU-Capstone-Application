@@ -146,12 +146,12 @@ test("facing: the band on |yaw|, the turn direction, and the latched side", () =
   assert.equal(facingCheck(null, SQUAT), "not_detected");
   assert.equal(facingCheck(45, SQUAT), "ok");
   assert.equal(facingCheck(-45, SQUAT), "ok");
-  for (const [yaw, expected] of [[0, "turn_right"], [5, "turn_right"], [-5, "turn_left"], [80, "turn_left"], [-80, "turn_right"]] as const) {
+  for (const [yaw, expected] of [[0, "turn_left"], [5, "turn_left"], [-5, "turn_right"], [80, "turn_right"], [-80, "turn_left"]] as const) {
     assert.equal(facingCheck(yaw, SQUAT), expected, String(yaw));
   }
-  assert.equal(facingCheck(-0.78, SQUAT), "turn_left");
-  assert.equal(facingCheck(-0.78, SQUAT, 1), "turn_right");
-  assert.equal(facingCheck(0.55, SQUAT, -1), "turn_left");
+  assert.equal(facingCheck(-0.78, SQUAT), "turn_right");
+  assert.equal(facingCheck(-0.78, SQUAT, 1), "turn_left");
+  assert.equal(facingCheck(0.55, SQUAT, -1), "turn_right");
 });
 
 // A standing body at a yaw in world metres, with a matching image box of height 0.82.
@@ -178,7 +178,7 @@ function turned(yaw: number, arms: Arms = "down", centerX = 0.5, scale = 1): Key
 test("placement guide: guides a frontal body, latches after 8 good frames, and stays placed", () => {
   const guide = new PlacementGuide(SQUAT);
   const frontal = guide.update(turned(0));
-  assert.deepEqual([frontal.phase, frontal.ok, frontal.cues[0]], ["guiding", false, "Turn to your right"]);
+  assert.deepEqual([frontal.phase, frontal.ok, frontal.cues[0]], ["guiding", false, "Turn to your left"]);
   assert.ok(Math.abs((frontal.bodyYaw ?? 1) - 0) < 1e-9);
   guide.update(turned(45));
   guide.update(turned(0)); // breaks the hold
@@ -194,31 +194,35 @@ test("placement guide: cues in priority order, and the generic cue without a bod
   const guide = new PlacementGuide(SQUAT);
   assert.deepEqual(guide.update(emptyKeypoints()).cues, ["Move into frame so the camera can see your whole body"]);
   assert.equal(guide.update(turned(45, "down", 0.5, 0.3)).distance, "too_far");
-  assert.deepEqual(guide.update(turned(0, "down", 0.8)).cues, ["Move right to center yourself in frame", "Turn to your right"]);
+  assert.deepEqual(guide.update(turned(0, "down", 0.8)).cues, ["Move right to center yourself in frame", "Turn to your left"]);
 });
 
 test("placement guide: the turn cue does not flip across frontal", () => {
   const guide = new PlacementGuide(SQUAT);
   const trace = [13.7, 8.4, 0.8, -1.9, -6.8, -10.2, -11.9, -5.8, -1.7, -0.3, 0.55, 1.0, 10.1, 17.2];
   const cues = new Set(trace.map((yaw) => guide.update(turned(yaw)).cues[0]));
-  assert.deepEqual([...cues], ["Turn to your right"]);
+  assert.deepEqual([...cues], ["Turn to your left"]);
   assert.equal(guide.targetSign, 1);
 });
 
 test("placement guide: a chosen arm faces the camera, one band only", () => {
   const left = new PlacementGuide(SQUAT, "left");
   assert.equal(left.targetSign, -1);
-  assert.equal(left.update(turned(2)).cues[0], "Turn to your left"); // unlatched this steers right
+  assert.equal(left.update(turned(2)).cues[0], "Turn to your right"); // unlatched this steers left
   assert.ok(left.update(turned(-45)).ok);
   const mirrored = left.update(turned(45));
-  assert.deepEqual([mirrored.ok, mirrored.cues[0]], [false, "Turn to your left"]);
+  assert.deepEqual([mirrored.ok, mirrored.cues[0]], [false, "Turn to your right"]);
   left.reset();
   assert.equal(left.targetSign, -1);
   const right = new PlacementGuide(SQUAT, "right");
   assert.ok(right.update(turned(45)).ok);
-  assert.equal(right.update(turned(-45)).cues[0], "Turn to your right");
-  assert.equal(facingCheck(-45, SQUAT, 1, true), "turn_right");
+  assert.equal(right.update(turned(-45)).cues[0], "Turn to your left");
+  assert.equal(facingCheck(-45, SQUAT, 1, true), "turn_left");
   assert.equal(facingCheck(45, SQUAT, 1, true), "ok");
+});
+
+test("placement guide: the right arm from facing the camera turns to your left (2026-10-22)", () => {
+  assert.equal(new PlacementGuide(SQUAT, "right").update(turned(0)).cues[0], "Turn to your left");
 });
 
 const LOGIC: RuleBasedLogic = {
@@ -250,7 +254,7 @@ test("engine: the T pose facing the camera starts the countdown, which holds at 
   assert.deepEqual([r.placement_phase, r.placement_cues], ["guiding", []]); // no turn cue during the T pose
   for (let i = 0; i < 200; i++) r = step(turned(0)); // 5 s, still facing the camera
   assert.deepEqual([r.ready_phase, r.countdown_s, r.placement_phase], ["countdown", 0, "guiding"]);
-  assert.equal(r.placement_cues[0], "Turn to your right");
+  assert.equal(r.placement_cues[0], "Turn to your left");
   for (let i = 0; i < 8; i++) r = step(turned(45)); // placed on the eighth frame: the set starts
   assert.deepEqual([r.placement_phase, r.ready_phase, r.armed], ["placed", "active", true]);
 });

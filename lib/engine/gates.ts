@@ -211,12 +211,13 @@ export type PlacementTarget = { yaw_center: number; yaw_tol: number };
 
 // "ok" inside the band on |yaw|; outside it, the turn toward the latched side's target.
 // requireSign makes the band one-sided: "ok" only on the latched side.
+// Positive yaw is turning to your own left (SeniorProject 504a5fc, flipped 2026-10-22).
 export function facingCheck(yaw: number | null, target: PlacementTarget, latchedSign: number | null = null, requireSign = false): string {
   if (yaw === null) return "not_detected";
   const magnitude = requireSign && latchedSign !== null ? latchedSign * yaw : Math.abs(yaw);
   if (target.yaw_center - target.yaw_tol <= magnitude && magnitude <= target.yaw_center + target.yaw_tol) return "ok";
   const sign = latchedSign ?? (yaw >= 0 ? 1 : -1);
-  return sign * target.yaw_center - yaw > 0 ? "turn_right" : "turn_left";
+  return sign * target.yaw_center - yaw > 0 ? "turn_left" : "turn_right";
 }
 
 export type PlacementStatus = {
