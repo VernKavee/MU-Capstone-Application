@@ -481,7 +481,30 @@ Decided 2026-10-22, the push-up sag bar, recorded in ADR-0002 and the 2026-10-22
   shoulder-ankle line (world y), under `align_min` 160 otherwise. One message, "Body not
   straight" (Vern). That set now: sags 4 of 5, pikes 4 of 4, no good rep. Exam good 2 of 10.
 
+Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 session log:
+
+- The turn cue pointed the wrong way: positive yaw is turning to your own left. SeniorProject
+  `504a5fc`, migration `rule_logic_504a5fc`, `ENGINE_VERSION` `504a5fc`. Evidence: Vern chose the
+  right arm and heard "Turn to your right"; set `0c5340d6` was placed at yaw +45.8 with the right
+  shoulder nearer. The squat and lunge accept either side, so they were placed anyway.
+- While a plank start waits, the voice says "Plank down to start the exercise" (Vern's words),
+  when the wait begins and every 10 s while nothing else is cued; `readyCue` in `LiveSession`,
+  keyed by `ready_pose`. The T pose stays screen text.
+- The push-up plank start is confirmed working on the phone (Vern).
+
 Still open, outside the build plan:
+
+- The squat back rule (2026-10-22 evening): `rounded_back` ("Keep back straight") measures trunk
+  lean, bar 35, set below the evidence on 2026-09-20 (good form's worst 43.5, lean's mildest 51.1;
+  SeniorProject RULES_AND_FSM). A new person (22:24 set `f232de47`, same account) warned on 9 of 12
+  reps at 39 to 52 degrees; at 43.5 it would be 5, at 48 2. Their standing tilt was 7.7 against
+  Vern's 5 to 7, so it is real extra lean at depth, not posture or camera. Vern's own reps peak at
+  about 36. Undecided: the bar, and whether that lean is a fault (physiotherapists).
+- The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
+  another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
+  elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject
+  (RULES_AND_FSM). The rule records no number in `rep_stats` (null, as in the Python), so judging it
+  needs the keypoint files. `partial_curl` is fine for now (Vern).
 
 - The squat knee rules: the live check at 0.020 (2026-10-21) was right on the usual side but caught
   2 of 6 knees-in on the mirrored side (right side toward the camera). Not the yaw's size: good form
@@ -494,7 +517,9 @@ Still open, outside the build plan:
   mirrored side, from a false sagittal part in the angle; the signed frontal part alone clears
   them but loses knees out.
   The frontal-part trial failed live too (11 of 20 good reps warned on the mirrored side).
-  Stopped 2026-10-22: the error at 45 degrees is as large as the signal. Undecided: hide the knee
+  Stopped 2026-10-22: the error at 45 degrees is as large as the signal. Then the evening phone
+  run (Vern, 2026-10-22, still `00437d1`): "works", and "can be more loose"; which rule and how much
+  is not agreed. Set 3 (`8f404c81`) warned knees on 10 of 20 attempts, the others 0 to 4. Undecided: hide the knee
   cues and run one front-camera test with an agreed pass bar, or revert to `50e4692` and document
   (session log 2026-10-21, last two sections). Vern, 2026-10-22: the check exists so the knee
   travels the same way as the toes; the shin-to-shin vector may be the wrong idea (see the note
@@ -547,14 +572,11 @@ Still open, outside the build plan:
   calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
   holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
   (up to 27% on the left arm), the likely cause of any false "Lower your chest".
-- Push-up landscape and plank start (2026-10-21): on the phone the plank start and the countdown
-  work (Vern, 2026-10-22). To fix later (Vern): the push-up's waiting instruction should suit a
-  push-up and be spoken, not only shown (today `READY_TEXT.plank` in `live-screen.tsx` is screen
-  text, and the voice says only placement cues). Proposed wording, short enough to hear from the
-  floor: "Get into the push-up start position, arms straight, side-on to the camera", spoken
-  once when the wait begins and again if it lasts. Not confirmed yet: the lying framing band
-  (scaled from portrait sets); getting up ends the set and a rest on the knees does not; with
-  the rotation lock on, whether the stream stays portrait; set-complete and rest sideways.
+- Push-up landscape and plank start (2026-10-21): the plank start is confirmed on the phone (Vern,
+  2026-10-22 evening) and the waiting instruction is now spoken (above). Not confirmed item by
+  item: the lying framing band (scaled from portrait sets); getting up ends the set and a rest on
+  the knees does not; with the rotation lock on, whether the stream stays portrait; set-complete
+  and rest sideways.
 - Push-up sag bar (2026-10-22, above): not tested live yet. Pass bar agreed: one sitting at 90
   degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
   5 of 5, at most 1 of 10 good warned. A small sag where good form reads near straight is still
