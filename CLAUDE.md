@@ -498,8 +498,8 @@ Still open, outside the build plan:
   lean, bar 35, set below the evidence on 2026-09-20 (good form's worst 43.5, lean's mildest 51.1;
   SeniorProject RULES_AND_FSM). A new person (22:24 set `f232de47`, same account) warned on 9 of 12
   reps at 39 to 52 degrees; at 43.5 it would be 5, at 48 2. Their standing tilt was 7.7 against
-  Vern's 5 to 7, so it is real extra lean at depth, not posture or camera. Vern's own reps peak at
-  about 36. Undecided: the bar, and whether that lean is a fault (physiotherapists).
+  Vern's 5 to 7, so it is real extra lean at depth, not posture or camera. Vern's 22:20 workout peaks at
+  34; the later sets (who, not recorded) reach 45. Undecided: the bar, and whether that lean is a fault (physiotherapists).
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
   elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject
