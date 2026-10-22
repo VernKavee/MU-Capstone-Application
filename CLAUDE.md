@@ -541,7 +541,8 @@ Still open, outside the build plan:
   once when the wait begins and again if it lasts. Not confirmed yet: the lying framing band
   (scaled from portrait sets); getting up ends the set and a rest on the knees does not; with
   the rotation lock on, whether the stream stays portrait; set-complete and rest sideways.
-- Push-up sag is missed, pike is caught (Vern, 2026-10-22; session log 2026-10-22). To fix.
+- Push-up sag is missed, pike is caught (Vern, 2026-10-22, the sags confirmed by him in the
+  replay; session log 2026-10-22). To fix.
   `hip_sag_or_pike` is one unsigned bar, 160, so about 20 degrees either side of straight. In
   workout `15558b94` set 1 his good reps read about 10 degrees on the pike side, so a pike needed
   about 10 more degrees and a sag about 30: pikes (-28 to -37) were all caught, sags (+15 to +25
