@@ -92,6 +92,7 @@ export function LiveScreen({ exercise, setup }: Props) {
       attemptCap,
       model,
       landscape: exercise.landscape,
+      readyCue: READY_SPOKEN[exercise.logic.state_machine.ready_pose],
       video: videoRef.current,
       canvas: canvasRef.current,
       onChange: (next) => {
@@ -297,6 +298,12 @@ export function LiveScreen({ exercise, setup }: Props) {
 const READY_TEXT: Record<RuleBasedLogic["state_machine"]["ready_pose"], string> = {
   t_pose: "Stand facing the camera with your whole body in view, then hold your arms straight out to the sides",
   plank: "Get into a plank at the top, arms straight, side-on to the camera, with your whole body in view",
+};
+
+// Spoken while the gate waits; the T pose is shown only.
+const READY_SPOKEN: Record<RuleBasedLogic["state_machine"]["ready_pose"], string | null> = {
+  t_pose: null,
+  plank: "Plank down to start the exercise",
 };
 
 function centreText(phase: string, frame: Snapshot["frame"], readyPose: RuleBasedLogic["state_machine"]["ready_pose"]): string | null {

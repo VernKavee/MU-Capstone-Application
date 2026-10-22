@@ -41,6 +41,7 @@ export type Snapshot = {
 
 export const TURN_CUE = "Turn your phone sideways. If the picture does not turn, switch off the rotation lock.";
 const NO_KEYPOINTS = emptyKeypoints();
+const READY_REPEAT_MS = 10_000;
 
 // Plain fields rather than constructor parameter properties, which Node's type stripping
 // cannot run.
@@ -64,6 +65,7 @@ type SessionOptions = {
   attemptCap: number;
   model: PoseModel;
   landscape: boolean; // the exercise row's camera orientation
+  readyCue: string | null; // spoken while the gate waits for the ready pose, by the row's ready pose
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
   onChange: (snapshot: Snapshot) => void;
@@ -88,6 +90,7 @@ export class LiveSession {
   private ended: EndedBy | null = null;
   private stopped = false;
   private turning = false;
+  private readySaidAt = -Infinity;
   private highlight = new Map<string, number[]>();
 
   constructor(opts: SessionOptions) {
@@ -174,7 +177,7 @@ export class LiveSession {
     const frame = this.opts.engine.process(keypoints, now, videoWidth && videoHeight ? [videoWidth, videoHeight] : null);
     this.draw(frame);
     this.capture(frame, now);
-    this.announce(frame);
+    this.announce(frame, now);
     this.lastFrame = frame;
     this.emit({ status: "running", frame, fps: this.fps(now), capture: null });
 
@@ -239,7 +242,7 @@ export class LiveSession {
     this.recorder.start(1000);
   }
 
-  private announce(frame: FrameResult) {
+  private announce(frame: FrameResult, now: number) {
     const prev = this.lastFrame;
     if (frame.correct_rep_count > (prev?.correct_rep_count ?? 0)) sound.beep();
     const second = frame.countdown_s === null ? null : Math.ceil(frame.countdown_s);
@@ -249,9 +252,16 @@ export class LiveSession {
     const warning = frame.warning_display[0] ?? null;
     const cue = frame.placement_phase === "guiding" ? (frame.placement_cues[0] ?? null) : null;
     const prevCue = prev?.placement_phase === "guiding" ? (prev.placement_cues[0] ?? null) : null;
+    // The ready cue when the wait begins and every READY_REPEAT_MS while nothing is cued.
+    const ready = this.opts.readyCue && frame.ready_phase === "waiting" && !cue && !frame.ready_pose;
+    if (frame.ready_phase !== "waiting") this.readySaidAt = -Infinity;
     // One phrase per frame: the warning wins over a placement cue.
     if (warning && warning !== (prev?.warning_display[0] ?? null)) sound.say(warning);
     else if (cue && cue !== prevCue) sound.say(cue);
+    else if (ready && now - this.readySaidAt >= READY_REPEAT_MS) {
+      this.readySaidAt = now;
+      sound.say(this.opts.readyCue!);
+    }
   }
 
   // Only what the HUD shows; identical frames do not reach React.

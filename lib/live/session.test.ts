@@ -39,6 +39,7 @@ function loop(script: FrameResult[], limits = { target: 2, attemptCap: 4 }, land
     ...limits,
     model: "full",
     landscape,
+    readyCue: "Plank down to start the exercise",
     video: video as unknown as HTMLVideoElement,
     canvas: { width: 0, height: 0, getContext: () => null } as unknown as HTMLCanvasElement,
     onChange: (s) => snapshots.push(s),
@@ -121,4 +122,24 @@ test("identical frames reach React once", () => {
   ]);
   feed(4);
   assert.deepEqual(snapshots.map((s) => s.frame?.placement_cues[0] ?? null), [null, "Move closer to the camera"]);
+});
+
+test("the ready cue is spoken when the wait begins, then gives way to a placement cue", () => {
+  const spoken: string[] = [];
+  Object.assign(globalThis, {
+    speechSynthesis: { speaking: false, pending: false, speak: (u: { text: string }) => spoken.push(u.text) },
+    SpeechSynthesisUtterance: class { text: string; constructor(text: string) { this.text = text; } },
+  });
+  try {
+    const { feed } = loop([
+      frame("waiting"),
+      frame("waiting"), // 1.1 s later: not repeated
+      frame("waiting", { placement_phase: "guiding", placement_cues: ["Move back -- your whole body must be in frame"] }),
+    ]);
+    feed(3);
+    assert.deepEqual(spoken, ["Plank down to start the exercise", "Move back -- your whole body must be in frame"]);
+  } finally {
+    delete (globalThis as Record<string, unknown>).speechSynthesis;
+    delete (globalThis as Record<string, unknown>).SpeechSynthesisUtterance;
+  }
 });
