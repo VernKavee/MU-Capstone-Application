@@ -507,15 +507,22 @@ Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 
 
 Still open, outside the build plan:
 
-- A wait in time instead of frames, for Vern to discuss with his friend (2026-10-22). On every
-  labelled push-up attempt (15 sags, 4 pikes, 7 good): 10 frames caught 5 sags; 5 frames 13 sags
-  and warned 1 good (10-17 13:39 set `9331a313` attempt 10, a 168 degree rep at 35 fps, Vern: good);
-  0.20 s 14 and 0 good; 0.15 s 15 and 0 good; 0.10 s 15 and 1 good. Pikes 4 of 4 under all. Still
-  missed at 5 frames: 23:04 repair set `8cf98b41` attempt 7 (4 frames, 238 ms) and 10-21 set 1
-  attempt 9 (193 ms). Small sample, picked on it, so optimistic. Other waits counted in frames,
-  all scaling with the phone's rate: the counter's state change 3 (`consecutive_frames_req`),
-  arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds 8, the set's end 30, the
-  curl rebuild's 10 straight-arm frames. The warning's 1 s hold is already a time.
+- A wait in time instead of frames, for Vern to discuss with his friend (2026-10-22, labelled
+  2026-10-23). Live is 5 frames: 0.38 s at 13 fps, 0.14 s at 35, 0.09 s at 58. 0.15 s is 3 frames
+  at 13 fps, 7 at 35, 10 at 58, so the two agree near 30 fps. Replayed on all 903 saved attempts
+  (current bars): only 10 change, every gain on a slow phone (13 to 19 fps), every loss on a fast
+  one (34 to 58). Squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88. Vern's labels:
+  0.15 s is better on 6 (catches the sags 10-21 22:33 set 1 #9 and 10-22 23:01 repair set 1 #7;
+  silences the good reps 10-17 13:39 set 1 #10, 12:37 set 2 #2, 12:42 set 1 #5, and curl 10-22
+  22:33 set 2 #16), 5 frames on 1 (0.15 s warns 10-22 23:01 set 3 #5, getting up from an
+  abandoned attempt); no labelled real fault lost. Unlabelled: 10-11 21:39 set 1 #7 (45 degree
+  camera, ignore) and two attempts on another tester's account. Risk: at 13 fps 3 glitch frames
+  fire; few slow-phone good reps exist to check. Cost: the Python evaluator and the TS evaluator
+  take each frame's time, the row carries a wait in seconds (`exercise_logic_valid()` changes),
+  fixtures and scorecards re-run. Other waits stay counted in frames: the counter's state change 3
+  (`consecutive_frames_req`), arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds
+  8, the set's end 30, the curl rebuild's 10 straight-arm frames; the warning's 1 s hold is a time.
+  Next: the sag pass bar sitting, raised and on the floor, watching slow-phone good reps.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
   elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject
