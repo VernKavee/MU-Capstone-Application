@@ -464,8 +464,9 @@ Decided 2026-10-21 (later), the push-up plank start, recorded in ADR-0002, 0006 
   `scratch/eval/eval_plank_gate.py`, 10 recordings at 90 degrees, the hold 0.7 to 6.4 s before
   the first rep, never standing.
 - While waiting for a plank, placement runs in full (facing included) with the lying framing:
-  plank width 0.40 to 0.95 of the frame, nothing within 0.03 of an edge, cue "Move back --
-  your whole body must be in frame". Until the trunk lies it gives no cue, so a standing user
+  plank width 0.40 to 0.95 of the frame, nothing within 0.03 of an edge. Since 2026-10-22 its
+  cues move the phone: "Bring the phone closer so your body fills the frame" (too far) and "Fit
+  your whole body in the frame" (too close or cut). Until the trunk lies it gives no cue, so a standing user
   sees "Get into a plank at the top...". The countdown is a plain 3 s hold.
 - The set ends on getting up: the trunk under `thresholds.left_tilt_max` (30) held 30 frames,
   after 3 s. A rest on hands and knees does not end it; a T pose does, being standing.
@@ -491,15 +492,30 @@ Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 
   when the wait begins and every 10 s while nothing else is cued; `readyCue` in `LiveSession`,
   keyed by `ready_pose`. The T pose stays screen text.
 - The push-up plank start is confirmed working on the phone (Vern).
+- Then (Vern): SeniorProject `ae66255` to `c4ee786`, migration `rule_logic_c4ee786`,
+  `ENGINE_VERSION` `c4ee786`.
+  - The squat `rounded_back` bar 35 to 45: just above good form's worst (43.5), below lean's
+    mildest (51.1). The 22:24 set (`f232de47`, another person on Vern's account) warned 9 of 12
+    at 35 and 2 at 45; over all 594 saved squat attempts 29 to 3. Whether that lean is a fault is
+    still for the physiotherapists.
+  - Every frame rule waits 5 frames, not 10 (`FRAME_RULE_MIN_FRAMES`): squat `rounded_back`,
+    lunge `forward_trunk_lean`, curl `elbow_flare`, push-up `hip_sag_or_pike`. The other eight
+    rules are judged once per rep. Why: with the phone raised the rate fell to 13 to 22 fps (24 to
+    35 on the floor), and real sags held 4 to 8 frames went unwarned (repair set `6a302107`: 1 of
+    7, now 7 of 7).
+  - The plank start's framing cues move the phone (above).
 
 Still open, outside the build plan:
 
-- The squat back rule (2026-10-22 evening): `rounded_back` ("Keep back straight") measures trunk
-  lean, bar 35, set below the evidence on 2026-09-20 (good form's worst 43.5, lean's mildest 51.1;
-  SeniorProject RULES_AND_FSM). A new person (22:24 set `f232de47`, same account) warned on 9 of 12
-  reps at 39 to 52 degrees; at 43.5 it would be 5, at 48 2. Their standing tilt was 7.7 against
-  Vern's 5 to 7, so it is real extra lean at depth, not posture or camera. Vern's 22:20 workout peaks at
-  34; the later sets (who, not recorded) reach 45. Undecided: the bar, and whether that lean is a fault (physiotherapists).
+- A wait in time instead of frames, for Vern to discuss with his friend (2026-10-22). On every
+  labelled push-up attempt (15 sags, 4 pikes, 7 good): 10 frames caught 5 sags; 5 frames 13 sags
+  and warned 1 good (10-17 13:39 set `9331a313` attempt 10, a 168 degree rep at 35 fps, Vern: good);
+  0.20 s 14 and 0 good; 0.15 s 15 and 0 good; 0.10 s 15 and 1 good. Pikes 4 of 4 under all. Still
+  missed at 5 frames: 23:04 repair set `8cf98b41` attempt 7 (4 frames, 238 ms) and 10-21 set 1
+  attempt 9 (193 ms). Small sample, picked on it, so optimistic. Other waits counted in frames,
+  all scaling with the phone's rate: the counter's state change 3 (`consecutive_frames_req`),
+  arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds 8, the set's end 30, the
+  curl rebuild's 10 straight-arm frames. The warning's 1 s hold is already a time.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
   elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject
@@ -580,7 +596,10 @@ Still open, outside the build plan:
 - Push-up sag bar (2026-10-22, above): not tested live yet. Pass bar agreed: one sitting at 90
   degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
   5 of 5, at most 1 of 10 good warned. A small sag where good form reads near straight is still
-  missed. Ask the physiotherapists whether 10 degrees of sag is the right line.
+  missed. Ask the physiotherapists whether 10 degrees of sag is the right line. Since the
+  5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
+  10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
+  should cover the phone raised and on the floor.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`

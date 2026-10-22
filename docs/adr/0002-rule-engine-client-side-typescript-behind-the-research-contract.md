@@ -135,3 +135,4 @@ warns 4 of 5 sags, 4 of 4 pikes, and no good rep. The research set: exam good wa
 small sag where good form reads near straight is still missed. Migration `rule_logic_ded29a2`,
 `ENGINE_VERSION` `ded29a2`, fixtures regenerated, parity 102 of 102. Evidence and the agreed live
 pass bar in the 2026-10-22 session log.
+- 2026-10-22 (SeniorProject `c4ee786`): every frame rule waits 5 consecutive frames, not 10 (`FRAME_RULE_MIN_FRAMES`, each row's `debounce_frames`), because a phone at 13 to 22 fps held real push-up sags only 4 to 8 frames. The wait is still counted in frames, not time; a wait in seconds is open. The squat back bar is 45. The plank start's framing cues tell the user to move the phone.
