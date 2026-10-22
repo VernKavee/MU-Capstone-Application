@@ -170,9 +170,13 @@ const PLACED_HOLD_FRAMES = 8;
 const CUE: Record<string, string> = {
   "framing:head_cut": "Step back -- your head is out of frame",
   "framing:feet_cut": "Step back -- your feet are out of frame",
-  "framing:cut": "Move back -- your whole body must be in frame",
   "distance:too_far": "Move closer to the camera",
   "distance:too_close": "Step back from the camera",
+  // Lying (the plank start): the user is on the floor, so the cue moves the phone
+  // (SeniorProject 3da5e15).
+  "lying_framing:cut": "Fit your whole body in the frame",
+  "lying_distance:too_far": "Bring the phone closer so your body fills the frame",
+  "lying_distance:too_close": "Fit your whole body in the frame",
   "centering:move_left": "Move left to center yourself in frame",
   "centering:move_right": "Move right to center yourself in frame",
   "facing:turn_left": "Turn to your left",
@@ -244,11 +248,13 @@ export class PlacementGuide {
   holdStreak = 0;
   targetSign: number | null = null;
   framing: typeof framingCheck;
+  lying: boolean;
 
   // lying: the body lies across the frame (the plank start), so framing is lyingFramingCheck.
   constructor(target: PlacementTarget, nearSide: Side | null = null, lying = false) {
     this.target = target;
     this.framing = lying ? lyingFramingCheck : framingCheck;
+    this.lying = lying;
     this.nearSign = nearSide === null ? null : nearSide === "left" ? -1 : 1;
     this.targetSign = this.nearSign;
   }
@@ -266,7 +272,8 @@ export class PlacementGuide {
     if (yaw !== null && this.targetSign === null) this.targetSign = yaw >= 0 ? 1 : -1;
     const facing = facingCheck(yaw, this.target, this.targetSign, this.nearSign !== null);
     const ok = framing === "ok" && distance === "ok" && centering === "ok" && facing === "ok";
-    const cues = cuesOf(ok, `framing:${framing}`, `distance:${distance}`, `centering:${centering}`, `facing:${facing}`);
+    const prefix = this.lying ? "lying_" : "";
+    const cues = cuesOf(ok, `${prefix}framing:${framing}`, `${prefix}distance:${distance}`, `centering:${centering}`, `facing:${facing}`);
     const status = { phase: this.phase, ok, bodyYaw: yaw, targetYaw: this.target.yaw_center, distance, cues };
     if (!ok) {
       this.holdStreak = 0;
@@ -290,7 +297,7 @@ export class PlacementGuide {
 
 // The cue text of every failed check, in the given order.
 function cuesOf(ok: boolean, ...keys: string[]): string[] {
-  const cues = keys.map((key) => CUE[key]).filter((text): text is string => text !== undefined);
+  const cues = [...new Set(keys.map((key) => CUE[key]).filter((text): text is string => text !== undefined))];
   if (!cues.length && !ok) cues.push(CUE_FALLBACK);
   return cues;
 }

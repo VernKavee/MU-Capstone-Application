@@ -382,12 +382,12 @@ test("engine: a plank start is placed while waiting, facing included, and ends o
   let t = 0;
   let r = engine.process(standing("t"), t);
   for (let i = 0; i < 24; i++) r = engine.process(standing("t"), (t += 25));
-  // Standing: no cue (the lying framing would say "Move closer"), so the screen asks for the plank.
+  // Standing: no cue (the lying framing would say "Bring the phone closer"), so the screen asks for the plank.
   assert.deepEqual([r.ready_phase, r.placement_phase, r.placement_ok, r.placement_cues], ["waiting", "guiding", false, []]);
   const cut = plank();
   cut.left_ankle = { ...cut.left_ankle, x: 0.01 };
   r = engine.process(cut, (t += 25));
-  assert.deepEqual([r.placement_ok, r.placement_cues[0]], [false, "Move back -- your whole body must be in frame"]);
+  assert.deepEqual([r.placement_ok, r.placement_cues[0]], [false, "Fit your whole body in the frame"]);
   for (let i = 0; i < 8; i++) r = engine.process(plank(), (t += 25));
   assert.deepEqual([r.ready_phase, r.placement_phase], ["countdown", "placed"]);
   r = engine.process(plank(), (t += 3000));
@@ -395,4 +395,12 @@ test("engine: a plank start is placed while waiting, facing included, and ends o
   t += 3000;
   for (let i = 0; i < 30; i++) r = engine.process(standing("down"), (t += 25));
   assert.deepEqual([r.ready_phase, r.armed], ["ended", false]);
+});
+
+test("placement guide: a plank's framing cues move the phone (2026-10-22)", () => {
+  assert.equal(new PlacementGuide(SQUAT, null, true).update(turned(45)).cues[0], "Bring the phone closer so your body fills the frame");
+  const cut = plank();
+  cut.left_ankle = { ...cut.left_ankle, x: 0.01 };
+  assert.equal(new PlacementGuide(SQUAT, null, true).update(cut).cues[0], "Fit your whole body in the frame");
+  assert.equal(new PlacementGuide(SQUAT).update(turned(45, "down", 0.5, 0.3)).cues[0], "Move closer to the camera");
 });

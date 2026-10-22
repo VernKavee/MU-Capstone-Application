@@ -134,10 +134,10 @@ test("the ready cue is spoken when the wait begins, then gives way to a placemen
     const { feed } = loop([
       frame("waiting"),
       frame("waiting"), // 1.1 s later: not repeated
-      frame("waiting", { placement_phase: "guiding", placement_cues: ["Move back -- your whole body must be in frame"] }),
+      frame("waiting", { placement_phase: "guiding", placement_cues: ["Fit your whole body in the frame"] }),
     ]);
     feed(3);
-    assert.deepEqual(spoken, ["Plank down to start the exercise", "Move back -- your whole body must be in frame"]);
+    assert.deepEqual(spoken, ["Plank down to start the exercise", "Fit your whole body in the frame"]);
   } finally {
     delete (globalThis as Record<string, unknown>).speechSynthesis;
     delete (globalThis as Record<string, unknown>).SpeechSynthesisUtterance;
