@@ -541,6 +541,15 @@ Still open, outside the build plan:
   once when the wait begins and again if it lasts. Not confirmed yet: the lying framing band
   (scaled from portrait sets); getting up ends the set and a rest on the knees does not; with
   the rotation lock on, whether the stream stays portrait; set-complete and rest sideways.
+- Push-up sag is missed, pike is caught (Vern, 2026-10-22; session log 2026-10-22). To fix.
+  `hip_sag_or_pike` is one unsigned bar, 160, so about 20 degrees either side of straight. In
+  workout `15558b94` set 1 his good reps read about 10 degrees on the pike side, so a pike needed
+  about 10 more degrees and a sag about 30: pikes (-28 to -37) were all caught, sags (+15 to +25
+  at their peak) none. One crossed for 3 frames against a debounce of 10 frames (0.6 s at 16
+  fps). The neutral moves with the setup (-1 to -4 in the later sets). Options, not chosen: a
+  neutral per set from the plank start hold, signed sag and pike bars (possibly own messages,
+  ask the physiotherapists), a debounce in time. SeniorProject first, then export, then port.
+  Agree the pass bar before the live retest.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
   (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
   the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`
