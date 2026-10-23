@@ -569,7 +569,10 @@ Still open, outside the build plan:
   floor sitting's usual side (good 0 of 16, knees in 7 of 7); the mirrored side (older reps: 2 of
   86 good warned) and knees out (11 of 13) rest on the reps its bars were picked on. Not filmed:
   the mirrored side, knees out (Vern cannot do one; the agreed bar's knees-out part is dropped
-  with it). No pass bar is agreed for a live check yet. Why the older rules failed, in the
+  with it). LabMoCap (2026-10-23, SeniorProject `769b1a1`): 0 of 75 good reps warned at the
+  mirrored 45 degrees, boom and kavee, inside the 1 in 20 bar; MediaPipe minus Vicon is a
+  per-person offset (+0.11 boom, -0.19 kavee), and 6 kavee reps Vicon puts past the knees-out bar
+  read under it. No pass bar is agreed for a live check yet. Why the older rules failed, in the
   2026-10-21 and 2026-10-22 session logs and RULES_AND_FSM 5.16 to 5.18: at 45 degrees MediaPipe's
   depth error was as large as the signal. Ask the physiotherapists whether a moderate knees-out is
   a fault. Other people are not tested.
