@@ -7,7 +7,10 @@
 //
 // lib/engine/fixtures holds one trimmed recording per exercise, and pushup_plank_gate,
 // a whole push-up set at 90 degrees run with the ready gate on (placement off), whose
-// ready_phase must match too: the plank start and the get-up end. PARITY_DIR, when set,
+// ready_phase must match too: the plank start and the get-up end. pushup_sag and
+// squat_toe_line are windows of web app keypoint files (2026-10-23), which carry the
+// picture the exam recordings lack: a sag set the old disarm stopped counting, and the
+// squat's knee rules, which read image x. PARITY_DIR, when set,
 // adds every file there (scratch_output/web_parity in SeniorProject, all 25 recordings).
 // The settings are the four rows of the latest rule_logic migration, as the database has
 // them. Also the seam checks the stub's test made: the counter moves only on a correct

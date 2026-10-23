@@ -137,3 +137,23 @@ small sag where good form reads near straight is still missed. Migration `rule_l
 pass bar in the 2026-10-22 session log.
 - 2026-10-22 (SeniorProject `c4ee786`): every frame rule waits 5 consecutive frames, not 10 (`FRAME_RULE_MIN_FRAMES`, each row's `debounce_frames`), because a phone at 13 to 22 fps held real push-up sags only 4 to 8 frames. The wait is still counted in frames, not time; a wait in seconds is open. The squat back bar is 45. The plank start's framing cues tell the user to move the phone.
 - 2026-10-23 (SeniorProject `d7aa1ef`): every frame rule waits 0.15 s from its first violated frame, timed by each frame's timestamp, not a count of frames (each row's `debounce_s`, in place of `debounce_frames`; `exercise_logic_valid()` changed with it). A gap over 0.3 s between two frames the evaluator sees starts every run over (`e4594df`; first equal to the wait in `d7aa1ef`, which let one dropped frame at 13 fps restart a run). `process(keypoints, timestampMs, frameSize?)` already carried the time, so the seam is unchanged. Other holds and counts stay in frames.
+
+## Decided 2026-10-23 (later): the squat knees read the toe line, and a sag no longer disarms the push-up
+
+SeniorProject `aa6dc15`, `4fdba6b` and `eebd58f` (Vern), ported in `ceb8f7b`, after the floor
+sitting of the same day.
+
+- The squat's `knee_valgus` and `knee_varus` read one signed number at the rep's deepest frame:
+  each knee's sideways offset from its own toe line in the picture (image x), in hip widths,
+  both legs added, + = outside. The rows carry `toe_line_in` -0.30 and `toe_line_out` +0.35, fixed
+  before the sitting. It replaces the 3D shank angle, the x-only direction and the frontal part,
+  which MediaPipe's depth error at 45 degrees made as large as the signal; those stay recorded in
+  `rep_stats` as evidence. On the sitting (usual side, no knees out) it warned 0 of 16 good reps
+  against the live rule's 2 and caught 7 of 7 knees in. The mirrored side and knees out rest on
+  the older reps the bars were picked on. The research recordings carry no picture, so the knee
+  rules are held to the Python by the `squat_toe_line` fixture, from a web app keypoint file.
+- The push-up counter disarms only on standing up (the trunk under `left_tilt_max`) or losing the
+  arm, not on being out of the start position: at the top of a deep sag the trunk reads under the
+  arming tilt 60, so the counter switched off and counted, and so warned, none of the sitting's
+  five sags. A machine-level choice in `fsm.ts`, not a row field. Over all 33 saved push-up sets
+  only those five sags and two older attempts change; the `pushup_sag` fixture holds it.

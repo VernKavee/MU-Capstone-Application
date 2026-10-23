@@ -531,12 +531,33 @@ Decided 2026-10-23, frame rules wait 0.15 s, recorded in ADR-0002 and the 2026-1
   8, the set's end 30, the curl rebuild's 10 straight-arm frames. The warning's 1 s hold was
   already a time.
 
+Decided 2026-10-23 (later), the toe line and the sag disarm, recorded in ADR-0002 and the
+2026-10-23 session log:
+
+- The floor sitting (push-up 90 degrees, left side, 35 fps; squat 45 degrees, usual side): push-up
+  good 0 of 10 warned, pike 5 of 5, sag 0 of 5. The sags were never counted: at the top of a deep
+  sag the trunk reads 47 to 58 degrees, under the arming tilt 60, so the counter disarmed.
+- SeniorProject `aa6dc15`: the push-up counter disarms only on standing up (trunk under
+  `left_tilt_max` 30) or losing the arm (`disarmEvidence()` in `fsm.ts`, not a row field). Over all
+  33 saved push-up sets only the five sags and two older attempts change.
+- SeniorProject `4fdba6b`: `knee_valgus` and `knee_varus` read `knee_toe_line` (each knee's
+  offset from its own toe line in the picture, hip widths, both legs added, + = outside, at the
+  rep's deepest frame); rows carry `toe_line_in` -0.30 and `toe_line_out` +0.35. Knees out with
+  both cues (Vern), though no knees out was filmed (Vern cannot do one). The old knee measures stay
+  in `rep_stats` as evidence. Sitting: good 0 of 16 warned (live rule 2), knees in 7 of 7.
+- SeniorProject `eebd58f`, migration `rule_logic_eebd58f` (applied locally), `ENGINE_VERSION`
+  `eebd58f`. The research recordings carry no picture, so `eval_live_rules` gives no knee verdict
+  on them; the fixtures `pushup_sag` and `squat_toe_line` come from this sitting's web keypoint
+  files. The sitting's export: SeniorProject `scratch_output/app_2026-10-23_sitting`.
+- SeniorProject's `.venv` is broken (Homebrew moved Python 3.10.20 to 3.10.22); it runs as
+  `PYTHONPATH=.:.venv/lib/python3.10/site-packages /opt/homebrew/bin/python3.10`. Recreating it is
+  Vern's call.
+
 Still open, outside the build plan:
 
-- The 0.15 s wait (2026-10-23): not tested live. Checked by the push-up sag sitting below, once
-  with the phone raised and once on the floor, watching slow-phone good reps; at 13 fps 3 glitch
-  frames are enough to warn. Migration `rule_logic_e4594df` is not applied to the local stack
-  yet: `npx supabase migration up` after the next `npx supabase start`. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
+- The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
+  the raised phone at 13 to 22 fps, the case it is for, is not tested. At 13 fps 3 glitch frames
+  are enough to warn. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
   import `FRAME_RULE_MIN_FRAMES` and say "N frames in a row"; they need new wording before use.
 - The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
   another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
@@ -544,32 +565,14 @@ Still open, outside the build plan:
   (RULES_AND_FSM). The rule records no number in `rep_stats` (null, as in the Python), so judging it
   needs the keypoint files. `partial_curl` is fine for now (Vern).
 
-- The squat knee rules: the live check at 0.020 (2026-10-21) was right on the usual side but caught
-  2 of 6 knees-in on the mirrored side (right side toward the camera). Not the yaw's size: good form
-  reads about 6 degrees lower there and the 11 bar is fixed (SeniorProject RULES_AND_FSM 5.16; at 45
-  degrees MediaPipe pulls the frontal part 6 to 15 toward "in" and adds a false sagittal part).
-  Trying live: the knees-in bar lowered 11 to 8 (SeniorProject `c3a9129`), then the direction bar
-  0.020 to 0.015 (`bfaa3dc`), then knees in judged from the signed frontal part over 7, knees out
-  unchanged (`00437d1`, `ENGINE_VERSION` `00437d1`), revert steps in the session log.
-  The good-rep check at 0.015 gave 18 of 56 false "Keep knees in line", 16 of them on the
-  mirrored side, from a false sagittal part in the angle; the signed frontal part alone clears
-  them but loses knees out.
-  The frontal-part trial failed live too (11 of 20 good reps warned on the mirrored side).
-  Stopped 2026-10-22: the error at 45 degrees is as large as the signal. Then the evening phone
-  run (Vern, 2026-10-22, still `00437d1`): "works", and "can be more loose"; which rule and how much
-  is not agreed. Set 3 (`8f404c81`) warned knees on 10 of 20 attempts, the others 0 to 4. Undecided: hide the knee
-  cues and run one front-camera test with an agreed pass bar, or revert to `50e4692` and document
-  (session log 2026-10-21, last two sections). Vern, 2026-10-22: the check exists so the knee
-  travels the same way as the toes; the shin-to-shin vector may be the wrong idea (see the note
-  there and RULES_AND_FSM 5.7 and 5.8). Each knee against its own foot, both legs summed, was
-  measured offline on 2026-10-22 and fails (5.17): the thigh fails the side gate, the shank does
-  not separate knees in from good, and a 30 degree turn moves the foot further into depth. Being tried (5.18): a vertical toe line per leg
-  in the picture, both legs summed at the rep's deepest frame; it works at 45 degrees with no side
-  offset. Bars fixed: knees in below -0.30, out above +0.35. Next: one new labelled 45 degree
-  sitting, pass bar agreed (session log 2026-10-22); then Python, export, port. Still to choose: a per-person, per-side starting point, one camera side, the front
-  camera for the knees, or the signed frontal part. An angle MediaPipe reads too low is still missed
-  (LabMoCap kavee-squats-03: Vicon 12.7, read 7.1). Ask the physiotherapists whether a moderate
-  knees-out (9 to 13 degrees) is a fault. Other people are not tested.
+- The squat toe line (2026-10-23, above): shipped and not tested live. Its only unseen data is the
+  floor sitting's usual side (good 0 of 16, knees in 7 of 7); the mirrored side (older reps: 2 of
+  86 good warned) and knees out (11 of 13) rest on the reps its bars were picked on. Not filmed:
+  the mirrored side, knees out (Vern cannot do one; the agreed bar's knees-out part is dropped
+  with it). No pass bar is agreed for a live check yet. Why the older rules failed, in the
+  2026-10-21 and 2026-10-22 session logs and RULES_AND_FSM 5.16 to 5.18: at 45 degrees MediaPipe's
+  depth error was as large as the signal. Ask the physiotherapists whether a moderate knees-out is
+  a fault. Other people are not tested.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
@@ -615,9 +618,11 @@ Still open, outside the build plan:
   item: the lying framing band (scaled from portrait sets); getting up ends the set and a rest on
   the knees does not; with the rotation lock on, whether the stream stays portrait; set-complete
   and rest sideways.
-- Push-up sag bar (2026-10-22, above): not tested live yet. Pass bar agreed: one sitting at 90
+- Push-up sag bar (2026-10-22, above): pass bar agreed: one sitting at 90
   degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
-  5 of 5, at most 1 of 10 good warned. A small sag where good form reads near straight is still
+  5 of 5, at most 1 of 10 good warned. The floor sitting (2026-10-23, left side) failed on sag,
+  0 of 5, because the counter disarmed; fixed above, not re-filmed. Still to film: the fixed
+  engine, the raised phone, and the right side. A small sag where good form reads near straight is still
   missed. Ask the physiotherapists whether 10 degrees of sag is the right line. Since the
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
