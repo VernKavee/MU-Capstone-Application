@@ -44,8 +44,19 @@ test("push-up: standing with straight arms never arms, a plank does", () => {
   const plank = createFsm("pushup", PUSHUP);
   feed(plank, bar(TOP), 10, 80);
   assert.equal(plank.isArmed, true);
-  feed(plank, bar(TOP), 40, 10); // stood up: the posture path still disarms
+  feed(plank, bar(TOP), 40, 10); // stood up: still disarms, the trunk under left_tilt_max
   assert.equal(plank.isArmed, false);
+});
+
+test("push-up: a sag at the top stays armed and starts the next rep", () => {
+  // The 2026-10-23 floor sitting: a deep sag reads the trunk 47-58 degrees at the top, under
+  // the arming tilt, for far longer than the disarm wait (SeniorProject aa6dc15).
+  const fsm = createFsm("pushup", PUSHUP);
+  feed(fsm, bar(TOP), 10, 80);
+  feed(fsm, bar(TOP), 120, 50);
+  assert.equal(fsm.isArmed, true);
+  feed(fsm, bar(DOWN), 3, 50);
+  assert.equal(fsm.state, CONCENTRIC);
 });
 
 test("push-up: standing up mid-attempt abandons it", () => {

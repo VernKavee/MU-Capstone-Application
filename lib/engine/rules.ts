@@ -147,6 +147,21 @@ function kneeFrontalTilt(kp: Keypoints | null): number | null {
   return tilt("left", lateral) + tilt("right", [-lateral[0], -lateral[1], -lateral[2]]);
 }
 
+// Both knees' sideways offsets from their own toe lines in the picture, added, in hip widths,
+// image x only, + = outside; null without keypoints or with the hips level in x
+// (SeniorProject 4fdba6b, _knee_toe_line).
+function kneeToeLine(kp: Keypoints | null): number | null {
+  if (!kp) return null;
+  const hipWidth = Math.abs(kp.right_hip.x - kp.left_hip.x);
+  if (hipWidth <= 1e-6) return null;
+  let total = 0;
+  for (const [side, other] of [["left", "right"], ["right", "left"]] as const) {
+    const outward = kp[`${side}_hip`].x > kp[`${other}_hip`].x ? 1 : -1;
+    total += ((kp[`${side}_knee`].x - kp[`${side}_foot_index`].x) * outward) / hipWidth;
+  }
+  return total;
+}
+
 const stat = (stats: Stats, key: string, fallback: number) => stats[key] ?? fallback;
 
 function lungeFrontKnee(stats: Stats): number | null {
@@ -173,24 +188,22 @@ export const CHECKS: Record<string, Check> = {
     },
     value: (stats) => stats.min_knee ?? null,
   },
-  // Knees in from the signed frontal part alone; knees out from the angle and direction.
+  // Both from the toe line at the rep's deepest frame, one signed number, so at most one fires.
   knee_valgus: {
     requiresKeypoints: true,
     check(angles, kp, side, stats, t) {
-      const frontal = stats.knee_frontal_deg ?? null;
-      return frontal === null ? null : frontal > t.frontal_min;
+      const toeLine = stats.knee_toe_line ?? null;
+      return toeLine === null ? null : toeLine < t.toe_line_in;
     },
-    value: (stats) => stats.knee_frontal_deg ?? null,
+    value: (stats) => stats.knee_toe_line ?? null,
   },
   knee_varus: {
     requiresKeypoints: true,
     check(angles, kp, side, stats, t) {
-      const angle = stats.knee_parallel_deg ?? null;
-      const direction = stats.knee_converge_sign ?? null;
-      if (angle === null || direction === null) return null;
-      return angle > t.parallel_max && direction < -t.converge_min;
+      const toeLine = stats.knee_toe_line ?? null;
+      return toeLine === null ? null : toeLine > t.toe_line_out;
     },
-    value: (stats) => stats.knee_parallel_deg ?? null,
+    value: (stats) => stats.knee_toe_line ?? null,
   },
   rounded_back: {
     requiresKeypoints: true,
@@ -304,9 +317,11 @@ function squat(rules: Rule[]): Accumulator {
       _knee_frontal_n: 0,
       _knee_frontal_sum: 0,
       knee_frontal_deg: null,
+      knee_toe_line: null,
     }),
     accumulate(stats, angles, kp) {
       const avgKnee = (angleOr180(angles, "left_knee") + angleOr180(angles, "right_knee")) / 2;
+      if (avgKnee < stat(stats, "min_knee", Infinity)) stats.knee_toe_line = kneeToeLine(kp); // the deepest frame so far
       stats.min_knee = Math.min(stat(stats, "min_knee", Infinity), avgKnee);
       const tilt = meanTrunkTilt(kp);
       if (tilt !== null) stats.max_back_tilt = Math.max(stat(stats, "max_back_tilt", -Infinity), tilt);

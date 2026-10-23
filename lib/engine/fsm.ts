@@ -135,6 +135,12 @@ export abstract class BaseFsm {
     return (["left", "right"] as const).some((side) => this.armJoints.every((j) => (scores[`${side}_${j}`] ?? 0) >= ARM_MIN_SCORE));
   }
 
+  // Evidence of having left the exercise, for a machine that is not disarmed just by being
+  // out of its start position (disarmOnExtendedAngle false).
+  disarmEvidence() {
+    return !this.armScoresOk();
+  }
+
   readyPostureOk() {
     const tilt = this.trunkTilt;
     if (tilt === null) return true;
@@ -167,7 +173,7 @@ export abstract class BaseFsm {
         } else {
           this.readyStreak = 0;
           // Out of the start position is not the same as having left the exercise.
-          if (this.disarmOnExtendedAngle || !this.armScoresOk()) {
+          if (this.disarmOnExtendedAngle || this.disarmEvidence()) {
             this.notReadyStreak += 1;
             if (this.notReadyStreak >= DISARM_FRAMES_REQ) this.armed = false;
           } else {
@@ -233,9 +239,16 @@ class PushUpFsm extends BaseFsm {
   constructor(sm: StateMachine) {
     super(sm);
     this.leftTiltMax = bar(sm, "left_tilt_max");
+    // A deep sag reads the trunk under the arming tilt at the top of a rep, so out of the
+    // start position is not leaving it: only standing up or losing the arm disarms
+    // (SeniorProject aa6dc15).
+    this.disarmOnExtendedAngle = false;
   }
   primary(angles: Angles) {
     return angles.floor_bar as number;
+  }
+  disarmEvidence() {
+    return super.disarmEvidence() || (this.trunkTilt !== null && this.trunkTilt < this.leftTiltMax);
   }
   update(angles: Angles, jointScores: JointScores | null, trunkTilt: number | null): FsmStep {
     // No world 3D this frame: nothing happens, not even the counters.

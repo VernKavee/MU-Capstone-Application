@@ -104,6 +104,44 @@ test("evaluator: an infinite stat is null, a null one is omitted", () => {
   assert.equal(stats.partial_squat, 140);
 });
 
+// Image x: hips 0.2 apart (the left hip at 0.6, so the left leg's outside is +x), each toe
+// under its hip, each knee `dev` hip widths outside its own toe line (negative = in). The
+// shoulders above the hips give the frame world 3D, which the evaluator needs.
+function toeLineFrame(leftDev: number, rightDev: number): Keypoints {
+  const kp = emptyKeypoints();
+  const put = (name: LandmarkName, x: number, y3d = 0) => (kp[name] = { x, y: 0, z: 0, x_3d: x - 0.5, y_3d: y3d, z_3d: 0, score: 1 });
+  put("left_shoulder", 0.6, -0.5);
+  put("right_shoulder", 0.4, -0.5);
+  put("left_hip", 0.6);
+  put("right_hip", 0.4);
+  put("left_foot_index", 0.6);
+  put("right_foot_index", 0.4);
+  put("left_knee", 0.6 + 0.2 * leftDev);
+  put("right_knee", 0.4 - 0.2 * rightDev);
+  return kp;
+}
+
+test("squat: the knee rules read the toe line at the rep's deepest frame", () => {
+  const rules = [
+    rule({ name: "partial_squat", priority: 1, scope: "rep", threshold: { depth_target: 100 } }),
+    rule({ name: "knee_valgus", priority: 2, scope: "rep", threshold: { toe_line_in: -0.3 } }),
+    rule({ name: "knee_varus", priority: 3, scope: "rep", threshold: { toe_line_out: 0.35 } }),
+  ];
+  const squat = (frames: [number, Keypoints][]) => {
+    const ev = new FormEvaluator(rules, accumulatorFor("squat", rules));
+    frames.forEach(([knee, kp], i) => ev.process({ left_knee: knee, right_knee: knee }, kp, i ? "none" : "rep_started", null, i * 33));
+    ev.process({ left_knee: 170, right_knee: 170 }, toeLineFrame(0, 0), "rep_completed", null, frames.length * 33);
+    return ev.reps[0];
+  };
+  // Knees in at the top and on the way up, inside the line at the bottom: no knee cue.
+  const quiet = squat([[150, toeLineFrame(-0.3, -0.3)], [95, toeLineFrame(0.05, 0)], [110, toeLineFrame(-0.3, -0.3)]]);
+  assert.deepEqual(quiet.violations, []);
+  assert.ok(Math.abs((quiet.rep_stats.knee_valgus as number) - 0.05) < 1e-9);
+  assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(-0.2, -0.15)]]).violations, ["knee_valgus"]);
+  assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(0.2, 0.14)]]).violations, []); // under the +0.35 bar
+  assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(0.2, 0.16)]]).violations, ["knee_varus"]);
+});
+
 // The frame on which elbow_flare fires, with frames 1000 / fps ms apart.
 function firesOn(fps: number) {
   const ev = new FormEvaluator(CURL_RULES, accumulatorFor("dumbbell_biceps_curls", CURL_RULES));
