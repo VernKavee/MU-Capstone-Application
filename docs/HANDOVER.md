@@ -1,8 +1,9 @@
 # Handover
 
 The app is complete around three AI components, each behind an interface so its owner
-replaces one file. The rule engine is ported (section 1); similarity and feedback are still
-stubs that return believable fake output. This page is enough to work on any of them
+replaces one file. The rule engine is ported (section 1); similarity is still a stub that
+returns believable fake output, and feedback calls its service when `FEEDBACK_URL` is set
+and falls back to a stub otherwise (section 3). This page is enough to work on any of them
 without reading the rest of the codebase: where it lives or what to replace, the interface
 to satisfy, what it returns today, and what else changes. The last section lists the tasks
 for running the evaluation.
@@ -305,6 +306,22 @@ succeeded and null when it did not. As with similarity, the file can be the comp
 TypeScript or a call to your own service. The model's API key lives with whichever
 process calls the model: in `.env.local` without `NEXT_PUBLIC_` if this file calls it.
 
+Status (2026-10-25, branch `integrate-rag-system`): the file is now a client for
+Sujira's Python service in the RAG_SYSTEM repository. With `FEEDBACK_URL` set in
+`.env.local` (for example `http://127.0.0.1:8100/feedback`), `writeFeedback` posts the
+input there and returns the service's `feedback`; with it unset, the stub below answers as
+before. The service answers within 45 s and the client gives up at 60 s
+(`TIMEOUT_MS`). A failure answer is one plain sentence, shown after "Feedback failed:".
+To run the service: in RAG_SYSTEM, `python -m service` (localhost only, port 8100; its
+`.env` holds the API key and the knowledge base's database URL). Since 2026-10-27 the
+service can write with a free Groq model while the integration is tried out
+(`FEEDBACK_LLM_PROVIDER=groq` in its `.env`; delete the line for Gemini), and serves the
+query embeddings from a cache filled once by `python tools/fill_query_cache.py`, so a
+request makes no paid call. `.env.local` with `FEEDBACK_URL` set also sends the e2e's dev
+server to the service. Still to do: the
+feedback text is the evaluation prompt's markdown until the app prompt replaces it. The
+knowledge base it reads is in this Postgres (see The knowledge base below).
+
 ### Input
 
 `docs/feedback-input-structure.json` gives every field's type, and
@@ -356,6 +373,16 @@ wrong the first time (REQUIREMENTS section 4.5).
 
 ### The knowledge base
 
+Status (2026-10-25): the service reads langchain_postgres's own tables,
+`langchain_pg_collection` and `langchain_pg_embedding`, created by migration
+`20261025143000_kb_langchain_tables` with row-level security on and no privilege for
+`anon` or `authenticated` (pgTAP: `supabase/tests/kb_langchain.test.sql`). They are filled
+from RAG_SYSTEM's database, vectors included and with no model call, by
+`python tools/copy_kb.py --to postgresql://postgres:postgres@127.0.0.1:54322/postgres` in
+RAG_SYSTEM; run it again after every `npm run db:reset`. The service finds them through
+`KB_DATABASE_URL` in its own environment. No vector index, so search stays exact, as it
+was when evaluated. The `knowledge_base` table below is left in place, unused.
+
 `knowledge_base` has `id` (uuid), `exercise_id` (the app id), `content` (text),
 `embedding` (pgvector, nullable), and `created_at`, with an index on `exercise_id` for
 retrieval scoped to one exercise. It is empty, and like `expert_motions` it is reached
@@ -367,7 +394,7 @@ and `npm run test:db`.
 
 ### What the stub returns today
 
-After 1.5 seconds, one paragraph built from the input: the set's counts; the most
+When `FEEDBACK_URL` is not set: after 1.5 seconds, one paragraph built from the input: the set's counts; the most
 frequent violation and how many attempts it hit, or that no rule fired; the mean
 similarity score and the weakest body part; how many earlier attempts in the workout did not
 count; how many past workouts are in the context; the medical history quoted back; and
@@ -375,10 +402,12 @@ count; how many past workouts are in the context; the medical history quoted bac
 
 ### What else changes
 
-- The feedback test in `lib/analysis/stubs.test.ts` checks the stub's wording; replace it.
+- The feedback test in `lib/analysis/stubs.test.ts` still checks the stub's wording, now
+  with `FEEDBACK_URL` unset; the client's tests are in `lib/analysis/feedback.test.ts`
+  (a local server stands in for the service).
 - `e2e/workout.spec.ts` ends by expecting the medical history, word for word, on the
-  feedback detail page. A model will not quote it verbatim, so change that step to
-  something your component does guarantee.
+  feedback detail page. That holds while the e2e runs without `FEEDBACK_URL` (the stub);
+  a model will not quote it verbatim, so a run against the service needs that step changed.
 
 ## Trying a replacement
 
