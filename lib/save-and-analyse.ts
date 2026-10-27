@@ -11,7 +11,7 @@ import { scoreSimilarity } from "./analysis/similarity.ts";
 import type { Side } from "./engine/rules.ts";
 import type { SessionReport } from "./engine/types.ts";
 import { ruleBasedLogic, type Setup } from "./exercise.ts";
-import { labelFrames, SETS_BUCKET, type Attempt, type KeypointFile, type Similarity, type Totals } from "./set.ts";
+import { labelFrames, SETS_BUCKET, type Attempt, type KeypointFile, type SetSimilarity, type Totals } from "./set.ts";
 import type { Database, Json } from "./supabase/database.types.ts";
 
 type Client = SupabaseClient<Database>;
@@ -36,7 +36,7 @@ export type SaveSetInput = {
 export type Upload = { path: string; token: string };
 export type SaveSetResult = { workoutId: string; setId: string; uploads: { video: Upload | null; keypoints: Upload } };
 export type SetFiles = { video: string | null; keypoints: string | null };
-export type AnalyseResult = { similarity: Similarity | null; feedback: string | null; error: string | null };
+export type AnalyseResult = { similarity: SetSimilarity | null; feedback: string | null; error: string | null };
 
 // The row exists before any file moves and before any analysis. Returns signed upload
 // URLs for the two files, which the browser uses directly against storage (NFR3).
@@ -113,7 +113,7 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
   const workout = set.workouts;
   const exercise = workout.exercises;
   let attempts = set.attempts as unknown as Attempt[];
-  let similarity = set.similarity as Similarity | null;
+  let similarity = set.similarity as SetSimilarity | null;
 
   if (set.keypoints_url && !similarity) {
     try {
@@ -191,7 +191,7 @@ const summary = (row: SetRow): SetSummary => ({
   kind: row.kind as SetSummary["kind"],
   ended_by: row.ended_by,
   totals: row.totals as Totals,
-  similarity: row.similarity as Similarity | null,
+  similarity: row.similarity as SetSimilarity | null,
   feedback: row.llm_feedback,
 });
 

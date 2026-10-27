@@ -1,0 +1,18 @@
+{
+  "reference_version": 1,
+  "exercise_key": "pushup",
+  "format": "lmc15",
+  "projection_scale": 0.2598168157101845,
+  "source_set": "LMC 90RightSideView, rule-engine reps (20260713-boom-pushUP-00)",
+  "variants": {
+    "any": {
+      "file": "any.npy",
+      "label": "pushup",
+      "frames": 39,
+      "source": "LabMoCap_share/videos/90RightSideView/20260713-boom-pushUP-00.mp4 frames 695-733, MediaPipe image coordinates: rule-engine attempt 7 (REP_STARTED..REP_COMPLETED, correct); take chosen as the one whose any attempts pass the rules most (10/10); medoid of the passing attempts",
+      "sha256": "4085ab970373f6574e9c72b64d3e920bcb4451c69919ece05b69375065c0368e",
+      "format": "image15"
+    }
+  },
+  "created": "2026-10-27"
+}

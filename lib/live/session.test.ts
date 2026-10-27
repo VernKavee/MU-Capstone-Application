@@ -76,6 +76,7 @@ test("the capture starts on the first active frame and the set ends at the targe
     [4400, "Idle", "rep_completed"],
   ]);
   assert.deepEqual(capture.frames[1].violations, ["back_straight"]);
+  assert.deepEqual(capture.frameSize, [640, 480], "the picture MediaPipe saw");
   assert.equal(capture.report, report, "the engine's report, as it gave it");
   assert.equal(capture.video, null, "no MediaRecorder here, so no video");
 });

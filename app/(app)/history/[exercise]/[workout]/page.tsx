@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ruleBasedLogic } from "@/lib/exercise";
 import { ENDED_BY, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import { jointIndices } from "@/lib/live/skeleton";
-import { REGIONS, type Attempt, type Similarity, type Totals } from "@/lib/set";
+import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { Replay } from "./replay";
@@ -39,7 +39,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const correct = totals.reduce((n, t) => n + t.correct_reps, 0);
   const tries = totals.reduce((n, t) => n + t.attempts, 0);
   const repairs = sets.filter((s) => s.kind === "repair").length;
-  const mean = meanSimilarity(sets.map((s) => s.similarity as Similarity | null));
+  const mean = meanSimilarity(sets.map((s) => s.similarity as SetSimilarity | null));
   const highlight = Object.fromEntries(ruleBasedLogic(workout.exercises).rules.map((r) => [r.name, jointIndices(r.highlight_joints)]));
   const href = (setId: string) => `/history/${exerciseId}/${id}?set=${setId}`;
 
@@ -61,7 +61,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {sets.map((s, i) => {
             const on = s.id === selected.id;
-            const overall = (s.similarity as Similarity | null)?.overall;
+            const score = (s.similarity as SetSimilarity | null)?.mean_score;
             const notes = [s.ended_by !== "target_reached" && ENDED_BY[s.ended_by], s.repair_declined && "repair skipped"].filter(Boolean);
             return (
               <li key={s.id}>
@@ -73,7 +73,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-2">
                     <span className="whitespace-nowrap text-sm font-medium">{setName(s)}</span>
-                    <span className="font-semibold tabular-nums">{overall === undefined ? "–" : `${overall}%`}</span>
+                    <span className="font-semibold tabular-nums">{score === undefined ? "–" : `${Math.round(score)}%`}</span>
                   </span>
                   <span className="mt-1 block text-xs opacity-70">
                     {totals[i].correct_reps} correct, {totals[i].attempts} attempts
@@ -94,7 +94,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
         highlight={highlight}
         // Keyed because Replay places both beside its own children, and elements built here
         // arrive on the client without the key check React gives its own JSX.
-        regions={<Regions key="regions" similarity={selected.similarity as Similarity | null} />}
+        regions={<BodyParts key="regions" similarity={selected.similarity as SetSimilarity | null} />}
         feedback={
           <section key="feedback" aria-labelledby="feedback-title" className="space-y-2">
             <h2 id="feedback-title" className="font-semibold">
@@ -117,24 +117,24 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   );
 }
 
-// The set's similarity: the overall number as the page's one big figure, then the five
-// regions as meters on the same 0 to 100 scale.
-function Regions({ similarity }: { similarity: Similarity | null }) {
+// The set's similarity: the mean score as the page's one big figure, then the body parts the
+// exercise is scored on as meters on the same 0 to 100 scale.
+function BodyParts({ similarity }: { similarity: SetSimilarity | null }) {
   if (!similarity) return <p className="text-sm opacity-70">Similarity was not scored for this set.</p>;
   return (
     <section aria-label="Similarity to the expert motion" className="space-y-4">
       <p className="flex items-end gap-3">
-        <span className="font-display text-7xl leading-[0.8]">{similarity.overall}</span>
-        <span className="text-sm leading-snug opacity-70">% similar to the expert motion, over the completed reps</span>
+        <span className="font-display text-7xl leading-[0.8]">{Math.round(similarity.mean_score)}</span>
+        <span className="text-sm leading-snug opacity-70">% similar to the expert motion, over the scored reps</span>
       </p>
       <dl className="space-y-2">
-        {REGIONS.map((region) => (
-          <div key={region} className="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-3 text-sm">
-            <dt className="first-letter:uppercase">{region.replace("_", " and ")}</dt>
+        {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (
+          <div key={part} className="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-3 text-sm">
+            <dt className="first-letter:uppercase">{part.replace("_", " ")}</dt>
             <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-foreground/10">
-              <span className="block h-full rounded-full bg-foreground" style={{ width: `${similarity[region]}%` }} />
+              <span className="block h-full rounded-full bg-foreground" style={{ width: `${similarity.body_parts[part]}%` }} />
             </dd>
-            <dd className="text-right tabular-nums">{similarity[region]}%</dd>
+            <dd className="text-right tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
           </div>
         ))}
       </dl>

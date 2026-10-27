@@ -115,13 +115,14 @@ Conventions the code follows, because the docs changed since the plan was writte
 ## The three-part AI structure
 
 Three AI components are owned by specific people. Each stays behind an explicit interface,
-so one person can replace one file. The rule engine is ported (2026-10-04); similarity and
-feedback are still stubs that return believable fake data.
+so one person can replace one file. The rule engine is ported (2026-10-04); similarity is
+real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback is still a stub that returns
+believable fake data.
 
 | Component | Owner | Lives where |
 |---|---|---|
 | Rule-based form checking plus FSM rep counting | Kavee (Vern) | ported from the research repo into `lib/engine/` (angles, fsm, rules, evaluator, gates, engine) |
-| Motion similarity, six numbers per rep | Punnapat | their own component |
+| Motion similarity, a 0 to 100 score per rep and per body part | Punnapat | copied from SeniorProject into `services/similarity/`, called over HTTP by `lib/analysis/similarity.ts` |
 | LLM coaching plus RAG retrieval | Sujira | their own component |
 
 Do not write similarity math, an LLM call, RAG, or vector search here. The rule engine

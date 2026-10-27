@@ -288,7 +288,11 @@ function AttemptRow({ attempt: a }: { attempt: Attempt }) {
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-3">
           <span className="font-medium">Attempt {a.attempt_no}</span>
-          {a.similarity && <span className="text-sm tabular-nums">{a.similarity.overall}%</span>}
+          {a.similarity && (
+            <span className="text-sm tabular-nums" title={a.similarity.skipped_reason ?? undefined}>
+              {a.similarity.score === null ? "not scored" : `${Math.round(a.similarity.score)}%`}
+            </span>
+          )}
         </span>
         <span className="block text-sm opacity-70">
           {OUTCOME[a.outcome]}

@@ -113,7 +113,10 @@ Python services ── localhost ──> Postgres (expert_motions, knowledge_bas
 7. Write `.env.production` with the API hostname and the compose stack's anon key, then
    `npm ci` and `npm run build`.
 8. Install the systemd unit and the Caddyfile, and start both.
-9. Start the two Python services, once they exist.
+9. Start the Python services. Similarity: a Python 3.10 venv with
+   `pip install -r services/similarity/requirements.txt` (CPU torch), then
+   `python services/similarity/server.py` under a second systemd unit, and
+   `SIMILARITY_URL=http://127.0.0.1:8765/score` in `.env.production`. Feedback, once it exists.
 
 ## Compose settings that differ from the local stack
 

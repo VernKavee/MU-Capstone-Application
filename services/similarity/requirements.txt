@@ -1,0 +1,4 @@
+# The versions the service was tested with (README.md). CPU-only torch is enough.
+torch==2.12.0
+numpy==2.2.6
+PyYAML==6.0.3

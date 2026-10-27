@@ -8,9 +8,10 @@ Every phase of the build plan is complete: project skeleton, database foundation
 sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
 setup and guide screens, the live session screen with the camera, the pose model, and the
 rule engine ported from the research repo, the completion flow that saves every set with its video and keypoint file,
-then writes similarity and feedback from stubs, History with the replay of every set, and
-Phase 6's hardening and handover. Similarity and feedback stay stubs until their owners
-replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
+then writes similarity and feedback, History with the replay of every set, and Phase 6's
+hardening and handover. Similarity is Punnapat's real service since 2026-10-27
+(`services/similarity/`); feedback stays a stub until Sujira replaces it;
+[docs/HANDOVER.md](docs/HANDOVER.md) says how.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -91,7 +92,7 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   finished workouts, newest first, with date and mean similarity.
   `/history/[exercise]/[workout]`: every set of one workout and the chosen set in full,
   its video replayed with the skeleton drawn from its keypoint file, an attempt strip to
-  jump to any attempt, similarity per region, every violation, and the start of the
+  jump to any attempt, similarity per body part, every violation, and the start of the
   feedback; `feedback?set=` shows the whole text. Days and dates are the browser's, sent
   to the server in a `tz` cookie. The plain-data part is `lib/history.ts`.
 - Every screen has a loading state, an empty state wherever there can be nothing yet, and
@@ -101,7 +102,7 @@ replace them; [docs/HANDOVER.md](docs/HANDOVER.md) says how.
   titles and big numbers. A bottom tab bar on a phone, a top bar on a laptop; every
   screen is checked at 375 and 1280 px.
 - Tests at three levels: unit tests under `lib/` (the engine and its parity with the
-  Python, the analysis stubs,
+  Python, similarity's answer and stub, the feedback stub,
   the frame loop, the set job, the attempt records, History's data), pgTAP in
   `supabase/tests/`, and two Playwright tests in `e2e/`, a whole workout through a fake
   camera into History and the replay (skipped until a clip of real reps exists), and user
@@ -127,6 +128,16 @@ npm run dev
 The app is on http://localhost:3000 and Supabase Studio on http://localhost:54323. The
 camera works on localhost without https; any other origin needs https. The pose model and
 its wasm are fetched from Google's storage and jsdelivr on first use, about 10 MB.
+
+Similarity uses fake numbers until its service runs. To score sets for real, start it in a
+Python 3.10 venv (CPU torch, about 1 GB) and set
+`SIMILARITY_URL=http://127.0.0.1:8765/score` in `.env.local`:
+
+```bash
+python3.10 -m venv services/similarity/.venv
+services/similarity/.venv/bin/pip install -r services/similarity/requirements.txt
+services/similarity/.venv/bin/python services/similarity/server.py
+```
 
 | Command | What it does |
 |---|---|

@@ -1,0 +1,2 @@
+# The similarity model is checked by sha256 (model.json): keep its bytes as committed on every OS
+services/similarity/models/** binary

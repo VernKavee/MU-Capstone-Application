@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import type { Setup } from "@/lib/exercise";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
-import { afterSet, REGIONS, type Attempt, type Similarity } from "@/lib/set";
+import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
 import type { JobStatus } from "./pipeline";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
@@ -14,7 +14,7 @@ export type SetEntry = Progress & {
   capture: SetCapture;
   attempts: Attempt[];
   status: JobStatus;
-  similarity: Similarity | null;
+  similarity: SetSimilarity | null;
   feedback: string | null;
   error: string | null;
 };
@@ -211,18 +211,18 @@ function RestTimer({ seconds, next, onDone }: { seconds: number; next: string; o
   );
 }
 
-function SimilarityRow({ similarity }: { similarity: Similarity }) {
+function SimilarityRow({ similarity }: { similarity: SetSimilarity }) {
   return (
     <div className="space-y-2">
       <p className="text-sm">
-        <span className="font-display text-4xl leading-none tabular-nums">{similarity.overall}%</span>{" "}
+        <span className="font-display text-4xl leading-none tabular-nums">{Math.round(similarity.mean_score)}%</span>{" "}
         <span className="opacity-70">similar to the expert motion</span>
       </p>
-      <dl className="grid grid-cols-5 gap-2 text-xs">
-        {REGIONS.map((region) => (
-          <div key={region}>
-            <dt className="opacity-70">{region.replace("_", " and ")}</dt>
-            <dd className="text-sm tabular-nums">{similarity[region]}%</dd>
+      <dl className="grid grid-cols-3 gap-2 text-xs">
+        {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (
+          <div key={part}>
+            <dt className="opacity-70 first-letter:uppercase">{part.replace("_", " ")}</dt>
+            <dd className="text-sm tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
           </div>
         ))}
       </dl>

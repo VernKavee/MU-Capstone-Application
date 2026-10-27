@@ -7,7 +7,7 @@
 // every import that is not a type carries a .ts extension.
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { Rule } from "@/lib/exercise";
-import { emptyKeypoints, LANDMARK_NAMES, type Engine, type FrameResult, type Keypoints, type SessionReport } from "../engine/types.ts";
+import { emptyKeypoints, LANDMARK_NAMES, type Engine, type FrameResult, type FrameSize, type Keypoints, type SessionReport } from "../engine/types.ts";
 import type { PoseModel } from "./pose";
 import { drawSkeleton, jointIndices } from "./skeleton.ts";
 import { sound } from "./sound.ts";
@@ -27,6 +27,7 @@ export type SetCapture = {
   endedAt: Date;
   report: SessionReport;
   frames: KeypointFrame[];
+  frameSize: FrameSize | null; // the picture MediaPipe saw, [width, height] in pixels; similarity needs it (ADR-0007)
   video: Blob | null; // null when MediaRecorder is unavailable
   videoMimeType: string | null;
 };
@@ -85,6 +86,7 @@ export class LiveSession {
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
   private frames: KeypointFrame[] = [];
+  private frameSize: FrameSize | null = null;
   private startedAt: Date | null = null;
   private t0 = 0;
   private ended: EndedBy | null = null;
@@ -174,9 +176,10 @@ export class LiveSession {
       return;
     }
     this.turning = false;
-    const frame = this.opts.engine.process(keypoints, now, videoWidth && videoHeight ? [videoWidth, videoHeight] : null);
+    const size: FrameSize | null = videoWidth && videoHeight ? [videoWidth, videoHeight] : null;
+    const frame = this.opts.engine.process(keypoints, now, size);
     this.draw(frame);
-    this.capture(frame, now);
+    this.capture(frame, now, size);
     this.announce(frame, now);
     this.lastFrame = frame;
     this.emit({ status: "running", frame, fps: this.fps(now), capture: null });
@@ -212,8 +215,9 @@ export class LiveSession {
 
   // Recording and keypoint capture both run from the end of the countdown to the end of
   // the set (ADR-0005), so t indexes both files.
-  private capture(frame: FrameResult, now: number) {
+  private capture(frame: FrameResult, now: number, size: FrameSize | null) {
     if (frame.ready_phase !== "active") return;
+    if (size) this.frameSize = size;
     if (!this.startedAt) {
       this.startedAt = new Date();
       this.t0 = now;
@@ -287,6 +291,7 @@ export class LiveSession {
         endedAt: new Date(),
         report: this.opts.engine.getSessionReport(),
         frames: this.frames,
+        frameSize: this.frameSize,
         video,
         videoMimeType,
       };

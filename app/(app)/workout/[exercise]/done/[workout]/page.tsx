@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
-import type { Similarity, Totals } from "@/lib/set";
+import type { SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
@@ -23,7 +23,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
   const sets = [...workout.sets].sort(setOrder);
   const totals = sets.map((s) => s.totals as Totals);
   const sum = (key: keyof Totals) => totals.reduce((n, t) => n + t[key], 0);
-  const mean = meanSimilarity(sets.map((s) => s.similarity as Similarity | null));
+  const mean = meanSimilarity(sets.map((s) => s.similarity as SetSimilarity | null));
   const name = workout.exercises.name;
 
   return (
@@ -42,7 +42,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
       <ol className="space-y-5">
         {sets.map((set, i) => {
           const t = totals[i];
-          const similarity = set.similarity as Similarity | null;
+          const similarity = set.similarity as SetSimilarity | null;
           return (
             <li key={set.id} className="space-y-2 border-t pt-4">
               <h2 className="font-semibold">
@@ -50,7 +50,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
               </h2>
               <p className="text-sm opacity-70">
                 {t.correct_reps} correct of {t.attempts} attempts, {t.abandoned_attempts} abandoned, {ENDED_BY[set.ended_by]}
-                {similarity && `, ${similarity.overall}% similarity`}
+                {similarity && `, ${Math.round(similarity.mean_score)}% similarity`}
                 {set.repair_declined && ", repair set skipped"}.
               </p>
               <p className="leading-relaxed">{set.llm_feedback ?? "No feedback yet. If it is still being written, it appears when you reload this page."}</p>

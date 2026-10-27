@@ -51,7 +51,7 @@ select throws_ok(
   '23505', null, 'but only one repair set per set');
 
 select lives_ok(
-  $$ update public.sets set similarity = '{"overall":90}', llm_feedback = 'Good', repair_declined = true,
+  $$ update public.sets set similarity = '{"mean_score":90}', llm_feedback = 'Good', repair_declined = true,
        keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm', attempts = '[{"attempt_no":1}]'
      where id = '20000000-0000-0000-0000-000000000001' $$,
   'the analyse step and the uploads write their columns');

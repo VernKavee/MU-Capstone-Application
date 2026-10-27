@@ -1,0 +1,29 @@
+{
+  "bundle_version": 1,
+  "id": "bpe_v3_seed2026",
+  "name": "BodyPartAutoencoder3f v3 seed 2026",
+  "files": {
+    "config": "config.yaml",
+    "checkpoint": "autoencoder.pt",
+    "meanpose": "meanpose.npy",
+    "stdpose": "stdpose.npy"
+  },
+  "sha256": {
+    "config.yaml": "2b3c655890860b66ea578dffdee85d51f052adeb60a5c715ee198a7c3981cb6a",
+    "autoencoder.pt": "f2d929ee40e6cd22d6f7e3d22b043523f40de5118de44ab3f3c2e780e9f5e660",
+    "meanpose.npy": "1b766bede924d2ba36dd5a087eb97ac221937fb3eace2ccf0b53d136997fac57",
+    "stdpose.npy": "1a8e52588b18bea3e1475c08dc5cf57a44aa34edcea8f6548802328c0ced6771"
+  },
+  "formula": {
+    "value": "norm_ratio",
+    "scale": 0.539362,
+    "scale_source": "median L2 / median norm_ratio over 482 MoCap negative-control pairs (comparison_features_ours_seed2026.json)"
+  },
+  "source": {
+    "run": "data/similarity/out/bpe_v3_seed2026",
+    "iteration": 42000,
+    "val_total": 0.5164101123809814,
+    "git_commit": "583d1cd80044a3338c5fcb72201d3dd5b86da9ec"
+  },
+  "created": "2026-10-24"
+}

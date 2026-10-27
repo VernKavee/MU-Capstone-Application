@@ -3,11 +3,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { activeDays, attemptAt, formatWhen, frameAt, isUuid, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
-import type { Similarity } from "./set.ts";
+import type { SetSimilarity } from "./set.ts";
 
 const BKK = "Asia/Bangkok";
 const THURSDAY = new Date("2026-09-10T05:00:00Z");
-const sim = (overall: number): Similarity => ({ overall, head_neck: overall, back_core: overall, hips_pelvis: overall, knees: overall, ankles_feet: overall });
+const sim = (mean_score: number): SetSimilarity => ({ mean_score, body_parts: { torso: mean_score }, weakest_body_part: "torso", model: "stub" });
 
 test("the seven days end today in the given zone", () => {
   assert.deepEqual(lastSevenDays(THURSDAY, BKK), ["2026-09-04", "2026-09-05", "2026-09-06", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10"]);

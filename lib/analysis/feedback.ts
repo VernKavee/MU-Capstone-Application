@@ -12,9 +12,7 @@ export async function writeFeedback(input: FeedbackInput, delayMs = DELAY_MS): P
   const counts = new Map<string, number>();
   for (const attempt of set.attempts) for (const v of attempt.violations) counts.set(v.message, (counts.get(v.message) ?? 0) + 1);
   const worst = [...counts].sort((a, b) => b[1] - a[1])[0];
-  const lowest = set.similarity
-    ? (Object.entries(set.similarity).filter(([k]) => k !== "overall") as [string, number][]).sort((a, b) => a[1] - b[1])[0]
-    : null;
+  const weakest = set.similarity?.weakest_body_part;
   const earlierIssues = workout.earlier_sets.reduce((n, s) => n + s.totals.attempts - s.totals.correct_reps, 0);
 
   const lines = [
@@ -22,8 +20,8 @@ export async function writeFeedback(input: FeedbackInput, delayMs = DELAY_MS): P
     worst
       ? `The most frequent issue was "${worst[0]}", on ${worst[1]} ${worst[1] === 1 ? "attempt" : "attempts"}. Slow the movement down and fix that one first.`
       : "No rule fired on any attempt. Keep the same tempo next set.",
-    set.similarity && lowest
-      ? `Your motion matched the expert ${set.similarity.overall}% overall, lowest in the ${lowest[0].replace("_", " and ")} at ${lowest[1]}%.`
+    set.similarity && weakest
+      ? `Your motion matched the expert ${Math.round(set.similarity.mean_score)}% on average, lowest in the ${weakest.replace("_", " ")} at ${Math.round(set.similarity.body_parts[weakest] ?? 0)}%.`
       : "Similarity is not available for this set.",
     workout.earlier_sets.length
       ? `Earlier in this workout you had ${earlierIssues} ${earlierIssues === 1 ? "attempt" : "attempts"} that did not count over ${workout.earlier_sets.length} ${workout.earlier_sets.length === 1 ? "set" : "sets"}.`

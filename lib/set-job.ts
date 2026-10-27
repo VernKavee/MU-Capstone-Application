@@ -7,10 +7,10 @@
 // fakes. Node-testable, so imports that are not types carry .ts extensions.
 import type { SetCapture } from "./live/session.ts";
 import type { AnalyseResult, SaveSetInput, SaveSetResult, SetFiles, Upload } from "./save-and-analyse.ts";
-import { toKeypointFile, type Similarity } from "./set.ts";
+import { toKeypointFile, type SetSimilarity } from "./set.ts";
 
 export type JobStatus = "saving" | "uploading" | "analysing" | "done" | "failed";
-export type JobUpdate = { status: JobStatus; error?: string | null; similarity?: Similarity | null; feedback?: string | null };
+export type JobUpdate = { status: JobStatus; error?: string | null; similarity?: SetSimilarity | null; feedback?: string | null };
 export type Job = ReturnType<typeof createJob>;
 
 export type JobApi = {
@@ -120,7 +120,7 @@ export function createJob(
 
 // The keypoint file (ADR-0005), gzipped where the browser has CompressionStream.
 async function encodeKeypoints(capture: SetCapture) {
-  const json = new Blob([JSON.stringify(toKeypointFile(capture.frames))], { type: "application/json" });
+  const json = new Blob([JSON.stringify(toKeypointFile(capture.frames, capture.frameSize))], { type: "application/json" });
   if (typeof CompressionStream === "undefined") return { body: json, ext: "json" as const, type: "application/json" };
   const body = await new Response(json.stream().pipeThrough(new CompressionStream("gzip"))).blob();
   return { body, ext: "json.gz" as const, type: "application/gzip" };

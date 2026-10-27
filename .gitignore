@@ -51,3 +51,7 @@ supabase/.branches/
 
 # per-user tool settings
 .claude/settings.local.json
+
+# the similarity service's Python environment and caches
+services/similarity/.venv/
+__pycache__/

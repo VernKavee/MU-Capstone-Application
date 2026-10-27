@@ -4,7 +4,7 @@
 // touching the caller in app/(app)/workout/[exercise]/live/actions.ts.
 import type { Side } from "../engine/rules.ts";
 import type { Rule } from "../exercise";
-import type { Attempt, KeypointFile, Outcome, Similarity, Totals } from "../set.ts";
+import type { Attempt, AttemptSimilarity, KeypointFile, Outcome, SetSimilarity, Totals } from "../set.ts";
 
 // The layout Punnapat agreed on 2026-10-05, SeniorProject's scratch/export_similarity.py.
 // frame_start..frame_end are inclusive indexes into landmarks.frames.
@@ -27,11 +27,11 @@ export type SimilarityInput = {
   landmarks: Omit<KeypointFile, "frames"> & { frames: (KeypointFile["frames"][number] & { attempt: number | null; rep: number | null })[] };
 };
 
-// Abandoned attempts get no similarity (ADR-0003); the set's numbers average the
-// completed reps.
+// What the app keeps from the service's answer (ADR-0007, 2026-10-27): every attempt it
+// answered for except abandoned ones (ADR-0003), and the set's summary over the scored ones.
 export type SimilarityOutput = {
-  attempts: { attempt_no: number; similarity: Similarity }[];
-  set: Similarity;
+  attempts: { attempt_no: number; similarity: AttemptSimilarity }[];
+  set: SetSimilarity;
 };
 
 export type SetSummary = {
@@ -39,7 +39,7 @@ export type SetSummary = {
   kind: "initial" | "repair";
   ended_by: string;
   totals: Totals;
-  similarity: Similarity | null;
+  similarity: SetSimilarity | null;
   feedback: string | null;
 };
 

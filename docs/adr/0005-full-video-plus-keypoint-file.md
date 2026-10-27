@@ -43,6 +43,7 @@ JSON, gzipped in the browser with `CompressionStream` before upload, stored as `
 - `t` is milliseconds since the recording started, so it indexes the video too. `state` and `event` are the engine's for that frame.
 - The frame indices in the attempt records (ADR-0003) are indices into `frames`.
 - `fps` is the mean capture rate over the set. Frames are not resampled.
+- `frame_size` is `[width, height]` in pixels of the picture MediaPipe saw, so `x` and `y` can be turned back into pixels. Added on 2026-10-27 within version 1 for similarity (ADR-0007), which refuses a file without it; files saved before lack it.
 - Numbers are rounded to four decimals.
 
 JSON rather than a binary format because the similarity contract of ADR-0007 already takes this object as `landmarks`, Python and TypeScript both read it without a decoder, and gzip closes most of the size gap. The table above assumed about 1 MB gzipped for two minutes; the real size is measured on the first real camera run. Written by `toKeypointFile` in `lib/set.ts`.

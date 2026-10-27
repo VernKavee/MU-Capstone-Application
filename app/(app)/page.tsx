@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { lastSevenDays, WEEK_FETCH_MS, weeklySummary } from "@/lib/history";
-import type { Similarity } from "@/lib/set";
+import type { SetSimilarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { WeeklySummary } from "./weekly-summary";
@@ -19,7 +19,7 @@ export default async function HomePage() {
   ]);
   const week = weeklySummary(
     lastSevenDays(now, tz),
-    sets.map((s) => ({ started_at: s.started_at, similarity: s.similarity as Similarity | null })),
+    sets.map((s) => ({ started_at: s.started_at, similarity: s.similarity as SetSimilarity | null })),
     tz,
   );
 

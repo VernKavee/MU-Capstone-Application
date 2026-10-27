@@ -2,7 +2,7 @@
 // falls on, the seven days the charts cover, and the mean similarity over sets. A day is
 // the user's day in the browser's time zone, which reaches the server in the tz cookie.
 // Node-testable, so imports carry .ts extensions.
-import type { Similarity } from "./set.ts";
+import type { SetSimilarity } from "./set.ts";
 
 export const TZ_COOKIE = "tz";
 const DAY_MS = 86_400_000;
@@ -42,17 +42,17 @@ export function lastSevenDays(now: Date, tz: string): string[] {
   return Array.from({ length: 7 }, (_, i) => new Date(today - (6 - i) * DAY_MS).toISOString().slice(0, 10));
 }
 
-// The mean of the sets' overall similarity, initial and repair alike (ADR-0004), over the
-// sets that have one. Null while none is scored.
-export function meanSimilarity(similarities: (Similarity | null)[]): number | null {
-  const scored = similarities.flatMap((s) => (typeof s?.overall === "number" ? [s.overall] : []));
+// The mean of the sets' mean scores, initial and repair alike (ADR-0004), over the sets that
+// have one, rounded for the screen. Null while none is scored.
+export function meanSimilarity(similarities: (SetSimilarity | null)[]): number | null {
+  const scored = similarities.flatMap((s) => (typeof s?.mean_score === "number" ? [s.mean_score] : []));
   return scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null;
 }
 
 export type Day = { date: string; mean: number | null; sets: number };
 
 // Level 1: each of the days with the mean similarity over that day's sets.
-export function weeklySummary(days: string[], sets: { started_at: string; similarity: Similarity | null }[], tz: string): Day[] {
+export function weeklySummary(days: string[], sets: { started_at: string; similarity: SetSimilarity | null }[], tz: string): Day[] {
   const dated = sets.map((s) => ({ date: localDate(s.started_at, tz), similarity: s.similarity }));
   return days.map((date) => {
     const mine = dated.filter((s) => s.date === date);

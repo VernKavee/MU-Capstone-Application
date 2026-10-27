@@ -1,0 +1,223 @@
+{
+  "source": "pipeline:Squat_rounded_45.MOV",
+  "exercise_key": "squat",
+  "side": null,
+  "status": "ok",
+  "error": null,
+  "warnings": [],
+  "reference": {
+    "kind": "builtin",
+    "source": "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)",
+    "reps": [
+      {
+        "variant": "any",
+        "attempt_no": null,
+        "frame_start": null,
+        "frame_end": null,
+        "selection": "builtin",
+        "label": "squat"
+      }
+    ]
+  },
+  "summary": {
+    "attempts_scored": 5,
+    "attempts_skipped": 2,
+    "mean_score": 38.8,
+    "std_score": 4.2,
+    "min_score": 31.2,
+    "max_score": 42.6,
+    "best_attempt_no": 5,
+    "worst_attempt_no": 7,
+    "mean_score_correct": null,
+    "mean_score_incorrect": 38.8,
+    "weakest_body_part": "torso",
+    "body_parts": {
+      "torso": 17.6,
+      "right_arm": 29.3,
+      "left_arm": 23.1,
+      "right_leg": 53.4,
+      "left_leg": 54.1
+    }
+  },
+  "attempts": [
+    {
+      "attempt_no": 1,
+      "rep_number": 1,
+      "outcome": "incorrect",
+      "score": 42.5,
+      "skipped_reason": null,
+      "body_parts": {
+        "torso": 22.6,
+        "right_arm": 34.6,
+        "left_arm": 24.9,
+        "right_leg": 58.8,
+        "left_leg": 53.6
+      },
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": "any",
+      "reference_rep": "squat",
+      "frame_start": 24,
+      "frame_end": 54,
+      "duration_s": 1.0,
+      "tracking_confidence": 0.867,
+      "warnings": []
+    },
+    {
+      "attempt_no": 2,
+      "rep_number": 2,
+      "outcome": "incorrect",
+      "score": 40.4,
+      "skipped_reason": null,
+      "body_parts": {
+        "torso": 21.5,
+        "right_arm": 36.1,
+        "left_arm": 26.0,
+        "right_leg": 51.2,
+        "left_leg": 55.0
+      },
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": "any",
+      "reference_rep": "squat",
+      "frame_start": 77,
+      "frame_end": 105,
+      "duration_s": 0.93,
+      "tracking_confidence": 0.867,
+      "warnings": []
+    },
+    {
+      "attempt_no": 3,
+      "rep_number": 3,
+      "outcome": "incorrect",
+      "score": 37.5,
+      "skipped_reason": null,
+      "body_parts": {
+        "torso": 14.8,
+        "right_arm": 22.0,
+        "left_arm": 21.0,
+        "right_leg": 50.3,
+        "left_leg": 58.4
+      },
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": "any",
+      "reference_rep": "squat",
+      "frame_start": 127,
+      "frame_end": 143,
+      "duration_s": 0.53,
+      "tracking_confidence": 0.857,
+      "warnings": []
+    },
+    {
+      "attempt_no": 4,
+      "rep_number": null,
+      "outcome": "abandoned",
+      "score": null,
+      "skipped_reason": "abandoned",
+      "body_parts": {},
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": null,
+      "reference_rep": null,
+      "frame_start": 151,
+      "frame_end": 154,
+      "duration_s": null,
+      "tracking_confidence": null,
+      "warnings": []
+    },
+    {
+      "attempt_no": 5,
+      "rep_number": 4,
+      "outcome": "incorrect",
+      "score": 42.6,
+      "skipped_reason": null,
+      "body_parts": {
+        "torso": 14.9,
+        "right_arm": 27.8,
+        "left_arm": 21.4,
+        "right_leg": 62.8,
+        "left_leg": 61.9
+      },
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": "any",
+      "reference_rep": "squat",
+      "frame_start": 173,
+      "frame_end": 191,
+      "duration_s": 0.6,
+      "tracking_confidence": 0.885,
+      "warnings": []
+    },
+    {
+      "attempt_no": 6,
+      "rep_number": null,
+      "outcome": "abandoned",
+      "score": null,
+      "skipped_reason": "abandoned",
+      "body_parts": {},
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": null,
+      "reference_rep": null,
+      "frame_start": 200,
+      "frame_end": 205,
+      "duration_s": null,
+      "tracking_confidence": null,
+      "warnings": []
+    },
+    {
+      "attempt_no": 7,
+      "rep_number": 5,
+      "outcome": "incorrect",
+      "score": 31.2,
+      "skipped_reason": null,
+      "body_parts": {
+        "torso": 14.2,
+        "right_arm": 26.0,
+        "left_arm": 22.4,
+        "right_leg": 44.0,
+        "left_leg": 41.5
+      },
+      "score_parts": [
+        "left_leg",
+        "right_leg",
+        "torso"
+      ],
+      "variant": "any",
+      "reference_rep": "squat",
+      "frame_start": 225,
+      "frame_end": 238,
+      "duration_s": 0.43,
+      "tracking_confidence": 0.878,
+      "warnings": []
+    }
+  ],
+  "model": {
+    "id": "bpe_v3_seed2026",
+    "name": "BodyPartAutoencoder3f v3 seed 2026",
+    "formula": "cos*exp(-s*norm_ratio)",
+    "formula_scale": 0.539362,
+    "version": "0.11.0"
+  },
+  "processed_at": "2026-10-27T04:57:44+00:00",
+  "processing_ms": 95
+}

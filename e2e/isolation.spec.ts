@@ -41,7 +41,7 @@ test("user B cannot reach user A's workout, its set, or its files", async ({ pag
         attempts: [],
         engine_report: { schema_version: 4 },
         engine_version: "e2e",
-        similarity: { overall: 90, head_neck: 90, back_core: 90, hips_pelvis: 90, knees: 90, ankles_feet: 90 },
+        similarity: { mean_score: 90, body_parts: { torso: 90, left_leg: 90, right_leg: 90 }, weakest_body_part: "torso", model: "e2e" },
         llm_feedback: "A's feedback, not B's to read.",
       })
       .select("id")

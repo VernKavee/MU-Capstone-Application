@@ -1,0 +1,18 @@
+{
+  "reference_version": 1,
+  "exercise_key": "squat",
+  "format": "lmc15",
+  "projection_scale": 0.2598168157101845,
+  "source_set": "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)",
+  "variants": {
+    "any": {
+      "file": "any.npy",
+      "label": "squat",
+      "frames": 49,
+      "source": "LabMoCap_share/videos/45SideView/20260713-boom-squats-00.mp4 frames 691-739, MediaPipe image coordinates: rule-engine attempt 7 (REP_STARTED..REP_COMPLETED, correct); take chosen as the one whose any attempts pass the rules most (10/10); medoid of the passing attempts",
+      "sha256": "87a46985f9a1fdad6ed241aec84e59d63443e16dda8c83e472e59497e2db8792",
+      "format": "image15"
+    }
+  },
+  "created": "2026-10-27"
+}

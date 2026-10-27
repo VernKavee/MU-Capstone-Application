@@ -10,7 +10,7 @@ for running the evaluation.
 | Component | Owner | Replace | Interface | Called from | Runs |
 |---|---|---|---|---|---|
 | Rule-based form checking and rep counting | Kavee (Vern) | ported: `lib/engine/` | `Engine` in `lib/engine/types.ts` | `app/(app)/workout/[exercise]/live/live-screen.tsx` | in the browser, every camera frame |
-| Motion similarity, six numbers per rep | Punnapat | `lib/analysis/similarity.ts` | `SimilarityInput` to `SimilarityOutput` in `lib/analysis/contracts.ts` | `analyseSet` in `lib/save-and-analyse.ts` | on the Next.js server, once per set |
+| Motion similarity, a score per rep and per body part | Punnapat | real: `services/similarity/`, called by `lib/analysis/similarity.ts` | `SimilarityInput` to `SimilarityOutput` in `lib/analysis/contracts.ts` | `analyseSet` in `lib/save-and-analyse.ts` | on the Next.js server, once per set |
 | Coaching feedback with retrieval | Sujira | `lib/analysis/feedback.ts` | `FeedbackInput` to `FeedbackOutput` in `lib/analysis/contracts.ts` | `analyseSet` in `lib/save-and-analyse.ts` | on the Next.js server, once per set, after similarity |
 
 Rules for all three:
@@ -208,48 +208,23 @@ The UI never counts, judges, or re-derives anything. It reads these fields:
 
 ## 2. Similarity: Punnapat
 
-Compares the user's motion with the expert's and returns six numbers per rep: `overall`,
-`head_neck`, `back_core`, `hips_pelvis`, `knees`, `ankles_feet` (REQUIREMENTS section 7).
+Compares each completed rep's motion with a reference rep of the same exercise and returns a
+0 to 100 score per rep and per body part (ADR-0007, decided 2026-10-27). Real since
+2026-10-27: Punnapat's Python service, SeniorProject `src/similarity/` (service 0.11.0, model
+`bpe_v3_seed2026`), is copied into `services/similarity/` (`SOURCE.md` names the commit and how
+to copy again). The app does no similarity math.
 
-Punnapat writes it in Python as a service the app calls with JSON over HTTP (ADR-0007,
-2026-09-29). The request is the layout he agreed on 2026-10-05, the one of SeniorProject's
-`scratch/export_similarity.py`, so a reader written for those sample files reads the app's
-request, provided it treats `frames[].rep_count` and `landmarks.frame_size` as optional:
-the app sends neither yet (ADR-0007, 2026-10-05). Still open with him:
+### How it runs
 
-- Whether an attempt's frame range, from leaving Idle to returning to it, is trimmed
-  enough or needs more trimming.
-- One expert rep per exercise, since `expert_motions` holds one `motion_data` each.
-- The frame rate differs between sets, 60 fps on a Mac and perhaps 30 on a phone.
-- Python has to be installed on the evaluation machine.
-
-### What to replace
-
-`lib/analysis/similarity.ts`, one function:
-
-```ts
-export async function scoreSimilarity(input: SimilarityInput): Promise<SimilarityOutput>
-```
-
-The stub's second parameter, `random`, is only for its test. `analyseSet` calls this on
-the server after the set is saved and its keypoint file uploaded, reading the file back
-from storage as the signed-in user. The function can be the component itself in
-TypeScript, or a call to your own service (ADR-0007), for example:
-
-```ts
-export async function scoreSimilarity(input: SimilarityInput): Promise<SimilarityOutput> {
-  const res = await fetch(process.env.SIMILARITY_URL!, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) throw new Error(`the similarity service answered ${res.status}`);
-  return (await res.json()) as SimilarityOutput;
-}
-```
-
-A server-only setting like that goes in `.env.local` and `.env.example`, without the
-`NEXT_PUBLIC_` prefix.
+- `services/similarity/server.py` loads the model once and answers `POST /score` with the
+  service's output, on 127.0.0.1, port `SIMILARITY_PORT` (default 8765). `GET /health` names
+  the model. It needs Python 3.10 with `services/similarity/requirements.txt` (CPU torch).
+- `lib/analysis/similarity.ts`: `scoreSimilarity` posts the input to `SIMILARITY_URL` and
+  maps the answer with `fromService`. While `SIMILARITY_URL` is unset (development, the
+  end-to-end tests) a stub answers in the same shape: no motion is read, a correct rep draws
+  80 to 95 and an incorrect one 45 to 70 on the exercise's parts, and the set's `model` is
+  `stub`.
+- To change the service, change it in SeniorProject, copy it again, and run the checks below.
 
 ### Input
 
@@ -262,61 +237,48 @@ A server-only setting like that goes in `.env.local` and `.env.example`, without
   | `lunge` | `lunge` |
   | `bicep-curl` | `dumbbell_biceps_curls` |
 
-- `source`: the set's id, for logs.
-- `side`: the workout's chosen arm, `left` or `right`, for the curl; null for the other
-  exercises.
+- `source`: the set's id, for logs. `side`: the workout's chosen arm for the curl, else null.
 - `totals`: the set's `attempts`, `completed_reps`, `correct_reps`, `abandoned_attempts`.
-- `attempts`, in order: `attempt_no`, `outcome` (`correct`, `incorrect`, or `abandoned`),
-  `rep_number` (null for an abandoned attempt), `frame_start` and `frame_end`, both
-  inclusive indexes into `landmarks.frames` and both null when a low-confidence pause
-  swallowed the attempt's events, `violations` (the rule names that fired), and `side`
-  (the side the engine judged, its `active_side`, or null).
-- `landmarks`: the set's keypoint file as stored (ADR-0005), already decompressed, with
-  two fields added to each frame. `joints` is the 33 landmark names in MediaPipe's order,
-  `fields` is `["x", "y", "z", "x_3d", "y_3d", "z_3d", "score"]`, and `fps` is the rate
-  the device managed, so it differs between sets. Each entry in `frames` has `t`
-  (milliseconds since the recording started), `state`, `event`, `attempt` and `rep` (the
-  attempt and rep number the frame is inside; null between attempts, and `rep` null inside
-  an abandoned attempt; cut a rep's sequence by these), and `points`, one flat row of 231
-  numbers: field `f` of joint `j` is `points[j * 7 + f]`. Not mirrored.
+- `attempts`, in order: `attempt_no`, `outcome`, `rep_number` (null when abandoned),
+  `frame_start` and `frame_end` (inclusive indexes into `landmarks.frames`, null when a
+  low-confidence pause swallowed the attempt's events), `violations` (rule names), `side`
+  (the engine's `active_side`, or null).
+- `landmarks`: the set's keypoint file as stored (ADR-0005) with `attempt` and `rep` added to
+  each frame; the service cuts each rep by `attempt`. It reads the 2D image `x`, `y` and the
+  visibility `score`, and needs `frame_size` (`[width, height]` in pixels), which keypoint
+  files carry since 2026-10-27. A file saved before has none, so the service refuses it and
+  that set stays unscored.
 
-### Output
+### Output, as the app keeps it
 
-- `attempts`: one `{ attempt_no, similarity }` per attempt you score. Leave out abandoned
-  attempts (ADR-0003) and any you cannot score; they keep a null similarity.
-- `set`: the six numbers for the whole set. The stub uses the mean over completed reps.
-- Integers from 0 to 100; the UI shows them as percentages. The database only checks
-  that `similarity` is a JSON object, so a missing key or a fraction is not caught at
-  the write: it shows up as a broken number on screen.
-- On failure, throw an `Error` with a readable message. The set stays saved without
-  similarity, and the set-complete screen shows "Similarity failed:" and the message,
-  with a Retry. A retry skips similarity once the set has it.
+- Per attempt, except abandoned ones (ADR-0003): `score` (one decimal, or null when the
+  service could not score the rep), `body_parts` (only the parts the rep is scored on: squat
+  and lunge `torso`, `left_leg`, `right_leg`; push-up `torso` and the arms it saw; curl the
+  working arm), `skipped_reason`, `warnings`, `tracking_confidence`.
+- Per set: `mean_score` over the scored reps, `body_parts` over the same parts,
+  `weakest_body_part`, and `model`, since scores from different models do not compare.
+- A service answer with `status` `error` throws: the set stays saved without similarity and
+  the set-complete screen shows "Similarity failed:" and the message, with a Retry. A retry
+  skips similarity once the set has it.
 
 The numbers land in `sets.similarity` and in each attempt record in `sets.attempts`, and
-feed the Home chart, History, the set-complete screen, and the feedback input.
+feed the Home chart, History, the set-complete screen, and the feedback input. How to read a
+score (typical ranges, camera angle, tracking) is SeniorProject
+`docs/similarity/SCORE_INTERPRETATION.md`.
 
-### The expert motion
+### The reference motion
 
-`expert_motions` has `exercise_id` (the app id, text, primary key), `motion_data`
-(bytea, meant for a `.npy` file's contents), and `updated_at`. It is empty. No API role can
-reach it: read and write it over a direct database connection, locally
-`postgresql://postgres:postgres@127.0.0.1:54322/postgres` (printed by
-`npx supabase status`). Join the input's key through `exercises.engine_key`.
+The service's built-in reference reps (`services/similarity/references/`, Punnapat's lab
+recordings at the app's camera angles, cut by the rule engine) are used. `expert_motions`
+stays empty; a coach's recorded set could later be sent as the service's `reference` package.
 
-### What the stub returns today
+### Checking a change
 
-No motion is read. For every completed attempt it draws a base score, 86 to 97 for a
-correct rep and 66 to 84 for an incorrect one, sets each region to the base plus or minus
-7, and `overall` to the regions' mean. `set` is each number's mean over the scored
-attempts, or zeros when there are none.
-
-### What else changes
-
-- The similarity test in `lib/analysis/stubs.test.ts` checks the stub, including "a
-  correct rep scores above an incorrect one", which a real component need not promise.
-  Replace it with a test on a motion whose answer you know.
-- `e2e/workout.spec.ts` expects every set of its workout to be scored, through the Home
-  chart's description ("today: N% over 3 sets").
+- `npm run test:unit`: `lib/analysis/stubs.test.ts` maps a recorded service answer
+  (`lib/analysis/fixtures/similarity-output-squat.json`, from SeniorProject's tests) and
+  checks the stub.
+- Start the server and POST a real set's request; `status` must be `ok` or `partial`.
+- SeniorProject's `tests/test_similarity_service.py` is the service's own test.
 
 ## 3. Coaching feedback: Sujira
 
@@ -386,8 +348,8 @@ and `npm run test:db`.
 ### What the stub returns today
 
 After 1.5 seconds, one paragraph built from the input: the set's counts; the most
-frequent violation and how many attempts it hit, or that no rule fired; the overall
-similarity and the lowest region; how many earlier attempts in the workout did not
+frequent violation and how many attempts it hit, or that no rule fired; the mean
+similarity score and the weakest body part; how many earlier attempts in the workout did not
 count; how many past workouts are in the context; the medical history quoted back; and
 "(Stub feedback: no language model was called.)". No retrieval, no model.
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatWhen, meanSimilarity } from "@/lib/history";
-import type { Similarity } from "@/lib/set";
+import type { SetSimilarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 
@@ -41,7 +41,7 @@ export default async function ExerciseHistoryPage({ params }: PageProps<"/histor
         <ol className="divide-y border-y">
           {list.map((workout) => {
             const repairs = workout.sets.filter((s) => s.kind === "repair").length;
-            const mean = meanSimilarity(workout.sets.map((s) => s.similarity as Similarity | null));
+            const mean = meanSimilarity(workout.sets.map((s) => s.similarity as SetSimilarity | null));
             return (
               <li key={workout.id}>
                 <Link href={`/history/${exercise.id}/${workout.id}`} className="flex items-center justify-between gap-4 px-1 py-3 hover:bg-foreground/5">

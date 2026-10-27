@@ -1,0 +1,26 @@
+{
+  "reference_version": 1,
+  "exercise_key": "dumbbell_biceps_curls",
+  "format": "lmc15",
+  "projection_scale": 0.2598168157101845,
+  "source_set": "LMC 45SideView, rule-engine reps (20260713-kavee-curl-00)",
+  "variants": {
+    "right": {
+      "file": "right.npy",
+      "label": "curl_right",
+      "frames": 38,
+      "source": "LabMoCap_share/videos/45SideView/20260713-kavee-curl-00.mp4 frames 1364-1401, MediaPipe image coordinates: rule-engine attempt 19 (REP_STARTED..REP_COMPLETED, correct); take chosen as the one whose right attempts pass the rules most (9/9); medoid of the passing attempts",
+      "sha256": "250ca29edb53da762ff674003d7fba2162f2e0de8aa4822e71b87c4937944219",
+      "format": "image15"
+    },
+    "left": {
+      "file": "left.npy",
+      "label": "curl_left",
+      "frames": 38,
+      "source": "the right reference mirrored (left / right swapped), so the left arm is near the camera as the app films it: LabMoCap_share/videos/45SideView/20260713-kavee-curl-00.mp4 frames 1364-1401, MediaPipe image coordinates: rule-engine attempt 19 (REP_STARTED..REP_COMPLETED, correct); take chosen as the one whose right attempts pass the rules most (9/9); medoid of the passing attempts",
+      "sha256": "f423896bdbe56a2a000c185851d7e766ae5f0ec289ee8a1cfa67e8877a035009",
+      "format": "image15"
+    }
+  },
+  "created": "2026-10-27"
+}

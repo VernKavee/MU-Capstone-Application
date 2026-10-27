@@ -1,6 +1,6 @@
 // What a set stores, built from the SetCapture the frame loop leaves behind. Node-testable:
 // no browser API here, and every import that is not a type carries a .ts extension.
-import { LANDMARK_NAMES, type LandmarkName, type RepStats, type SessionReport } from "./engine/types.ts";
+import { LANDMARK_NAMES, type FrameSize, type LandmarkName, type RepStats, type SessionReport } from "./engine/types.ts";
 import type { Rule } from "./exercise";
 import type { KeypointFrame } from "./live/session.ts";
 
@@ -8,11 +8,34 @@ export const ATTEMPT_SCHEMA_VERSION = 1;
 // The private bucket for a set's two files, <user_id>/<set_id>/video.<ext> and
 // <user_id>/<set_id>/keypoints.json.gz (ADR-0005).
 export const SETS_BUCKET = "sets";
-export const REGIONS = ["head_neck", "back_core", "hips_pelvis", "knees", "ankles_feet"] as const;
-export type Region = (typeof REGIONS)[number];
+// Similarity in the names of Punnapat's service (ADR-0007, 2026-10-27), not the report's five
+// regions: the model scores these five parts, and only the ones an exercise counts are kept
+// (squat and lunge torso and legs, push-up torso and arms, curl the working arm). Scores are 0
+// to 100 with one decimal; the screen rounds them.
+export const BODY_PARTS = ["torso", "left_arm", "right_arm", "left_leg", "right_leg"] as const;
+export type BodyPart = (typeof BODY_PARTS)[number];
+export type BodyPartScores = Partial<Record<BodyPart, number>>;
 
-// Six numbers, per attempt and per set (the report's similarity_scores_percent).
-export type Similarity = { overall: number } & Record<Region, number>;
+// One attempt. score is null, with skipped_reason, when the service could not score the rep
+// (pose lost, too short); then nothing may be concluded about its form. warnings and
+// tracking_confidence say how far the camera saw the rep. An abandoned attempt has no
+// similarity at all (ADR-0003).
+export type AttemptSimilarity = {
+  score: number | null;
+  body_parts: BodyPartScores;
+  skipped_reason: string | null;
+  warnings: string[];
+  tracking_confidence: number | null;
+};
+
+// The set: the mean over its scored attempts, the weakest counted part, and the model that
+// scored it, since scores from different models do not compare.
+export type SetSimilarity = {
+  mean_score: number;
+  body_parts: BodyPartScores;
+  weakest_body_part: BodyPart | null;
+  model: string;
+};
 
 export type Outcome = "correct" | "incorrect" | "abandoned";
 
@@ -37,7 +60,7 @@ export type Attempt = {
   state_durations_s: Record<string, number>; // keyed by the row's state names, lower case
   violations: Violation[];
   rep_stats: RepStats;
-  similarity: Similarity | null;
+  similarity: AttemptSimilarity | null;
 };
 
 export type Totals = { attempts: number; completed_reps: number; correct_reps: number; abandoned_attempts: number };
@@ -134,18 +157,22 @@ export type KeypointFile = {
   joints: readonly LandmarkName[];
   fields: typeof KEYPOINT_FIELDS;
   fps: number;
+  // [width, height] in pixels of the picture MediaPipe saw; x and y are fractions of it. Added
+  // 2026-10-27 within version 1 for similarity, which refuses a file without it; older files lack it.
+  frame_size?: FrameSize | null;
   frames: { t: number; state: string; event: KeypointFrame["event"]; points: number[] }[];
 };
 
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
 
-export function toKeypointFile(frames: KeypointFrame[]): KeypointFile {
+export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | null = null): KeypointFile {
   const span = frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / 1000 : 0;
   return {
     schema_version: KEYPOINT_FILE_VERSION,
     joints: LANDMARK_NAMES,
     fields: KEYPOINT_FIELDS,
     fps: span > 0 ? Math.round((frames.length - 1) / span) : 0,
+    frame_size: frameSize,
     frames: frames.map((f) => ({
       t: Math.round(f.t),
       state: f.state,

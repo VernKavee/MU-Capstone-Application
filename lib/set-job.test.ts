@@ -21,6 +21,7 @@ const capture: SetCapture = {
   endedAt: new Date(66),
   report,
   frames: [0, 33, 66].map((t) => ({ t, state: "Idle", event: "none", violations: [], keypoints: emptyKeypoints() })),
+  frameSize: [1080, 1920],
   video: new Blob(["video bytes"], { type: "video/webm" }),
   videoMimeType: "video/webm;codecs=vp9",
 };
