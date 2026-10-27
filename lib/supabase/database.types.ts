@@ -149,6 +149,56 @@ export type Database = {
           },
         ]
       }
+      langchain_pg_collection: {
+        Row: {
+          cmetadata: Json | null
+          name: string
+          uuid: string
+        }
+        Insert: {
+          cmetadata?: Json | null
+          name: string
+          uuid: string
+        }
+        Update: {
+          cmetadata?: Json | null
+          name?: string
+          uuid?: string
+        }
+        Relationships: []
+      }
+      langchain_pg_embedding: {
+        Row: {
+          cmetadata: Json | null
+          collection_id: string | null
+          document: string | null
+          embedding: string | null
+          id: string
+        }
+        Insert: {
+          cmetadata?: Json | null
+          collection_id?: string | null
+          document?: string | null
+          embedding?: string | null
+          id: string
+        }
+        Update: {
+          cmetadata?: Json | null
+          collection_id?: string | null
+          document?: string | null
+          embedding?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "langchain_pg_embedding_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "langchain_pg_collection"
+            referencedColumns: ["uuid"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number

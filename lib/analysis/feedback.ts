@@ -1,12 +1,44 @@
-// Feedback stub (ADR-0007). Sujira's component replaces this file with the LLM call and
-// the knowledge base retrieval. The text is assembled from the input so the seam is
-// visibly real: the medical history is quoted back, the set's violations are named, and
-// the earlier sets of the workout and the past workouts are counted.
+// Feedback (ADR-0007). Sujira's component is a Python service beside the app, reached over
+// localhost (RAG_SYSTEM, `python -m service`), that does the knowledge base retrieval and
+// the LLM call. FEEDBACK_URL points at its POST /feedback; without it the stub below
+// answers, so the app still runs where the service is not set up. Every failure is thrown
+// as an Error whose message the set-complete screen shows after "Feedback failed:".
 import type { FeedbackInput, FeedbackOutput } from "./contracts.ts";
 
 const DELAY_MS = 1500; // a short artificial wait so the loading state is exercised
+// The service keeps its own budget under this (45 s), so its answer, even a failure, arrives first.
+export const TIMEOUT_MS = 60_000;
 
 export async function writeFeedback(input: FeedbackInput, delayMs = DELAY_MS): Promise<FeedbackOutput> {
+  const url = process.env.FEEDBACK_URL;
+  return url ? requestFeedback(url, input) : stubFeedback(input, delayMs);
+}
+
+export async function requestFeedback(url: string, input: FeedbackInput, timeoutMs = TIMEOUT_MS): Promise<FeedbackOutput> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (e) {
+    if (e instanceof Error && e.name === "TimeoutError") throw new Error(`the feedback service did not answer within ${timeoutMs / 1000} s`);
+    throw new Error("the feedback service is not reachable");
+  }
+  // The service answers a failure with one plain-text sentence meant for the user.
+  if (!res.ok) throw new Error(`the feedback service answered ${res.status}: ${(await res.text()).trim() || res.statusText}`);
+  const body: unknown = await res.json().catch(() => null);
+  const feedback = (body as { feedback?: unknown } | null)?.feedback;
+  if (typeof feedback !== "string" || !feedback.trim()) throw new Error("the feedback service answered without feedback");
+  return { feedback };
+}
+
+// The stub: text assembled from the input so the seam is visibly real. The medical history
+// is quoted back, the set's violations are named, and the earlier sets of the workout and
+// the past workouts are counted.
+async function stubFeedback(input: FeedbackInput, delayMs: number): Promise<FeedbackOutput> {
   await new Promise((resolve) => setTimeout(resolve, delayMs));
   const { set, workout, history, profile, exercise } = input;
   const counts = new Map<string, number>();

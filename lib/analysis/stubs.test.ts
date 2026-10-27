@@ -1,6 +1,7 @@
 // Run with `npm run test:unit`. The contracts of ADR-0007: similarity keeps the body parts a
 // rep is scored on and nothing for an abandoned attempt, from the real service's answer and from
-// the stub alike; feedback visibly carries the medical history.
+// the stub alike; feedback visibly carries the medical history. The feedback client's tests are
+// in feedback.test.ts.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -61,7 +62,8 @@ test("the stub: the exercise's parts per completed attempt, none for abandoned",
   assert.equal(out.set.model, "stub");
 });
 
-test("feedback quotes the medical history and names the worst violation", async () => {
+test("feedback without FEEDBACK_URL: the stub quotes the medical history and names the worst violation", async () => {
+  delete process.env.FEEDBACK_URL;
   const input: FeedbackInput = {
     profile: { display_name: "A", age: 30, gender: "female", weight_kg: 60, height_cm: 165, medical_history: "broken left leg in 2024" },
     exercise: { id: "squat", name: "Squat", rules: [] },
