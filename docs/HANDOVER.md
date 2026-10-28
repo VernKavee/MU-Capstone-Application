@@ -318,7 +318,8 @@ service can write with a free Groq model while the integration is tried out
 (`FEEDBACK_LLM_PROVIDER=groq` in its `.env`; delete the line for Gemini), and serves the
 query embeddings from a cache filled once by `python tools/fill_query_cache.py`, so a
 request makes no paid call. `.env.local` with `FEEDBACK_URL` set also sends the e2e's dev
-server to the service. Still to do: the
+server to the service. Setting it up on another machine, step by step:
+`docs/FEEDBACK_SETUP.md`. Still to do: the
 feedback text is the evaluation prompt's markdown until the app prompt replaces it. The
 knowledge base it reads is in this Postgres (see The knowledge base below).
 

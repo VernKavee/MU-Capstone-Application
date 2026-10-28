@@ -10,8 +10,9 @@ setup and guide screens, the live session screen with the camera, the pose model
 rule engine ported from the research repo, the completion flow that saves every set with its video and keypoint file,
 then writes similarity and feedback, History with the replay of every set, and Phase 6's
 hardening and handover. Similarity is Punnapat's real service since 2026-10-27
-(`services/similarity/`); feedback stays a stub until Sujira replaces it;
-[docs/HANDOVER.md](docs/HANDOVER.md) says how.
+(`services/similarity/`). Feedback calls Sujira's RAG service when `FEEDBACK_URL` is set
+and falls back to the stub otherwise; [docs/FEEDBACK_SETUP.md](docs/FEEDBACK_SETUP.md)
+sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md) says the rest.
 
 - `REQUIREMENTS.md`: what the system must do.
 - `BUILD_PLAN.md`: the seven build phases, one session each.
@@ -21,6 +22,7 @@ hardening and handover. Similarity is Punnapat's real service since 2026-10-27
 - `docs/sessions/`: one log per session.
 - `docs/HANDOVER.md`: which stub each teammate replaces, and the tasks for the evaluation.
 - `docs/DEPLOY.md`: the deployment plan, not yet rehearsed.
+- `docs/FEEDBACK_SETUP.md`: running real feedback (the RAG service) on your own machine.
 
 ## What exists
 
