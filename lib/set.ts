@@ -39,6 +39,10 @@ export type SetSimilarity = {
   body_parts: BodyPartScores;
   weakest_body_part: BodyPart | null;
   model: string;
+  service_version: string | null; // the service's code version, apart from the model; null from the stub
+  // The mean over the scored reps, the stand-in for the camera setup: sets whose means differ by
+  // more than about 0.05 were filmed differently (SCORE_INTERPRETATION section 3).
+  tracking_confidence: number | null;
   // What the reps were compared with: "builtin" (the service's own reps) or "package" (a set
   // sent with the request), and which take or set. Scores against different references do
   // not compare. Null from the stub.

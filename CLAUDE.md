@@ -560,8 +560,9 @@ Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVE
 - A similarity failure no longer blocks feedback: `analyseSet` keeps the error and writes
   feedback without similarity; a retry that scores nothing new keeps the feedback written.
 - `sets.similarity` keeps the service's `mean_score_correct` and `mean_score_incorrect` (the
-  mean split by the rule verdict: correct = no warning fired) and `reference` (`kind`,
-  `source`). `weakest_body_part` stays and is sent to Sujira as a hint (Vern); the rule
+  mean split by the rule verdict: correct = no warning fired), `service_version`,
+  `tracking_confidence` (the set's mean, the camera-setup stand-in for comparing days), and
+  `reference` (`kind`, `source`), what SCORE_INTERPRETATION section 5 asks the app to keep. `weakest_body_part` stays and is sent to Sujira as a hint (Vern); the rule
   violations say what to fix.
 - Whether the scores separate correct from incorrect reps is Punnapat's to judge; the app's
   check is only that a set is scored, stored, and shown.

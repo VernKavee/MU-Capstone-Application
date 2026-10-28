@@ -112,13 +112,21 @@
         },
         "similarity": {
           "model": "bpe_v3_seed2026",
+          "reference": {
+            "kind": "builtin",
+            "source": "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)"
+          },
           "body_parts": {
             "torso": 45.3,
             "left_leg": 63.2,
             "right_leg": 76.8
           },
           "mean_score": 62.1,
-          "weakest_body_part": "torso"
+          "service_version": "0.11.0",
+          "weakest_body_part": "torso",
+          "mean_score_correct": 62,
+          "tracking_confidence": 0.978,
+          "mean_score_incorrect": 62.8
         },
         "feedback": "Set 1 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Keep knees in line\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 62% on average, lowest in the torso at 45%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
       },
@@ -134,13 +142,21 @@
         },
         "similarity": {
           "model": "bpe_v3_seed2026",
+          "reference": {
+            "kind": "builtin",
+            "source": "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)"
+          },
           "body_parts": {
             "torso": 80.4,
             "left_leg": 94.5,
             "right_leg": 84.5
           },
           "mean_score": 86.5,
-          "weakest_body_part": "torso"
+          "service_version": "0.11.0",
+          "weakest_body_part": "torso",
+          "mean_score_correct": 87,
+          "tracking_confidence": 0.963,
+          "mean_score_incorrect": 81.5
         },
         "feedback": "Set 2 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Push knees out\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 87% on average, lowest in the torso at 80%. Earlier in this workout you had 1 attempt that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
       }
@@ -158,13 +174,21 @@
     },
     "similarity": {
       "model": "bpe_v3_seed2026",
+      "reference": {
+        "kind": "builtin",
+        "source": "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)"
+      },
       "body_parts": {
         "torso": 44.4,
         "left_leg": 64.4,
         "right_leg": 74.8
       },
       "mean_score": 61.5,
-      "weakest_body_part": "torso"
+      "service_version": "0.11.0",
+      "weakest_body_part": "torso",
+      "mean_score_correct": 62,
+      "tracking_confidence": 0.978,
+      "mean_score_incorrect": 59
     },
     "feedback": "Set 3 of 3, squat: 10 correct reps in 13 attempts. The most frequent issue was \"Keep knees in line\", on 2 attempts. Slow the movement down and fix that one first. Your motion matched the expert 62% on average, lowest in the torso at 44%. Earlier in this workout you had 2 attempts that did not count over 2 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)",
     "attempts": [

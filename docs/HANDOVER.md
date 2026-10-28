@@ -257,10 +257,11 @@ to copy again). The app does no similarity math.
   working arm), `skipped_reason`, `warnings`, `tracking_confidence`.
 - Per set: `mean_score` over the scored reps, `mean_score_correct` and
   `mean_score_incorrect` (the same mean split by the rule engine's verdict, null when a set
-  has none of that kind), `body_parts` over the same parts, `weakest_body_part`, `model`, and
-  `reference` (`kind` `builtin` or `package`, and its `source`), since scores from different
-  models or references do not compare. Sets scored before 2026-10-28 have neither the two
-  split means nor `reference`.
+  has none of that kind), `body_parts` over the same parts, `weakest_body_part`, `model`,
+  `service_version`, `tracking_confidence` (the mean over the scored reps, the stand-in for
+  the camera setup), and `reference` (`kind` `builtin` or `package`, and its `source`), since
+  scores from different models, references, or camera setups do not compare. Sets scored
+  before 2026-10-28 have only `mean_score`, `body_parts`, `weakest_body_part`, and `model`.
 - A service answer with `status` `error` throws: the set stays saved without similarity,
   feedback is still written without it, and the set-complete screen shows "Similarity
   failed:" and the message, with a Retry. A retry skips similarity once the set has it, and
@@ -308,9 +309,9 @@ process calls the model: in `.env.local` without `NEXT_PUBLIC_` if this file cal
 
 `docs/feedback-input-structure.json` gives every field's type, and
 `docs/feedback-input-example.json` is a real one: set 3 of a squat workout on 2026-10-27, written
-by `feedbackInput` in `lib/save-and-analyse.ts`, the function `analyseSet` calls. The example
-predates 2026-10-28, so its `similarity` lacks `mean_score_correct`, `mean_score_incorrect`,
-and `reference`; the structure file is current.
+by `feedbackInput` in `lib/save-and-analyse.ts`, the function `analyseSet` calls, rescored on
+2026-10-28 so its similarity has every field. Its past workouts predate `frame_size`, so their
+similarity is null, as it is for any set saved before 2026-10-27.
 
 - `profile`: `display_name`, `age`, `gender`, `weight_kg`, `height_cm`, and
   `medical_history`, free text, required, possibly "none". The medical history is the

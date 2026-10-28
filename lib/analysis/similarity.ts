@@ -27,7 +27,7 @@ export type ServiceOutput = {
     tracking_confidence: number | null;
     warnings: string[];
   }[];
-  model: { id: string };
+  model: { id: string; version: string };
   reference: { kind: "builtin" | "package"; source: string | null };
 };
 
@@ -37,10 +37,12 @@ export type ServiceOutput = {
 export function fromService(out: ServiceOutput): SimilarityOutput {
   if (out.status === "error" || out.summary.mean_score === null) throw new Error(out.error ?? "the similarity service scored no rep");
   const counted = new Set<string>();
+  const confidences: number[] = [];
   const attempts = out.attempts
     .filter((a) => a.outcome !== "abandoned")
     .map((a) => {
       if (a.score !== null) a.score_parts.forEach((p) => counted.add(p));
+      if (a.score !== null && a.tracking_confidence !== null) confidences.push(a.tracking_confidence);
       return {
         attempt_no: a.attempt_no,
         similarity: {
@@ -59,6 +61,8 @@ export function fromService(out: ServiceOutput): SimilarityOutput {
     body_parts: pick(out.summary.body_parts ?? {}, [...counted]),
     weakest_body_part: (out.summary.weakest_body_part as BodyPart | null) ?? null,
     model: out.model.id,
+    service_version: out.model.version,
+    tracking_confidence: confidences.length ? Math.round(mean(confidences) * 1000) / 1000 : null,
     reference: { kind: out.reference.kind, source: out.reference.source },
   };
   return { attempts, set };
@@ -99,6 +103,8 @@ function stub(input: SimilarityInput, random: () => number): SimilarityOutput {
       body_parts,
       weakest_body_part: attempts.length ? parts.reduce((lo, p) => (body_parts[p]! < body_parts[lo]! ? p : lo)) : null,
       model: "stub",
+      service_version: null,
+      tracking_confidence: attempts.length ? 0.95 : null,
       reference: null,
     },
   };
