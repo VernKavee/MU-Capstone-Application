@@ -96,7 +96,8 @@ export async function saveSet(supabase: Client, input: SaveSetInput): Promise<Sa
 
 // Record which files arrived, score similarity from the keypoint file in storage, then
 // write feedback with the workout's earlier sets and the user's past workouts of the
-// exercise as context. Whatever step fails, what came before it stays written.
+// exercise as context. Whatever step fails, what came before it stays written. Similarity
+// may be empty (ADR-0007): when it fails, feedback is still written without it.
 export async function analyseSet(supabase: Client, setId: string, files: SetFiles): Promise<AnalyseResult> {
   // Only paths that arrived are written, so a retry never erases one an earlier call stored.
   const paths = { ...(files.video && { video_url: files.video }), ...(files.keypoints && { keypoints_url: files.keypoints }) };
@@ -114,6 +115,8 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
   const exercise = workout.exercises;
   let attempts = set.attempts as unknown as Attempt[];
   let similarity = set.similarity as SetSimilarity | null;
+  let similarityError: string | null = null;
+  let scoredNow = false;
 
   if (set.keypoints_url && !similarity) {
     try {
@@ -136,24 +139,29 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
         landmarks: { ...file, frames: labelFrames(file.frames, attempts) },
       });
       const byNo = new Map(scored.attempts.map((a) => [a.attempt_no, a.similarity]));
-      attempts = attempts.map((a) => ({ ...a, similarity: byNo.get(a.attempt_no) ?? null }));
-      similarity = scored.set;
-      const { error } = await supabase.from("sets").update({ similarity, attempts: attempts as unknown as Json }).eq("id", setId);
+      const scoredAttempts = attempts.map((a) => ({ ...a, similarity: byNo.get(a.attempt_no) ?? null }));
+      const { error } = await supabase.from("sets").update({ similarity: scored.set, attempts: scoredAttempts as unknown as Json }).eq("id", setId);
       if (error) throw error;
+      attempts = scoredAttempts;
+      similarity = scored.set;
+      scoredNow = true;
     } catch (e) {
-      return { similarity: null, feedback: null, error: `Similarity failed: ${message(e)}` };
+      similarityError = `Similarity failed: ${message(e)}`;
     }
   }
 
+  // A retry that scored nothing new keeps the feedback already written.
+  if (set.llm_feedback && !scoredNow) return { similarity, feedback: set.llm_feedback, error: similarityError };
+  const withSimilarityError = (error: string) => [similarityError, error].filter(Boolean).join(" ");
   try {
     const input = await feedbackInput(supabase, set, similarity, attempts);
-    if (!input) return { similarity, feedback: null, error: "The profile could not be read." };
+    if (!input) return { similarity, feedback: null, error: withSimilarityError("The profile could not be read.") };
     const { feedback } = await writeFeedback(input);
     const { error } = await supabase.from("sets").update({ llm_feedback: feedback }).eq("id", setId);
     if (error) throw error;
-    return { similarity, feedback, error: null };
+    return { similarity, feedback, error: similarityError };
   } catch (e) {
-    return { similarity, feedback: null, error: `Feedback failed: ${message(e)}` };
+    return { similarity, feedback: null, error: withSimilarityError(`Feedback failed: ${message(e)}`) };
   }
 }
 
