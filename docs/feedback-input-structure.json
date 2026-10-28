@@ -1,0 +1,99 @@
+{
+  "_about": "The FeedbackInput the app sends after every set (lib/analysis/contracts.ts, built by feedbackInput in lib/save-and-analyse.ts). Each value here names the type; docs/feedback-input-example.json is a real one. A list shows one element.",
+  "profile": {
+    "display_name": "string",
+    "age": "integer",
+    "gender": "string",
+    "weight_kg": "number",
+    "height_cm": "number",
+    "medical_history": "string, \"None\" allowed; the advice must be safe for it"
+  },
+  "exercise": {
+    "id": "\"squat\" | \"push-up\" | \"lunge\" | \"bicep-curl\"",
+    "name": "string, e.g. \"Squat\"",
+    "rules": [
+      {
+        "name": "string, the rule name that violations[].rule refers to, e.g. \"knee_valgus\"",
+        "check": "string, the engine check it runs",
+        "priority": "integer, 1 is the most important",
+        "scope": "\"rep\" (judged once per rep) | \"frame\" (judged while moving)",
+        "debounce_s": "number, seconds a frame rule must hold; 0 for rep rules",
+        "threshold": { "<key>": "number, the rule's bar, keys named per check" },
+        "messages": { "en": "string, the warning shown and spoken to the user" },
+        "highlight_joints": ["string, MediaPipe joint name"]
+      }
+    ]
+  },
+  "workout": {
+    "target_reps": "integer, correct reps per set",
+    "target_sets": "integer",
+    "rest_seconds": "integer",
+    "earlier_sets": ["SetSummary, the sets of this workout before this one, oldest first"]
+  },
+  "set": {
+    "set_no": "integer, a repair set keeps its set's number",
+    "kind": "\"initial\" | \"repair\"",
+    "ended_by": "\"target_reached\" | \"user_ended\" | \"attempt_cap\"",
+    "totals": {
+      "attempts": "integer",
+      "completed_reps": "integer",
+      "correct_reps": "integer, the counter; only correct reps count",
+      "abandoned_attempts": "integer"
+    },
+    "similarity": {
+      "mean_score": "number 0-100, one decimal, mean over the scored reps",
+      "body_parts": { "<part>": "number 0-100; only the parts this exercise is scored on: squat and lunge torso, left_leg, right_leg; push-up torso and arms; curl the working arm" },
+      "weakest_body_part": "\"torso\" | \"left_arm\" | \"right_arm\" | \"left_leg\" | \"right_leg\" | null",
+      "model": "string, the model that scored it; scores from different models do not compare"
+    },
+    "feedback": "string | null, the feedback already written for this set (null while it is being written)",
+    "attempts": [
+      {
+        "schema_version": 1,
+        "attempt_no": "integer, from 1",
+        "outcome": "\"correct\" | \"incorrect\" | \"abandoned\"",
+        "rep_number": "integer | null, null when abandoned",
+        "frame_start": "integer | null, index into the keypoint file",
+        "frame_end": "integer | null",
+        "state_durations_s": { "idle | concentric | inflection | eccentric": "number, seconds in each state" },
+        "violations": [
+          {
+            "rule": "string, exercise.rules[].name",
+            "message": "string, the English warning",
+            "priority": "integer, as in exercise.rules",
+            "scope": "\"rep\" | \"frame\"",
+            "state": "string | null, the engine state when it fired",
+            "value": "number | null, what was measured",
+            "threshold": { "<key>": "number, the bar it was measured against" }
+          }
+        ],
+        "rep_stats": { "<name>": "number, the engine's measurements for the rep; keys starting with _ are internal" },
+        "similarity": {
+          "score": "number 0-100 | null; null means the rep could not be scored, so do not judge form from it",
+          "body_parts": { "<part>": "number 0-100, same parts as the set" },
+          "skipped_reason": "string | null, why score is null",
+          "warnings": ["string, tracking problems in this rep"],
+          "tracking_confidence": "number 0-1 | null, how well the camera saw the rep"
+        }
+      }
+    ],
+    "_abandoned_attempts": "an abandoned attempt has \"similarity\": null as a whole"
+  },
+  "history": [
+    {
+      "started_at": "string, ISO 8601 time",
+      "target_reps": "integer",
+      "target_sets": "integer",
+      "sets": ["SetSummary"]
+    }
+  ],
+  "_history_note": "the user's last 5 workouts of this exercise, newest first, this one excluded",
+  "SetSummary": {
+    "set_no": "integer",
+    "kind": "\"initial\" | \"repair\"",
+    "ended_by": "string",
+    "totals": "as set.totals",
+    "similarity": "as set.similarity, or null when the set was not scored",
+    "feedback": "string | null"
+  }
+}

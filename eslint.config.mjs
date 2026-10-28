@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The similarity service's Python environment (torch ships JavaScript).
+    "services/similarity/.venv/**",
   ]),
 ]);
 

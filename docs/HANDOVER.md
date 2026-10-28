@@ -301,6 +301,10 @@ process calls the model: in `.env.local` without `NEXT_PUBLIC_` if this file cal
 
 ### Input
 
+`docs/feedback-input-structure.json` gives every field's type, and
+`docs/feedback-input-example.json` is a real one: set 3 of a squat workout on 2026-10-27, written
+by `feedbackInput` in `lib/save-and-analyse.ts`, the function `analyseSet` calls.
+
 - `profile`: `display_name`, `age`, `gender`, `weight_kg`, `height_cm`, and
   `medical_history`, free text, required, possibly "none". The medical history is the
   safety input: the advice must respect it (REQUIREMENTS FR1, a previously broken leg is

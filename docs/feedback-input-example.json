@@ -1,0 +1,959 @@
+{
+  "profile": {
+    "display_name": "Kavee",
+    "age": 21,
+    "gender": "male",
+    "weight_kg": 76,
+    "height_cm": 179,
+    "medical_history": "None"
+  },
+  "exercise": {
+    "id": "squat",
+    "name": "Squat",
+    "rules": [
+      {
+        "name": "partial_squat",
+        "check": "partial_squat",
+        "scope": "rep",
+        "messages": {
+          "en": "Lower to 90 degrees"
+        },
+        "priority": 1,
+        "threshold": {
+          "depth_target": 100
+        },
+        "debounce_s": 0,
+        "highlight_joints": [
+          "left_hip",
+          "right_hip",
+          "left_knee",
+          "right_knee",
+          "left_ankle",
+          "right_ankle"
+        ]
+      },
+      {
+        "name": "knee_valgus",
+        "check": "knee_valgus",
+        "scope": "rep",
+        "messages": {
+          "en": "Push knees out"
+        },
+        "priority": 2,
+        "threshold": {
+          "toe_line_in": -0.3
+        },
+        "debounce_s": 0,
+        "highlight_joints": [
+          "left_hip",
+          "right_hip",
+          "left_knee",
+          "right_knee",
+          "left_ankle",
+          "right_ankle"
+        ]
+      },
+      {
+        "name": "knee_varus",
+        "check": "knee_varus",
+        "scope": "rep",
+        "messages": {
+          "en": "Keep knees in line"
+        },
+        "priority": 3,
+        "threshold": {
+          "toe_line_out": 0.35
+        },
+        "debounce_s": 0,
+        "highlight_joints": [
+          "left_hip",
+          "right_hip",
+          "left_knee",
+          "right_knee",
+          "left_ankle",
+          "right_ankle"
+        ]
+      },
+      {
+        "name": "rounded_back",
+        "check": "rounded_back",
+        "scope": "frame",
+        "messages": {
+          "en": "Keep back straight"
+        },
+        "priority": 4,
+        "threshold": {
+          "tilt_max": 45
+        },
+        "debounce_s": 0.15,
+        "highlight_joints": [
+          "left_shoulder",
+          "right_shoulder",
+          "left_hip",
+          "right_hip"
+        ]
+      }
+    ]
+  },
+  "workout": {
+    "target_reps": 10,
+    "target_sets": 3,
+    "rest_seconds": 60,
+    "earlier_sets": [
+      {
+        "set_no": 1,
+        "kind": "initial",
+        "ended_by": "target_reached",
+        "totals": {
+          "attempts": 11,
+          "correct_reps": 10,
+          "completed_reps": 11,
+          "abandoned_attempts": 0
+        },
+        "similarity": {
+          "model": "bpe_v3_seed2026",
+          "body_parts": {
+            "torso": 45.3,
+            "left_leg": 63.2,
+            "right_leg": 76.8
+          },
+          "mean_score": 62.1,
+          "weakest_body_part": "torso"
+        },
+        "feedback": "Set 1 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Keep knees in line\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 62% on average, lowest in the torso at 45%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+      },
+      {
+        "set_no": 2,
+        "kind": "initial",
+        "ended_by": "target_reached",
+        "totals": {
+          "attempts": 11,
+          "correct_reps": 10,
+          "completed_reps": 11,
+          "abandoned_attempts": 0
+        },
+        "similarity": {
+          "model": "bpe_v3_seed2026",
+          "body_parts": {
+            "torso": 80.4,
+            "left_leg": 94.5,
+            "right_leg": 84.5
+          },
+          "mean_score": 86.5,
+          "weakest_body_part": "torso"
+        },
+        "feedback": "Set 2 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Push knees out\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 87% on average, lowest in the torso at 80%. Earlier in this workout you had 1 attempt that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+      }
+    ]
+  },
+  "set": {
+    "set_no": 3,
+    "kind": "initial",
+    "ended_by": "target_reached",
+    "totals": {
+      "attempts": 13,
+      "correct_reps": 10,
+      "completed_reps": 12,
+      "abandoned_attempts": 1
+    },
+    "similarity": {
+      "model": "bpe_v3_seed2026",
+      "body_parts": {
+        "torso": 44.4,
+        "left_leg": 64.4,
+        "right_leg": 74.8
+      },
+      "mean_score": 61.5,
+      "weakest_body_part": "torso"
+    },
+    "feedback": "Set 3 of 3, squat: 10 correct reps in 13 attempts. The most frequent issue was \"Keep knees in line\", on 2 attempts. Slow the movement down and fix that one first. Your motion matched the expert 62% on average, lowest in the torso at 44%. Earlier in this workout you had 2 attempts that did not count over 2 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)",
+    "attempts": [
+      {
+        "outcome": "incorrect",
+        "frame_end": 137,
+        "rep_stats": {
+          "min_knee": 69.82543848879848,
+          "knee_varus": 0.3887989292288805,
+          "knee_valgus": 0.3887989292288805,
+          "rounded_back": 27.266277471646745,
+          "knee_toe_line": 0.3887989292288805,
+          "max_back_tilt": 27.266277471646745,
+          "partial_squat": 69.82543848879848,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 0.8105008596619214,
+          "_knee_frontal_sum": 7.294507736957293,
+          "knee_parallel_deg": 5.870782538565113,
+          "_knee_converge_sum": -0.12320239247714364,
+          "_knee_parallel_sum": 52.83704284708602,
+          "knee_converge_sign": -0.013689154719682626
+        },
+        "attempt_no": 1,
+        "rep_number": 1,
+        "similarity": {
+          "score": 61.9,
+          "warnings": [],
+          "body_parts": {
+            "torso": 47.4,
+            "left_leg": 61.6,
+            "right_leg": 75.1
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.971
+        },
+        "violations": [
+          {
+            "rule": "knee_varus",
+            "scope": "rep",
+            "state": "idle",
+            "value": 0.3887989292288805,
+            "message": "Keep knees in line",
+            "priority": 3,
+            "threshold": {
+              "toe_line_out": 0.35
+            }
+          }
+        ],
+        "frame_start": 63,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.183,
+          "concentric": 0.183,
+          "inflection": 0.867
+        }
+      },
+      {
+        "outcome": "abandoned",
+        "frame_end": 214,
+        "rep_stats": {
+          "min_knee": 141.5852529317924,
+          "knee_varus": -0.07561380252931102,
+          "knee_valgus": -0.07561380252931102,
+          "rounded_back": 13.57528979173191,
+          "knee_toe_line": -0.07561380252931102,
+          "max_back_tilt": 13.57528979173191,
+          "partial_squat": 141.5852529317924,
+          "_knee_frontal_n": 0,
+          "_knee_parallel_n": 0,
+          "_knee_frontal_sum": 0,
+          "_knee_converge_sum": 0,
+          "_knee_parallel_sum": 0
+        },
+        "attempt_no": 2,
+        "rep_number": null,
+        "similarity": null,
+        "violations": [
+          {
+            "rule": "partial_squat",
+            "scope": "rep",
+            "state": "idle",
+            "value": 141.5852529317924,
+            "message": "Lower to 90 degrees",
+            "priority": 1,
+            "threshold": {
+              "depth_target": 100
+            }
+          }
+        ],
+        "frame_start": 170,
+        "schema_version": 1,
+        "state_durations_s": {
+          "concentric": 0.732
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 425,
+        "rep_stats": {
+          "min_knee": 76.25904022374644,
+          "knee_varus": 0.1817096478528502,
+          "knee_valgus": 0.1817096478528502,
+          "rounded_back": 27.06405150222149,
+          "knee_toe_line": 0.1817096478528502,
+          "max_back_tilt": 27.06405150222149,
+          "partial_squat": 76.25904022374644,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 4.270631831908099,
+          "_knee_frontal_sum": 38.43568648717289,
+          "knee_parallel_deg": 5.586798135733468,
+          "_knee_converge_sum": 0.006400378192784065,
+          "_knee_parallel_sum": 50.28118322160121,
+          "knee_converge_sign": 0.0007111531325315627
+        },
+        "attempt_no": 3,
+        "rep_number": 2,
+        "similarity": {
+          "score": 62.1,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45.5,
+            "left_leg": 62.8,
+            "right_leg": 76.4
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.978
+        },
+        "violations": [],
+        "frame_start": 356,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.2,
+          "concentric": 0.133,
+          "inflection": 0.816
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 533,
+        "rep_stats": {
+          "min_knee": 75.59708836416436,
+          "knee_varus": 0.11047842477828104,
+          "knee_valgus": 0.11047842477828104,
+          "rounded_back": 34.51501637952276,
+          "knee_toe_line": 0.11047842477828104,
+          "max_back_tilt": 34.51501637952276,
+          "partial_squat": 75.59708836416436,
+          "_knee_frontal_n": 6,
+          "_knee_parallel_n": 6,
+          "knee_frontal_deg": 5.633014869566547,
+          "_knee_frontal_sum": 33.79808921739928,
+          "knee_parallel_deg": 6.242986692592637,
+          "_knee_converge_sum": 0.008555897098857485,
+          "_knee_parallel_sum": 37.45792015555582,
+          "knee_converge_sign": 0.0014259828498095807
+        },
+        "attempt_no": 4,
+        "rep_number": 3,
+        "similarity": {
+          "score": 62.6,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45.8,
+            "left_leg": 64.4,
+            "right_leg": 76.7
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.978
+        },
+        "violations": [],
+        "frame_start": 476,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.205,
+          "concentric": 0.116,
+          "inflection": 0.701
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 642,
+        "rep_stats": {
+          "min_knee": 72.68407774664556,
+          "knee_varus": 0.1373183508510023,
+          "knee_valgus": 0.1373183508510023,
+          "rounded_back": 25.287090129890423,
+          "knee_toe_line": 0.1373183508510023,
+          "max_back_tilt": 25.287090129890423,
+          "partial_squat": 72.68407774664556,
+          "_knee_frontal_n": 7,
+          "_knee_parallel_n": 7,
+          "knee_frontal_deg": 5.2238153813863155,
+          "_knee_frontal_sum": 36.56670766970421,
+          "knee_parallel_deg": 7.982054340691329,
+          "_knee_converge_sum": -0.02306256850362759,
+          "_knee_parallel_sum": 55.874380384839306,
+          "knee_converge_sign": -0.00329465264337537
+        },
+        "attempt_no": 5,
+        "rep_number": 4,
+        "similarity": {
+          "score": 63.4,
+          "warnings": [],
+          "body_parts": {
+            "torso": 47.6,
+            "left_leg": 65.6,
+            "right_leg": 75.4
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.98
+        },
+        "violations": [],
+        "frame_start": 573,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.217,
+          "concentric": 0.15,
+          "inflection": 0.784
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 749,
+        "rep_stats": {
+          "min_knee": 72.49788906119852,
+          "knee_varus": 0.2438714433749723,
+          "knee_valgus": 0.2438714433749723,
+          "rounded_back": 32.48156508954521,
+          "knee_toe_line": 0.2438714433749723,
+          "max_back_tilt": 32.48156508954521,
+          "partial_squat": 72.49788906119852,
+          "_knee_frontal_n": 6,
+          "_knee_parallel_n": 6,
+          "knee_frontal_deg": 5.402352222836516,
+          "_knee_frontal_sum": 32.414113337019096,
+          "knee_parallel_deg": 6.611245148766318,
+          "_knee_converge_sum": 0.0030153805953339607,
+          "_knee_parallel_sum": 39.667470892597905,
+          "knee_converge_sign": 0.0005025634325556602
+        },
+        "attempt_no": 6,
+        "rep_number": 5,
+        "similarity": {
+          "score": 62.6,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45,
+            "left_leg": 65.1,
+            "right_leg": 76.8
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.978
+        },
+        "violations": [],
+        "frame_start": 679,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.2,
+          "concentric": 0.167,
+          "inflection": 0.8
+        }
+      },
+      {
+        "outcome": "incorrect",
+        "frame_end": 867,
+        "rep_stats": {
+          "min_knee": 68.4595686833785,
+          "knee_varus": 0.9458692779979794,
+          "knee_valgus": 0.9458692779979794,
+          "rounded_back": 35.76007930540853,
+          "knee_toe_line": 0.9458692779979794,
+          "max_back_tilt": 35.76007930540853,
+          "partial_squat": 68.4595686833785,
+          "_knee_frontal_n": 10,
+          "_knee_parallel_n": 10,
+          "knee_frontal_deg": -6.548222996923741,
+          "_knee_frontal_sum": -65.48222996923741,
+          "knee_parallel_deg": 9.639690852257166,
+          "_knee_converge_sum": -0.516167500540543,
+          "_knee_parallel_sum": 96.39690852257166,
+          "knee_converge_sign": -0.05161675005405429
+        },
+        "attempt_no": 7,
+        "rep_number": 6,
+        "similarity": {
+          "score": 56.2,
+          "warnings": [],
+          "body_parts": {
+            "torso": 38,
+            "left_leg": 59.9,
+            "right_leg": 70.4
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.977
+        },
+        "violations": [
+          {
+            "rule": "knee_varus",
+            "scope": "rep",
+            "state": "idle",
+            "value": 0.9458692779979794,
+            "message": "Keep knees in line",
+            "priority": 3,
+            "threshold": {
+              "toe_line_out": 0.35
+            }
+          }
+        ],
+        "frame_start": 791,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.199,
+          "concentric": 0.166,
+          "inflection": 0.901
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 997,
+        "rep_stats": {
+          "min_knee": 73.21269146630335,
+          "knee_varus": 0.18412769081763364,
+          "knee_valgus": 0.18412769081763364,
+          "rounded_back": 31.07841557629431,
+          "knee_toe_line": 0.18412769081763364,
+          "max_back_tilt": 31.07841557629431,
+          "partial_squat": 73.21269146630335,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 5.622769067483866,
+          "_knee_frontal_sum": 50.6049216073548,
+          "knee_parallel_deg": 9.004574563756792,
+          "_knee_converge_sum": -0.05165610584260143,
+          "_knee_parallel_sum": 81.04117107381113,
+          "knee_converge_sign": -0.005739567315844603
+        },
+        "attempt_no": 8,
+        "rep_number": 7,
+        "similarity": {
+          "score": 61.8,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45.5,
+            "left_leg": 64.9,
+            "right_leg": 74.2
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.979
+        },
+        "violations": [],
+        "frame_start": 927,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.183,
+          "concentric": 0.133,
+          "inflection": 0.851
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 1108,
+        "rep_stats": {
+          "min_knee": 72.29300746688418,
+          "knee_varus": 0.22126363078680444,
+          "knee_valgus": 0.22126363078680444,
+          "rounded_back": 26.990981931119585,
+          "knee_toe_line": 0.22126363078680444,
+          "max_back_tilt": 26.990981931119585,
+          "partial_squat": 72.29300746688418,
+          "_knee_frontal_n": 8,
+          "_knee_parallel_n": 8,
+          "knee_frontal_deg": 3.785221794494093,
+          "_knee_frontal_sum": 30.281774355952745,
+          "knee_parallel_deg": 6.914894888537055,
+          "_knee_converge_sum": -0.059442828840883366,
+          "_knee_parallel_sum": 55.31915910829644,
+          "knee_converge_sign": -0.007430353605110421
+        },
+        "attempt_no": 9,
+        "rep_number": 8,
+        "similarity": {
+          "score": 61.6,
+          "warnings": [],
+          "body_parts": {
+            "torso": 42.8,
+            "left_leg": 66,
+            "right_leg": 74.7
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.98
+        },
+        "violations": [],
+        "frame_start": 1037,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.183,
+          "concentric": 0.166,
+          "inflection": 0.834
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 1221,
+        "rep_stats": {
+          "min_knee": 72.20245439409337,
+          "knee_varus": 0.2970975985400305,
+          "knee_valgus": 0.2970975985400305,
+          "rounded_back": 31.636303809780628,
+          "knee_toe_line": 0.2970975985400305,
+          "max_back_tilt": 31.636303809780628,
+          "partial_squat": 72.20245439409337,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 5.717684481711623,
+          "_knee_frontal_sum": 51.459160335404604,
+          "knee_parallel_deg": 7.74531812111625,
+          "_knee_converge_sum": -0.04020935824031435,
+          "_knee_parallel_sum": 69.70786309004625,
+          "knee_converge_sign": -0.004467706471146039
+        },
+        "attempt_no": 10,
+        "rep_number": 9,
+        "similarity": {
+          "score": 60.9,
+          "warnings": [],
+          "body_parts": {
+            "torso": 41.5,
+            "left_leg": 66.5,
+            "right_leg": 74.1
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.976
+        },
+        "violations": [],
+        "frame_start": 1145,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.25,
+          "concentric": 0.2,
+          "inflection": 0.816
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 1330,
+        "rep_stats": {
+          "min_knee": 71.84473719427353,
+          "knee_varus": 0.24935927717069326,
+          "knee_valgus": 0.24935927717069326,
+          "rounded_back": 29.754203171446086,
+          "knee_toe_line": 0.24935927717069326,
+          "max_back_tilt": 29.754203171446086,
+          "partial_squat": 71.84473719427353,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 5.59553358781779,
+          "_knee_frontal_sum": 50.35980229036011,
+          "knee_parallel_deg": 8.059999226057858,
+          "_knee_converge_sum": -0.013637453900252505,
+          "_knee_parallel_sum": 72.53999303452072,
+          "knee_converge_sign": -0.0015152726555836117
+        },
+        "attempt_no": 11,
+        "rep_number": 10,
+        "similarity": {
+          "score": 62.4,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45,
+            "left_leg": 67.3,
+            "right_leg": 73.8
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.981
+        },
+        "violations": [],
+        "frame_start": 1255,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.217,
+          "concentric": 0.167,
+          "inflection": 0.866
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 1438,
+        "rep_stats": {
+          "min_knee": 70.51903992941205,
+          "knee_varus": 0.020064264285876127,
+          "knee_valgus": 0.020064264285876127,
+          "rounded_back": 33.25427611993062,
+          "knee_toe_line": 0.020064264285876127,
+          "max_back_tilt": 33.25427611993062,
+          "partial_squat": 70.51903992941205,
+          "_knee_frontal_n": 9,
+          "_knee_parallel_n": 9,
+          "knee_frontal_deg": 3.362638587508126,
+          "_knee_frontal_sum": 30.263747287573135,
+          "knee_parallel_deg": 5.849797202569816,
+          "_knee_converge_sum": -0.07731330850832198,
+          "_knee_parallel_sum": 52.64817482312834,
+          "knee_converge_sign": -0.008590367612035776
+        },
+        "attempt_no": 12,
+        "rep_number": 11,
+        "similarity": {
+          "score": 61.8,
+          "warnings": [],
+          "body_parts": {
+            "torso": 45.5,
+            "left_leg": 63.8,
+            "right_leg": 75.4
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.981
+        },
+        "violations": [],
+        "frame_start": 1369,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.184,
+          "concentric": 0.183,
+          "inflection": 0.783
+        }
+      },
+      {
+        "outcome": "correct",
+        "frame_end": 1551,
+        "rep_stats": {
+          "min_knee": 73.34135783362433,
+          "knee_varus": 0.20470324486370803,
+          "knee_valgus": 0.20470324486370803,
+          "rounded_back": 31.60656123621724,
+          "knee_toe_line": 0.20470324486370803,
+          "max_back_tilt": 31.60656123621724,
+          "partial_squat": 73.34135783362433,
+          "_knee_frontal_n": 8,
+          "_knee_parallel_n": 8,
+          "knee_frontal_deg": 3.6997218200386306,
+          "_knee_frontal_sum": 29.597774560309045,
+          "knee_parallel_deg": 6.746468146681136,
+          "_knee_converge_sum": -0.05947658714859008,
+          "_knee_parallel_sum": 53.97174517344909,
+          "knee_converge_sign": -0.00743457339357376
+        },
+        "attempt_no": 13,
+        "rep_number": 12,
+        "similarity": {
+          "score": 61.3,
+          "warnings": [],
+          "body_parts": {
+            "torso": 43.8,
+            "left_leg": 64.9,
+            "right_leg": 74.2
+          },
+          "skipped_reason": null,
+          "tracking_confidence": 0.981
+        },
+        "violations": [],
+        "frame_start": 1477,
+        "schema_version": 1,
+        "state_durations_s": {
+          "eccentric": 0.2,
+          "concentric": 0.183,
+          "inflection": 0.85
+        }
+      }
+    ]
+  },
+  "history": [
+    {
+      "started_at": "2026-10-23T03:07:09.812+00:00",
+      "target_reps": 10,
+      "target_sets": 3,
+      "sets": [
+        {
+          "set_no": 1,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 11,
+            "correct_reps": 10,
+            "completed_reps": 11,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 1 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Keep knees in line\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 92% overall, lowest in the head and neck at 91%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 3,
+          "kind": "initial",
+          "ended_by": "user_ended",
+          "totals": {
+            "attempts": 6,
+            "correct_reps": 4,
+            "completed_reps": 6,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 3 of 3, squat: 4 correct reps in 6 attempts. The most frequent issue was \"Keep knees in line\", on 2 attempts. Slow the movement down and fix that one first. Your motion matched the expert 86% overall, lowest in the back and core at 85%. Earlier in this workout you had 10 attempts that did not count over 2 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 2,
+          "kind": "initial",
+          "ended_by": "user_ended",
+          "totals": {
+            "attempts": 13,
+            "correct_reps": 4,
+            "completed_reps": 12,
+            "abandoned_attempts": 1
+          },
+          "similarity": null,
+          "feedback": "Set 2 of 3, squat: 4 correct reps in 13 attempts. The most frequent issue was \"Push knees out\", on 8 attempts. Slow the movement down and fix that one first. Your motion matched the expert 79% overall, lowest in the hips and pelvis at 78%. Earlier in this workout you had 1 attempt that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-22T15:27:46.203+00:00",
+      "target_reps": 10,
+      "target_sets": 1,
+      "sets": [
+        {
+          "set_no": 1,
+          "kind": "repair",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 12,
+            "correct_reps": 10,
+            "completed_reps": 12,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Repair set 1 of 1, squat: 10 correct reps in 12 attempts. The most frequent issue was \"Keep knees in line\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 91% overall, lowest in the head and neck at 91%. Earlier in this workout you had 4 attempts that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 1,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 14,
+            "correct_reps": 10,
+            "completed_reps": 14,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 1 of 1, squat: 10 correct reps in 14 attempts. The most frequent issue was \"Push knees out\", on 3 attempts. Slow the movement down and fix that one first. Your motion matched the expert 86% overall, lowest in the ankles and feet at 85%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-22T15:24:36.401+00:00",
+      "target_reps": 10,
+      "target_sets": 1,
+      "sets": [
+        {
+          "set_no": 1,
+          "kind": "repair",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 15,
+            "correct_reps": 10,
+            "completed_reps": 15,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Repair set 1 of 1, squat: 10 correct reps in 15 attempts. The most frequent issue was \"Keep back straight\", on 3 attempts. Slow the movement down and fix that one first. Your motion matched the expert 86% overall, lowest in the knees at 85%. Earlier in this workout you had 10 attempts that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 1,
+          "kind": "initial",
+          "ended_by": "user_ended",
+          "totals": {
+            "attempts": 12,
+            "correct_reps": 2,
+            "completed_reps": 11,
+            "abandoned_attempts": 1
+          },
+          "similarity": null,
+          "feedback": "Set 1 of 1, squat: 2 correct reps in 12 attempts. The most frequent issue was \"Keep back straight\", on 9 attempts. Slow the movement down and fix that one first. Your motion matched the expert 78% overall, lowest in the head and neck at 77%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-22T15:20:02.44+00:00",
+      "target_reps": 10,
+      "target_sets": 3,
+      "sets": [
+        {
+          "set_no": 1,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 11,
+            "correct_reps": 10,
+            "completed_reps": 11,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 1 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Keep knees in line\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 89% overall, lowest in the hips and pelvis at 88%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 2,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 10,
+            "correct_reps": 10,
+            "completed_reps": 10,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 2 of 3, squat: 10 correct reps in 10 attempts. No rule fired on any attempt. Keep the same tempo next set. Your motion matched the expert 93% overall, lowest in the knees at 91%. Earlier in this workout you had 1 attempt that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 3,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 20,
+            "correct_reps": 10,
+            "completed_reps": 20,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 3 of 3, squat: 10 correct reps in 20 attempts. The most frequent issue was \"Push knees out\", on 6 attempts. Slow the movement down and fix that one first. Your motion matched the expert 82% overall, lowest in the knees at 81%. Earlier in this workout you had 1 attempt that did not count over 2 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        }
+      ]
+    },
+    {
+      "started_at": "2026-10-21T17:41:29.504+00:00",
+      "target_reps": 10,
+      "target_sets": 3,
+      "sets": [
+        {
+          "set_no": 1,
+          "kind": "repair",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 18,
+            "correct_reps": 10,
+            "completed_reps": 18,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Repair set 1 of 3, squat: 10 correct reps in 18 attempts. The most frequent issue was \"Push knees out\", on 6 attempts. Slow the movement down and fix that one first. Your motion matched the expert 84% overall, lowest in the ankles and feet at 83%. Earlier in this workout you had 1 attempt that did not count over 1 set. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 1,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 11,
+            "correct_reps": 10,
+            "completed_reps": 11,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 1 of 3, squat: 10 correct reps in 11 attempts. The most frequent issue was \"Push knees out\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 92% overall, lowest in the back and core at 91%. This is the first set of the workout. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 2,
+          "kind": "initial",
+          "ended_by": "target_reached",
+          "totals": {
+            "attempts": 20,
+            "correct_reps": 10,
+            "completed_reps": 20,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 2 of 3, squat: 10 correct reps in 20 attempts. The most frequent issue was \"Keep knees in line\", on 6 attempts. Slow the movement down and fix that one first. Your motion matched the expert 85% overall, lowest in the hips and pelvis at 83%. Earlier in this workout you had 9 attempts that did not count over 2 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        },
+        {
+          "set_no": 3,
+          "kind": "initial",
+          "ended_by": "user_ended",
+          "totals": {
+            "attempts": 4,
+            "correct_reps": 3,
+            "completed_reps": 4,
+            "abandoned_attempts": 0
+          },
+          "similarity": null,
+          "feedback": "Set 3 of 3, squat: 3 correct reps in 4 attempts. The most frequent issue was \"Push knees out\", on 1 attempt. Slow the movement down and fix that one first. Your motion matched the expert 90% overall, lowest in the head and neck at 89%. Earlier in this workout you had 19 attempts that did not count over 3 sets. Your last 5 squat workouts are in the context. Your profile notes \"None\", so this advice would be checked against it. (Stub feedback: no language model was called.)"
+        }
+      ]
+    }
+  ]
+}

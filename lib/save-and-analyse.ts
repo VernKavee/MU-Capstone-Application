@@ -146,25 +146,8 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
   }
 
   try {
-    const [{ data: profile }, { data: earlier }, { data: history }] = await Promise.all([
-      supabase.from("profiles").select("display_name, age, gender, weight_kg, height_cm, medical_history").single(),
-      supabase.from("sets").select("*").eq("workout_id", workout.id).lt("created_at", set.created_at).order("created_at"),
-      supabase
-        .from("workouts")
-        .select("started_at, target_reps, target_sets, sets(*)")
-        .eq("exercise_id", exercise.id)
-        .neq("id", workout.id)
-        .order("started_at", { ascending: false })
-        .limit(HISTORY_WORKOUTS),
-    ]);
-    if (!profile) return { similarity, feedback: null, error: "The profile could not be read." };
-    const input: FeedbackInput = {
-      profile,
-      exercise: { id: exercise.id, name: exercise.name, rules: ruleBasedLogic(exercise).rules },
-      workout: { target_reps: workout.target_reps, target_sets: workout.target_sets, rest_seconds: workout.rest_seconds, earlier_sets: (earlier ?? []).map(summary) },
-      set: { ...summary(set), similarity, attempts },
-      history: (history ?? []).map((w) => ({ started_at: w.started_at, target_reps: w.target_reps, target_sets: w.target_sets, sets: w.sets.map(summary) })),
-    };
+    const input = await feedbackInput(supabase, set, similarity, attempts);
+    if (!input) return { similarity, feedback: null, error: "The profile could not be read." };
     const { feedback } = await writeFeedback(input);
     const { error } = await supabase.from("sets").update({ llm_feedback: feedback }).eq("id", setId);
     if (error) throw error;
@@ -172,6 +155,35 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
   } catch (e) {
     return { similarity, feedback: null, error: `Feedback failed: ${message(e)}` };
   }
+}
+
+type AnalysedSet = SetRow & { created_at: string; workouts: Database["public"]["Tables"]["workouts"]["Row"] & { exercises: Database["public"]["Tables"]["exercises"]["Row"] } };
+
+// What the feedback component receives (ADR-0007): the set with its attempt records, the
+// workout's earlier sets, and the user's past workouts of the exercise. Null without a profile.
+// Exported so a script can write a real example (docs/feedback-input-example.json).
+export async function feedbackInput(supabase: Client, set: AnalysedSet, similarity: SetSimilarity | null, attempts: Attempt[]): Promise<FeedbackInput | null> {
+  const workout = set.workouts;
+  const exercise = workout.exercises;
+  const [{ data: profile }, { data: earlier }, { data: history }] = await Promise.all([
+    supabase.from("profiles").select("display_name, age, gender, weight_kg, height_cm, medical_history").single(),
+    supabase.from("sets").select("*").eq("workout_id", workout.id).lt("created_at", set.created_at).order("created_at"),
+    supabase
+      .from("workouts")
+      .select("started_at, target_reps, target_sets, sets(*)")
+      .eq("exercise_id", exercise.id)
+      .neq("id", workout.id)
+      .order("started_at", { ascending: false })
+      .limit(HISTORY_WORKOUTS),
+  ]);
+  if (!profile) return null;
+  return {
+    profile,
+    exercise: { id: exercise.id, name: exercise.name, rules: ruleBasedLogic(exercise).rules },
+    workout: { target_reps: workout.target_reps, target_sets: workout.target_sets, rest_seconds: workout.rest_seconds, earlier_sets: (earlier ?? []).map(summary) },
+    set: { ...summary(set), similarity, attempts },
+    history: (history ?? []).map((w) => ({ started_at: w.started_at, target_reps: w.target_reps, target_sets: w.target_sets, sets: w.sets.map(summary) })),
+  };
 }
 
 // Recorded on the set whose repair set was skipped (ADR-0004).
