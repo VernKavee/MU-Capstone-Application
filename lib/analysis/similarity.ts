@@ -16,7 +16,7 @@ export async function scoreSimilarity(input: SimilarityInput, random: () => numb
 export type ServiceOutput = {
   status: "ok" | "partial" | "error";
   error: string | null;
-  summary: { mean_score: number | null; weakest_body_part: string | null; body_parts: Record<string, number> | null };
+  summary: { mean_score: number | null; mean_score_correct: number | null; mean_score_incorrect: number | null; weakest_body_part: string | null; body_parts: Record<string, number> | null };
   attempts: {
     attempt_no: number;
     outcome: string;
@@ -53,6 +53,8 @@ export function fromService(out: ServiceOutput): SimilarityOutput {
     });
   const set: SetSimilarity = {
     mean_score: out.summary.mean_score,
+    mean_score_correct: out.summary.mean_score_correct,
+    mean_score_incorrect: out.summary.mean_score_incorrect,
     body_parts: pick(out.summary.body_parts ?? {}, [...counted]),
     weakest_body_part: (out.summary.weakest_body_part as BodyPart | null) ?? null,
     model: out.model.id,
@@ -81,10 +83,17 @@ function stub(input: SimilarityInput, random: () => number): SimilarityOutput {
       return { attempt_no: a.attempt_no, similarity: { score, body_parts, skipped_reason: null, warnings: [], tracking_confidence: 0.95 } };
     });
   const body_parts: BodyPartScores = Object.fromEntries(parts.map((p) => [p, round1(mean(attempts.map((a) => a.similarity.body_parts[p]!)))]));
+  const outcome = new Map(input.attempts.map((a) => [a.attempt_no, a.outcome]));
+  const meanOf = (o: string) => {
+    const scores = attempts.filter((a) => outcome.get(a.attempt_no) === o).map((a) => a.similarity.score);
+    return scores.length ? round1(mean(scores)) : null;
+  };
   return {
     attempts,
     set: {
       mean_score: round1(mean(attempts.map((a) => a.similarity.score))),
+      mean_score_correct: meanOf("correct"),
+      mean_score_incorrect: meanOf("incorrect"),
       body_parts,
       weakest_body_part: attempts.length ? parts.reduce((lo, p) => (body_parts[p]! < body_parts[lo]! ? p : lo)) : null,
       model: "stub",

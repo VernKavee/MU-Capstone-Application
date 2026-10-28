@@ -42,8 +42,10 @@
     },
     "similarity": {
       "mean_score": "number 0-100, one decimal, mean over the scored reps",
+      "mean_score_correct": "number 0-100 | null, mean over the scored reps the rule engine judged correct (no warning fired); null when there were none",
+      "mean_score_incorrect": "number 0-100 | null, mean over the scored reps the rule engine judged incorrect (a warning fired); null when there were none",
       "body_parts": { "<part>": "number 0-100; only the parts this exercise is scored on: squat and lunge torso, left_leg, right_leg; push-up torso and arms; curl the working arm" },
-      "weakest_body_part": "\"torso\" | \"left_arm\" | \"right_arm\" | \"left_leg\" | \"right_leg\" | null",
+      "weakest_body_part": "\"torso\" | \"left_arm\" | \"right_arm\" | \"left_leg\" | \"right_leg\" | null, the lowest mean part; the torso reads lower even on good reps",
       "model": "string, the model that scored it; scores from different models do not compare"
     },
     "feedback": "string | null, the feedback already written for this set (null while it is being written)",

@@ -32,6 +32,10 @@ export type AttemptSimilarity = {
 // scored it, since scores from different models do not compare.
 export type SetSimilarity = {
   mean_score: number;
+  // The mean over the reps the rule engine judged correct, and over those it judged incorrect
+  // (null when the set has none), the service's yardstick for a single rep's score.
+  mean_score_correct: number | null;
+  mean_score_incorrect: number | null;
   body_parts: BodyPartScores;
   weakest_body_part: BodyPart | null;
   model: string;

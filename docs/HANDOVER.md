@@ -321,7 +321,15 @@ by `feedbackInput` in `lib/save-and-analyse.ts`, the function `analyseSet` calls
   first, finished or left part way, with their sets but without attempt records.
 
 Sets outside the current one travel as summaries: `set_no`, `kind`, `ended_by`, `totals`,
-`similarity`, and `feedback`. A repair set has `kind` `repair`, and the initial set it
+`similarity`, and `feedback`.
+
+Reading similarity beside the rules (SeniorProject `docs/similarity/SCORE_INTERPRETATION.md`):
+the rule violations say what to fix; similarity says how close the motion was to the
+reference. A single score means little on its own: compare it with the set's
+`mean_score_correct` and `mean_score_incorrect`, the means over the reps the rules judged
+correct (no warning) and incorrect (a warning). `weakest_body_part` points at the torso even
+on good reps, because the torso reads 6 to 9 points below the legs (section 4), so it is a
+hint, not the thing to fix. A repair set has `kind` `repair`, and the initial set it
 repairs is in `earlier_sets` with the same `set_no`, so the advice can say what went
 wrong the first time (REQUIREMENTS section 4.5).
 

@@ -7,7 +7,7 @@ import type { SetSimilarity } from "./set.ts";
 
 const BKK = "Asia/Bangkok";
 const THURSDAY = new Date("2026-09-10T05:00:00Z");
-const sim = (mean_score: number): SetSimilarity => ({ mean_score, body_parts: { torso: mean_score }, weakest_body_part: "torso", model: "stub" });
+const sim = (mean_score: number): SetSimilarity => ({ mean_score, mean_score_correct: null, mean_score_incorrect: null, body_parts: { torso: mean_score }, weakest_body_part: "torso", model: "stub" });
 
 test("the seven days end today in the given zone", () => {
   assert.deepEqual(lastSevenDays(THURSDAY, BKK), ["2026-09-04", "2026-09-05", "2026-09-06", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10"]);
