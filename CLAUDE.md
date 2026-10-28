@@ -9,7 +9,7 @@ vocabulary, the decision records, and the code: scaffolding, the foundation migr
 auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
 and guide screens, the live session screen with the camera, MediaPipe, and the engine
 (the stub until 2026-10-04, now Vern's port), the completion flow: every set saved with its attempt records, engine report,
-video, and keypoint file, similarity and feedback from stubs, the repair set, the rest
+video, and keypoint file, similarity from Punnapat's service and feedback from a stub, the repair set, the rest
 timer, and the finished summary, History: the weekly chart on Home, active days, each
 exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
 unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
@@ -380,9 +380,8 @@ session log:
   `scratch/export_similarity.py`: `source` (the set id), `side` (the workout's arm or
   null), `totals`, attempts with `rep_number`, rule-name `violations`, and the engine's
   `side`, and each keypoint frame labelled with `attempt` and `rep` by `labelFrames`.
-  `rep_count` per frame is not sent (Vern). `frame_size` in the keypoint file (schema
-  version 2) and the request was waiting for the curl update, which is now in; it is not
-  done yet (Vern: not now, during the curl update).
+  `rep_count` per frame is not sent (Vern). `frame_size` joined the keypoint file and the
+  request on 2026-10-27, within schema version 1 (ADR-0005, ADR-0007).
 
 Decided 2026-10-10, the first phone run, recorded in ADR-0001, 0002 and the 2026-10-10
 session log:
@@ -554,6 +553,18 @@ Decided 2026-10-23 (later), the toe line and the sag disarm, recorded in ADR-000
   `PYTHONPATH=.:.venv/lib/python3.10/site-packages /opt/homebrew/bin/python3.10`. Recreating it is
   Vern's call.
 
+Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVER.md` and the
+2026-10-28 session log:
+
+- A similarity failure no longer blocks feedback: `analyseSet` keeps the error and writes
+  feedback without similarity; a retry that scores nothing new keeps the feedback written.
+- `sets.similarity` keeps the service's `mean_score_correct` and `mean_score_incorrect` (the
+  mean split by the rule verdict: correct = no warning fired) and `reference` (`kind`,
+  `source`). `weakest_body_part` stays and is sent to Sujira as a hint (Vern); the rule
+  violations say what to fix.
+- Whether the scores separate correct from incorrect reps is Punnapat's to judge; the app's
+  check is only that a set is scored, stored, and shown.
+
 Still open, outside the build plan:
 
 - The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
@@ -607,7 +618,7 @@ Still open, outside the build plan:
   picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
   the frame height on a portrait phone, in the session log), and History replay. Android
   Chrome is not tested.
-- Similarity and feedback replacing their stubs (`docs/HANDOVER.md`). The workout e2e is
+- Feedback replacing its stub (`docs/HANDOVER.md` section 3). The workout e2e is
   skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
   facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
@@ -638,8 +649,14 @@ Still open, outside the build plan:
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be
-  installed on the evaluation machine. Its request is agreed (above); `frame_size` can now join it
-  and the keypoint file, not done yet.
+  installed on the evaluation machine. Real since 2026-10-27; sets saved before have no
+  `frame_size` and stay unscored.
+- The similarity reference (2026-10-28): the service's built-in reps (LMC, kavee and Boom) are a
+  placeholder until the expert records sets through the app. How the expert's set becomes the
+  reference (rebuilt built-in or a `reference` package per request) is to agree with Punnapat;
+  a new reference moves scores 20 to 30 points, so SCORE_INTERPRETATION's ranges need
+  re-measuring and `sets.similarity.reference` tells the two apart. `scoreSimilarity`'s fetch
+  has no timeout and `server.py` serves one request at a time, both to settle before the VM.
 - Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
   the hosting.
