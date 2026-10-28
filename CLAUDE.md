@@ -14,8 +14,9 @@ timer, and the finished summary, History: the weekly chart on Home, active days,
 exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
 unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
 `knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: the
-similarity and feedback owners replacing their stubs, and running the evaluation. The rule
-engine port is in (2026-10-04, see "Decided at the engine port").
+feedback owner replacing the stub, the expert's similarity reference, and running the
+evaluation. The rule engine port is in (2026-10-04, see "Decided at the engine port"), and
+similarity is real (2026-10-27).
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
