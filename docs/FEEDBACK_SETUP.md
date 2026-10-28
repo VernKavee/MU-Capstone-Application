@@ -17,12 +17,13 @@ feedback in about 14 seconds.
 - The app already running on your machine as in `README.md`: Node 22, Docker Desktop, `.env.local`,
   `npx supabase start`, and `npm run dev`.
 - Python 3.10 (tested with 3.10.11) and Git.
-- A free Groq API key: sign up at https://console.groq.com and create a key under API Keys. Each
-  person uses their own; never commit it.
-- Two files from Sujira, sent outside Git (they are not in any repository):
-  - `kb_dump.sql.gz`, about 34 MB: the knowledge base, 2197 chunks with their vectors.
-  - `gemini-embedding-2.json`, about 1.8 MB: the search queries already turned into vectors, so a
-    request never calls Google.
+- A free Groq API key: sign up at https://console.groq.com and create one at
+  https://console.groq.com/keys. It starts with `gsk_`. Each person uses their own; never commit it.
+
+The two data files come with the RAG_SYSTEM clone, in its `app_setup/` folder:
+`kb_dump.sql.gz` (about 34 MB, the knowledge base: 2197 chunks with their vectors) and
+`gemini-embedding-2.json` (about 1.8 MB, the search queries already turned into vectors, so a
+request never calls Google).
 
 On Windows, run every command below in **Git Bash** (installed with Git for Windows), not
 PowerShell or cmd. On a Mac, use Terminal.
@@ -41,25 +42,9 @@ npx supabase migration up --local
 `langchain_pg_embedding`) without touching your users or sets. `npm run db:reset` would also work
 but deletes all your local data.
 
-## 2. Load the knowledge base
+## 2. Clone RAG_SYSTEM
 
-Put `kb_dump.sql.gz` somewhere you can find, then:
-
-```bash
-docker exec supabase_db_MU-Capstone-Application psql -U postgres -c "DELETE FROM langchain_pg_collection"
-gzip -dc ~/Downloads/kb_dump.sql.gz | docker exec -i supabase_db_MU-Capstone-Application psql -U postgres -q -v ON_ERROR_STOP=1
-docker exec supabase_db_MU-Capstone-Application psql -U postgres -tAc "SELECT count(*) FROM langchain_pg_embedding"
-```
-
-The last line must print `2197`. The first line empties the tables so the load can be run again
-safely; deleting the collection deletes its chunks with it.
-
-The knowledge base survives `npx supabase stop` and `start`. It is emptied by `npm run db:reset`;
-after a reset, run this step again.
-
-## 3. Set up the feedback service
-
-Clone RAG_SYSTEM next to the app, on the branch the app uses:
+Next to the app, on the branch the app uses:
 
 ```bash
 cd ..
@@ -69,7 +54,25 @@ cd RAG_SYSTEM
 
 `core.longpaths=true` matters on Windows: some file names in the repository are long, and without
 it the checkout fails with "Filename too long". The repository is public, so no GitHub access is
-needed.
+needed. Already cloned before? `git pull` inside it instead.
+
+Every command from here on runs inside the RAG_SYSTEM folder.
+
+## 3. Load the knowledge base
+
+```bash
+docker exec supabase_db_MU-Capstone-Application psql -U postgres -c "DELETE FROM langchain_pg_collection"
+gzip -dc app_setup/kb_dump.sql.gz | docker exec -i supabase_db_MU-Capstone-Application psql -U postgres -q -v ON_ERROR_STOP=1
+docker exec supabase_db_MU-Capstone-Application psql -U postgres -tAc "SELECT count(*) FROM langchain_pg_embedding"
+```
+
+The last line must print `2197`. The first line empties the tables so the load can be run again
+safely; deleting the collection deletes its chunks with it.
+
+The knowledge base survives `npx supabase stop` and `start`. It is emptied by `npm run db:reset`;
+after a reset, run this step again.
+
+## 4. Set up the feedback service
 
 Create a virtual environment and install only what the service needs:
 
@@ -82,7 +85,7 @@ Put the query vectors where the service looks for them:
 
 ```bash
 mkdir -p .cache/query_vectors
-cp ~/Downloads/gemini-embedding-2.json .cache/query_vectors/
+cp app_setup/gemini-embedding-2.json .cache/query_vectors/
 ```
 
 Create a file named `.env` in the RAG_SYSTEM folder with these four lines, your Groq key in the
@@ -112,7 +115,7 @@ curl http://127.0.0.1:8100/health
 
 You should see `"ok":true`, `"rows":2197`, `"prompt":"v15a"`, and `"llm":"groq:qwen/qwen3.8-27b"`.
 
-## 4. Point the app at the service
+## 5. Point the app at the service
 
 Add this line to the app's `.env.local` (it is already listed, empty, in `.env.example`):
 
@@ -147,19 +150,21 @@ taken and the chunks used; it never logs the profile or the feedback text.
 
 To stop: Ctrl+C in the service's terminal and in the dev server's, then `npx supabase stop`.
 
-To pick up Sujira's changes to the service: `git pull` in RAG_SYSTEM and restart the service.
+To pick up Sujira's changes to the service: `git pull` in RAG_SYSTEM and restart the service. If
+the pull changed `app_setup/kb_dump.sql.gz`, load it again (step 3); if it changed
+`app_setup/gemini-embedding-2.json`, copy it again (step 4).
 
 ## When something goes wrong
 
 | What you see | Why | What to do |
 |---|---|---|
 | Feedback still ends with "(Stub feedback ...)" | The app does not see `FEEDBACK_URL` | Check the line in `.env.local`, then restart `npm run dev` |
-| "Feedback failed: the feedback service is not reachable" | The service is not running | Start it (step 3) and press Retry |
+| "Feedback failed: the feedback service is not reachable" | The service is not running | Start it (step 4) and press Retry |
 | "Feedback failed: ... the language model is busy right now, try again in a minute" | Groq's free tier allows about one answer per minute | Wait a minute and press Retry |
-| "Feedback failed: ... the exercise knowledge base is not reachable" | Supabase is down, or the tables are empty | `npx supabase start`; if `/health` shows `"rows":0`, redo step 2 |
-| `/health` shows `"rows":0` after `npm run db:reset` | A reset empties the knowledge base | Redo step 2 |
+| "Feedback failed: ... the exercise knowledge base is not reachable" | Supabase is down, or the tables are empty | `npx supabase start`; if `/health` shows `"rows":0`, redo step 3 |
+| `/health` shows `"rows":0` after `npm run db:reset` | A reset empties the knowledge base | Redo step 3 |
 | "Feedback failed: ... the language model could not write feedback this time" | Wrong or missing `GROQ_API_KEY` | Fix `.env` in RAG_SYSTEM and restart the service |
-| The clone stops with "Filename too long" | Windows path limit | Clone again with `-c core.longpaths=true` as in step 3 |
+| The clone stops with "Filename too long" | Windows path limit | Clone again with `-c core.longpaths=true` as in step 2 |
 | A few PDFs show as modified in `git status` in RAG_SYSTEM, and `/health` shows the commit with `-dirty` | Line-ending conversion on Windows | Harmless; leave them |
 | `docker exec` says no such container | Supabase is not running, or the project folder has another name | `npx supabase start`, then `docker ps` to see the `supabase_db_...` name |
 
@@ -180,14 +185,15 @@ for using it (RAG_SYSTEM `docs/plans/app_integration_plan.md`, D6).
 
 ## For Sujira: making the two files again
 
-With the app's Supabase running and its knowledge base filled:
+In RAG_SYSTEM, with the app's Supabase running and its knowledge base filled:
 
 ```bash
 docker exec supabase_db_MU-Capstone-Application pg_dump -U postgres --data-only --no-owner \
-  -t public.langchain_pg_collection -t public.langchain_pg_embedding postgres | gzip > kb_dump.sql.gz
-cp ../RAG_SYSTEM/.cache/query_vectors/gemini-embedding-2.json .
+  -t public.langchain_pg_collection -t public.langchain_pg_embedding postgres | gzip > app_setup/kb_dump.sql.gz
+cp .cache/query_vectors/gemini-embedding-2.json app_setup/
 ```
 
 Make new ones whenever the collection changes (a new curation round or a different
-`KB_COLLECTION`) or new queries are added to the cache by `tools/fill_query_cache.py`. Share them
-outside Git and delete the local copies afterwards.
+`KB_COLLECTION`) or new queries are added to the cache by `tools/fill_query_cache.py`, then commit
+them on `app-integration`. Each new dump adds about 34 MB to the repository's history, so only
+when the collection really changed.
