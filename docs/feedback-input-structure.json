@@ -46,7 +46,8 @@
       "mean_score_incorrect": "number 0-100 | null, mean over the scored reps the rule engine judged incorrect (a warning fired); null when there were none",
       "body_parts": { "<part>": "number 0-100; only the parts this exercise is scored on: squat and lunge torso, left_leg, right_leg; push-up torso and arms; curl the working arm" },
       "weakest_body_part": "\"torso\" | \"left_arm\" | \"right_arm\" | \"left_leg\" | \"right_leg\" | null, the lowest mean part; the torso reads lower even on good reps",
-      "model": "string, the model that scored it; scores from different models do not compare"
+      "model": "string, the model that scored it; scores from different models do not compare",
+      "reference": { "kind": "\"builtin\" | \"package\", what the reps were compared with; scores against different references do not compare", "source": "string | null, which take or set" }
     },
     "feedback": "string | null, the feedback already written for this set (null while it is being written)",
     "attempts": [

@@ -255,11 +255,16 @@ to copy again). The app does no similarity math.
   service could not score the rep), `body_parts` (only the parts the rep is scored on: squat
   and lunge `torso`, `left_leg`, `right_leg`; push-up `torso` and the arms it saw; curl the
   working arm), `skipped_reason`, `warnings`, `tracking_confidence`.
-- Per set: `mean_score` over the scored reps, `body_parts` over the same parts,
-  `weakest_body_part`, and `model`, since scores from different models do not compare.
-- A service answer with `status` `error` throws: the set stays saved without similarity and
-  the set-complete screen shows "Similarity failed:" and the message, with a Retry. A retry
-  skips similarity once the set has it.
+- Per set: `mean_score` over the scored reps, `mean_score_correct` and
+  `mean_score_incorrect` (the same mean split by the rule engine's verdict, null when a set
+  has none of that kind), `body_parts` over the same parts, `weakest_body_part`, `model`, and
+  `reference` (`kind` `builtin` or `package`, and its `source`), since scores from different
+  models or references do not compare. Sets scored before 2026-10-28 have neither the two
+  split means nor `reference`.
+- A service answer with `status` `error` throws: the set stays saved without similarity,
+  feedback is still written without it, and the set-complete screen shows "Similarity
+  failed:" and the message, with a Retry. A retry skips similarity once the set has it, and
+  keeps the feedback already written unless it scored similarity this time.
 
 The numbers land in `sets.similarity` and in each attempt record in `sets.attempts`, and
 feed the Home chart, History, the set-complete screen, and the feedback input. How to read a

@@ -39,6 +39,10 @@ export type SetSimilarity = {
   body_parts: BodyPartScores;
   weakest_body_part: BodyPart | null;
   model: string;
+  // What the reps were compared with: "builtin" (the service's own reps) or "package" (a set
+  // sent with the request), and which take or set. Scores against different references do
+  // not compare. Null from the stub.
+  reference: { kind: string; source: string | null } | null;
 };
 
 export type Outcome = "correct" | "incorrect" | "abandoned";

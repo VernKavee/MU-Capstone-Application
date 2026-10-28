@@ -25,7 +25,8 @@ test("the service's answer keeps the squat's torso and legs, and no abandoned at
   assert.deepEqual(out.attempts.map((a) => a.attempt_no), [1, 2, 3, 5, 7], "attempts 4 and 6 were abandoned");
   for (const a of out.attempts) assert.deepEqual(Object.keys(a.similarity.body_parts), ["torso", "left_leg", "right_leg"], "no arm on a squat");
   assert.equal(out.attempts[0].similarity.score, 42.5);
-  assert.deepEqual(out.set, { mean_score: 38.8, mean_score_correct: null, mean_score_incorrect: 38.8, body_parts: out.set.body_parts, weakest_body_part: "torso", model: "bpe_v3_seed2026" });
+  assert.deepEqual(out.set, { mean_score: 38.8, mean_score_correct: null, mean_score_incorrect: 38.8, body_parts: out.set.body_parts, weakest_body_part: "torso", model: "bpe_v3_seed2026",
+    reference: { kind: "builtin", source: "LMC 45SideView, rule-engine reps (20260713-boom-squats-00)" } });
   assert.deepEqual(Object.keys(out.set.body_parts), ["torso", "left_leg", "right_leg"]);
 });
 
@@ -66,7 +67,7 @@ test("feedback quotes the medical history and names the worst violation", async 
     exercise: { id: "squat", name: "Squat", rules: [] },
     workout: { target_reps: 10, target_sets: 3, rest_seconds: 60, earlier_sets: [] },
     set: { set_no: 1, kind: "initial", ended_by: "target_reached", totals: { attempts: 3, completed_reps: 2, correct_reps: 1, abandoned_attempts: 1 },
-      similarity: { mean_score: 80, mean_score_correct: 85, mean_score_incorrect: 75, body_parts: { torso: 70, left_leg: 85, right_leg: 84 }, weakest_body_part: "torso", model: "stub" }, feedback: null,
+      similarity: { mean_score: 80, mean_score_correct: 85, mean_score_incorrect: 75, body_parts: { torso: 70, left_leg: 85, right_leg: 84 }, weakest_body_part: "torso", model: "stub", reference: null }, feedback: null,
       attempts: [attempt(1, "correct"), attempt(2, "abandoned", ["Keep back straight"]), attempt(3, "incorrect", ["Keep back straight"])] },
     history: [],
   };

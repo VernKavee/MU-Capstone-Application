@@ -28,6 +28,7 @@ export type ServiceOutput = {
     warnings: string[];
   }[];
   model: { id: string };
+  reference: { kind: "builtin" | "package"; source: string | null };
 };
 
 // Keeps only the parts each rep is scored on, so a squat never shows an arm. A rep the service
@@ -58,6 +59,7 @@ export function fromService(out: ServiceOutput): SimilarityOutput {
     body_parts: pick(out.summary.body_parts ?? {}, [...counted]),
     weakest_body_part: (out.summary.weakest_body_part as BodyPart | null) ?? null,
     model: out.model.id,
+    reference: { kind: out.reference.kind, source: out.reference.source },
   };
   return { attempts, set };
 }
@@ -97,6 +99,7 @@ function stub(input: SimilarityInput, random: () => number): SimilarityOutput {
       body_parts,
       weakest_body_part: attempts.length ? parts.reduce((lo, p) => (body_parts[p]! < body_parts[lo]! ? p : lo)) : null,
       model: "stub",
+      reference: null,
     },
   };
 }
