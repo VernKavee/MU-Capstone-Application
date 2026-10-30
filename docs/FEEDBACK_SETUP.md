@@ -48,13 +48,15 @@ Next to the app, on the branch the app uses:
 
 ```bash
 cd ..
-git -c core.longpaths=true clone -b app-integration https://github.com/sujira7236212/Capstone_RAG.git RAG_SYSTEM
+git -c core.longpaths=true clone -b main https://github.com/sujira7236212/Capstone_RAG.git RAG_SYSTEM
 cd RAG_SYSTEM
 ```
 
 `core.longpaths=true` matters on Windows: some file names in the repository are long, and without
 it the checkout fails with "Filename too long". The repository is public, so no GitHub access is
-needed. Already cloned before? `git pull` inside it instead.
+needed. Already cloned before? `git pull` inside it instead. A clone made with
+`-b app-integration` switches once with `git fetch` and then `git switch main`; both branches hold
+the same commit, so nothing else changes.
 
 Every command from here on runs inside the RAG_SYSTEM folder.
 
@@ -195,5 +197,5 @@ cp .cache/query_vectors/gemini-embedding-2.json app_setup/
 
 Make new ones whenever the collection changes (a new curation round or a different
 `KB_COLLECTION`) or new queries are added to the cache by `tools/fill_query_cache.py`, then commit
-them on `app-integration`. Each new dump adds about 34 MB to the repository's history, so only
+them on `main`. Each new dump adds about 34 MB to the repository's history, so only
 when the collection really changed.
