@@ -12,8 +12,12 @@ export async function saveSet(input: SaveSetInput) {
   return store.saveSet(await createClient(), input);
 }
 
+// The error also goes to the server log: the screen that shows it is gone once the
+// workout is finished, and the finished summary cannot tell a failure from a wait.
 export async function analyseSet(setId: string, files: SetFiles) {
-  return store.analyseSet(await createClient(), setId, files);
+  const result = await store.analyseSet(await createClient(), setId, files);
+  if (result.error) console.error(`analyseSet ${setId}: ${result.error}`);
+  return result;
 }
 
 export async function declineRepair(setId: string) {
