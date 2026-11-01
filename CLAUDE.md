@@ -550,9 +550,6 @@ Decided 2026-10-23 (later), the toe line and the sag disarm, recorded in ADR-000
   `eebd58f`. The research recordings carry no picture, so `eval_live_rules` gives no knee verdict
   on them; the fixtures `pushup_sag` and `squat_toe_line` come from this sitting's web keypoint
   files. The sitting's export: SeniorProject `scratch_output/app_2026-10-23_sitting`.
-- SeniorProject's `.venv` is broken (Homebrew moved Python 3.10.20 to 3.10.22); it runs as
-  `PYTHONPATH=.:.venv/lib/python3.10/site-packages /opt/homebrew/bin/python3.10`. Recreating it is
-  Vern's call.
 
 Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVER.md` and the
 2026-10-28 session log:

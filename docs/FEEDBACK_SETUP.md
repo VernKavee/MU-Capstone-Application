@@ -35,12 +35,13 @@ cd MU-Capstone-Application
 git pull
 npm install
 npx supabase start
-npx supabase migration up --local
+npx supabase migration up --local --include-all
 ```
 
 `migration up` adds the two knowledge base tables (`langchain_pg_collection` and
-`langchain_pg_embedding`) without touching your users or sets. `npm run db:reset` would also work
-but deletes all your local data.
+`langchain_pg_embedding`) without touching your users or sets. `--include-all` is needed because
+this migration is dated before later ones your database already has. `npm run db:reset` would also
+work but deletes all your local data.
 
 ## 2. Clone RAG_SYSTEM
 
@@ -79,7 +80,7 @@ after a reset, run this step again.
 Create a virtual environment and install only what the service needs:
 
 ```bash
-python -m venv .venv                 # on a Mac: python3 -m venv .venv
+python -m venv .venv                 # on a Mac: python3.10 -m venv .venv (plain python3 may be newer, and the install fails on 3.15)
 .venv/Scripts/python -m pip install -r service/requirements.txt    # on a Mac: .venv/bin/python
 ```
 
