@@ -104,6 +104,12 @@ KB_DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:54322/postgres
 `GOOGLE_API_KEY` only has to exist: with the query vectors in place and Groq writing, no request
 reaches Google. `.env` is ignored by Git.
 
+Can't register with Groq? Use a free Gemini key from https://aistudio.google.com/apikey instead,
+with no billing added: set `FEEDBACK_LLM_PROVIDER=gemini` and put the key in `GOOGLE_API_KEY`.
+`GROQ_API_KEY` can stay empty, and `/health` then shows `"llm":"gemini:gemini-3.6-flash"`. Checked
+2026-11-01 on a Mac: the example input below answered in 14 seconds. Google may use free-tier
+requests to improve its products, so use it for your own test sets only, not real testers' data.
+
 Start the service and leave this terminal open:
 
 ```bash
