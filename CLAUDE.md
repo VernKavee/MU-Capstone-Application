@@ -9,13 +9,13 @@ vocabulary, the decision records, and the code: scaffolding, the foundation migr
 auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
 and guide screens, the live session screen with the camera, MediaPipe, and the engine
 (the stub until 2026-10-04, now Vern's port), the completion flow: every set saved with its attempt records, engine report,
-video, and keypoint file, similarity from Punnapat's service and feedback from a stub, the repair set, the rest
+video, and keypoint file, similarity from Punnapat's service and feedback from Sujira's (a stub without `FEEDBACK_URL`), the repair set, the rest
 timer, and the finished summary, History: the weekly chart on Home, active days, each
 exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
 unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
 `knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: the
-feedback owner replacing the stub, the expert's similarity reference, and running the
-evaluation. The rule engine port is in (2026-10-04, see "Decided at the engine port"), and
+feedback owner finishing the prompt and the model, the expert's similarity reference, and
+running the evaluation. The rule engine port is in (2026-10-04, see "Decided at the engine port"), and
 similarity is real (2026-10-27).
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
@@ -117,14 +117,14 @@ Conventions the code follows, because the docs changed since the plan was writte
 
 Three AI components are owned by specific people. Each stays behind an explicit interface,
 so one person can replace one file. The rule engine is ported (2026-10-04); similarity is
-real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback is still a stub that returns
-believable fake data.
+real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback calls Sujira's service when
+`FEEDBACK_URL` is set (`docs/FEEDBACK_SETUP.md`), and otherwise a stub answers.
 
 | Component | Owner | Lives where |
 |---|---|---|
 | Rule-based form checking plus FSM rep counting | Kavee (Vern) | ported from the research repo into `lib/engine/` (angles, fsm, rules, evaluator, gates, engine) |
 | Motion similarity, a 0 to 100 score per rep and per body part | Punnapat | copied from SeniorProject into `services/similarity/`, called over HTTP by `lib/analysis/similarity.ts` |
-| LLM coaching plus RAG retrieval | Sujira | their own component |
+| LLM coaching plus RAG retrieval | Sujira | Capstone_RAG repo, cloned as `../RAG_SYSTEM`, called over HTTP by `lib/analysis/feedback.ts` |
 
 Do not write similarity math, an LLM call, RAG, or vector search here. The rule engine
 port is Vern's separate work behind the seam in ADR-0002, not a phase of this build. The
@@ -617,9 +617,12 @@ Still open, outside the build plan:
   picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
   the frame height on a portrait phone, in the session log), and History replay. Android
   Chrome is not tested.
-- Feedback replacing its stub (`docs/HANDOVER.md` section 3). The workout e2e is
-  skipped until a clip of real reps at the exercise's angle is its camera, with the T pose
-  facing the camera first.
+- Feedback (2026-11-01): runs on Vern's Mac through a free Gemini key, tested with the example
+  input only, not a set from the camera. Free-tier requests may be used by Google, so not for real
+  testers' data. Medical history does not reach the model yet, against the invariant above; it
+  waits on the consent wording. The prompt is Sujira's to tune. Session log 2026-11-01.
+- The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
+  the T pose facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
   pinned to `float16/1`, byte for byte the research repo's model, and real keypoint files
   carry real visibility scores (both 2026-10-04).
