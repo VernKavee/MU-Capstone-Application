@@ -77,3 +77,7 @@ The exact TypeScript types are fixed in Phase 4, below.
 - `sets.similarity` also keeps `mean_score_correct` and `mean_score_incorrect`, the service's means over the reps the rule engine judged correct (no warning fired) and incorrect (a warning fired), `service_version`, `tracking_confidence` (the set's mean, the stand-in for the camera setup), and `reference` (`kind`, `source`), because a new model, service, reference, or camera setup moves scores (SCORE_INTERPRETATION section 5). `weakest_body_part` is still sent; HANDOVER section 3 says it is a hint, since the torso reads lower even on good reps.
 - The built-in reference is a placeholder: the expert's recorded sets will be the reference. The trained model is unchanged by that; only the reference rep changes. The route (a rebuilt built-in reference or a `reference` package per request) is to agree with Punnapat.
 - Judging whether similarity separates correct from incorrect reps is Punnapat's; the app's check is that a set is scored, stored, and shown.
+
+## Decided 2026-10-30
+
+- The embedding model is `gemini-embedding-2` (Sujira), the model the knowledge base's vectors in `langchain_pg_embedding` were made with; queries are embedded with it too. The open question of the column's dimension above no longer applies to `public.knowledge_base`, which stays empty and unused since the service reads langchain_postgres's own tables (migration `kb_langchain_tables`, 2026-10-25).

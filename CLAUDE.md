@@ -9,14 +9,15 @@ vocabulary, the decision records, and the code: scaffolding, the foundation migr
 auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
 and guide screens, the live session screen with the camera, MediaPipe, and the engine
 (the stub until 2026-10-04, now Vern's port), the completion flow: every set saved with its attempt records, engine report,
-video, and keypoint file, similarity from Punnapat's service and feedback from Sujira's (a stub without `FEEDBACK_URL`), the repair set, the rest
+video, and keypoint file, similarity from Punnapat's service and feedback from Sujira's RAG service (a stub without `FEEDBACK_URL`), the repair set, the rest
 timer, and the finished summary, History: the weekly chart on Home, active days, each
 exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
 unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
 `knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: the
-feedback owner finishing the prompt and the model, the expert's similarity reference, and
-running the evaluation. The rule engine port is in (2026-10-04, see "Decided at the engine port"), and
-similarity is real (2026-10-27).
+feedback prompt and how feedback is shown, the expert's similarity reference, the deploy,
+and running the evaluation. The rule engine port is in (2026-10-04, see "Decided at the
+engine port"), similarity is real (2026-10-27), and feedback calls Sujira's service
+(2026-10-25, see "Decided 2026-10-25, feedback").
 
 - `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
 - `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
@@ -84,9 +85,9 @@ Conventions the code follows, because the docs changed since the plan was writte
   passes the real one), and `live/set-complete.tsx` renders it. `lib/set.ts` builds the
   attempt records and the keypoint file, and its `afterSet` decides repair, rest, or
   finish. The
-  similarity and feedback stubs are `lib/analysis/similarity.ts` and
-  `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each owner replaces one
-  file.
+  similarity and feedback clients are `lib/analysis/similarity.ts` and
+  `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each posts to its service
+  when `SIMILARITY_URL` or `FEEDBACK_URL` is set and falls back to its stub otherwise.
 - History: `lib/history.ts` is the plain-data part (local days, the seven days, means,
   frame lookup), Node-tested. The browser's time zone arrives in the `tz` cookie from
   `app/(app)/time-zone.tsx` and `lib/time-zone.ts` reads it; every date rendered on the
@@ -117,14 +118,14 @@ Conventions the code follows, because the docs changed since the plan was writte
 
 Three AI components are owned by specific people. Each stays behind an explicit interface,
 so one person can replace one file. The rule engine is ported (2026-10-04); similarity is
-real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback calls Sujira's service when
-`FEEDBACK_URL` is set (`docs/FEEDBACK_SETUP.md`), and otherwise a stub answers.
+real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback is real since 2026-10-25
+(Sujira's RAG_SYSTEM service, `docs/FEEDBACK_SETUP.md`). Both stubs remain for when their URL is unset.
 
 | Component | Owner | Lives where |
 |---|---|---|
 | Rule-based form checking plus FSM rep counting | Kavee (Vern) | ported from the research repo into `lib/engine/` (angles, fsm, rules, evaluator, gates, engine) |
 | Motion similarity, a 0 to 100 score per rep and per body part | Punnapat | copied from SeniorProject into `services/similarity/`, called over HTTP by `lib/analysis/similarity.ts` |
-| LLM coaching plus RAG retrieval | Sujira | Capstone_RAG repo, cloned as `../RAG_SYSTEM`, called over HTTP by `lib/analysis/feedback.ts` |
+| LLM coaching plus RAG retrieval | Sujira | the RAG_SYSTEM repo (Capstone_RAG), cloned as `../RAG_SYSTEM` and run as `python -m service`, called over HTTP by `lib/analysis/feedback.ts`; its knowledge base is in this Postgres |
 
 Do not write similarity math, an LLM call, RAG, or vector search here. The rule engine
 port is Vern's separate work behind the seam in ADR-0002, not a phase of this build. The
@@ -161,7 +162,7 @@ similarity and feedback contracts are in ADR-0007.
   records. Never reconstruct it.
 - **Medical history is a real field**, not profile trivia. Required before the first
   workout, "none" allowed, editable in Settings. It feeds the LLM so advice is safe.
-  Stubs should visibly receive it.
+  The feedback prompt must use it; the stub quotes it back.
 
 ## Decided in Phase 0
 
@@ -564,6 +565,25 @@ Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVE
 - Whether the scores separate correct from incorrect reps is Punnapat's to judge; the app's
   check is only that a set is scored, stored, and shown.
 
+Decided 2026-10-25, feedback, recorded in ADR-0007, `docs/HANDOVER.md` section 3,
+`docs/FEEDBACK_SETUP.md` and the 2026-10-25 and 2026-10-27 session logs (Sujira):
+
+- Feedback is Sujira's service in the RAG_SYSTEM repo (`python -m service`, POST
+  `/feedback` on 127.0.0.1:8100). `writeFeedback()` posts the `FeedbackInput` to
+  `FEEDBACK_URL` with a 60 s timeout (the service keeps its own 45 s budget) and uses the
+  stub only while that is unset. A failure is thrown and shown after "Feedback failed:".
+- The knowledge base is langchain_postgres's own two tables, `langchain_pg_collection` and
+  `langchain_pg_embedding` (migration `kb_langchain_tables`), RLS on with no policy and no
+  API privilege. Rows are loaded by RAG_SYSTEM's `tools/copy_kb.py` from its `app_setup/`.
+  `public.knowledge_base` (Phase 6) stays, empty and unused.
+- The embedding model is `gemini-embedding-2` (Sujira, 2026-10-30), the model the KB's
+  vectors were made with, so queries use it too. Query vectors come from a cache filled once
+  by `tools/fill_query_cache.py`; a query missing from it is embedded and added.
+- The writing model: `FEEDBACK_LLM_PROVIDER=groq` uses `qwen/qwen3.8-27b` on Groq's free tier;
+  unset, Gemini.
+- `npm run db:reset` empties the two KB tables; `npx supabase stop` and `start` keep them.
+  After a reset, load them again with `tools/copy_kb.py`.
+
 Still open, outside the build plan:
 
 - The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
@@ -617,10 +637,16 @@ Still open, outside the build plan:
   picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
   the frame height on a portrait phone, in the session log), and History replay. Android
   Chrome is not tested.
-- Feedback (2026-11-01): runs on Vern's Mac through a free Gemini key, tested with the example
-  input only, not a set from the camera. Free-tier requests may be used by Google, so not for real
-  testers' data. Medical history does not reach the model yet, against the invariant above; it
-  waits on the consent wording. The prompt is Sujira's to tune. Session log 2026-11-01.
+- Feedback on Vern's Mac (2026-11-01): a free Gemini key, tested with the example input only,
+  not a set from the camera, on RAG_SYSTEM `3fa3a09` (prompt v15a, which does not send the
+  medical history). Free-tier requests may be used by Google, so not for real testers' data.
+  Session log 2026-11-01.
+- Feedback (Sujira): prompt v15 uses the medical history and the similarity fields more
+  (SCORE_INTERPRETATION), and drops v14's bar and weight advice, wrong for bodyweight
+  exercises. v14's markdown shows as raw `*` and `**` on the set-complete, finished, and
+  feedback pages, and set-complete and finished collapse its line breaks. Not checked: a set
+  recorded through the camera with feedback from the model. The workout e2e expects the
+  medical history verbatim, which holds only for the stub.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
   the T pose facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
@@ -659,7 +685,6 @@ Still open, outside the build plan:
   a new reference moves scores 20 to 30 points, so SCORE_INTERPRETATION's ranges need
   re-measuring and `sets.similarity.reference` tells the two apart. `scoreSimilarity`'s fetch
   has no timeout and `server.py` serves one request at a time, both to settle before the VM.
-- Embedding model and column dimension, at integration with Sujira's component.
 - Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
   the hosting.
 - The deploy (`docs/DEPLOY.md`, ADR-0001, 2026-10-01): the professor requires a published
