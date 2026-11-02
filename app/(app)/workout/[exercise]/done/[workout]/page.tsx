@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import type { SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
+import { RetryFeedback } from "../../../../history/[exercise]/[workout]/retry-feedback";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
-// as not there yet; the retry lives on the set-complete screen (ADR-0007).
-export default async function DonePage({ params }: PageProps<"/workout/[exercise]/done/[workout]">) {
+// as not there yet, with a button to write it, since a failure looks the same (ADR-0007).
+export default async function DonePage({ params, searchParams }: PageProps<"/workout/[exercise]/done/[workout]">) {
   const { exercise, workout: id } = await params;
+  const { set: failedSet, error } = await searchParams;
   if (!isUuid(id)) notFound();
   const supabase = await createClient();
   const { data: workout } = await supabase
@@ -53,7 +55,20 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
                 {similarity && `, ${Math.round(similarity.mean_score)}% similarity`}
                 {set.repair_declined && ", repair set skipped"}.
               </p>
-              <p className="leading-relaxed">{set.llm_feedback ?? "No feedback yet. If it is still being written, it appears when you reload this page."}</p>
+              {set.llm_feedback ? (
+                <p className="leading-relaxed">{set.llm_feedback}</p>
+              ) : (
+                <>
+                  <p className="leading-relaxed">No feedback yet. If it is still being written, it appears when you reload this page.</p>
+                  <RetryFeedback
+                    exercise={exercise}
+                    workout={id}
+                    set={set.id}
+                    from="done"
+                    error={failedSet === set.id && typeof error === "string" ? error : undefined}
+                  />
+                </>
+              )}
             </li>
           );
         })}

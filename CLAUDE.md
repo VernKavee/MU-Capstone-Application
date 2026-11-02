@@ -55,7 +55,8 @@ Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
   reuses a running dev server or starts one. `e2e/workout.spec.ts` runs a whole workout
   through Chrome's fake camera and skips itself without `e2e/fixtures/t-pose.y4m`, which is
   not in git (`e2e/fixtures/README.md`). `e2e/isolation.spec.ts` has user B fail to reach
-  user A's workout, set, and files.
+  user A's workout, set, and files. `e2e/retry-feedback.spec.ts` writes a missing feedback
+  from the finished summary; it passes whether `FEEDBACK_URL` answers or not.
 
 Conventions the code follows, because the docs changed since the plan was written:
 
@@ -278,7 +279,10 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
   initial set, even when the skip comes before the save lands.
 - The rest timer starts the next set on its own at zero; Start now skips it.
 - Finish workout writes `ended_at` and opens the finished summary, which reads from the
-  database and has no retry; the retry lives on the set-complete screen.
+  database. The retry lives on the set-complete screen; since 2026-11-01 a set without
+  feedback also gets "Write feedback now" on the finished summary and History level 4
+  (`retryFeedback` in `history/[exercise]/[workout]/actions.ts`, `analyseSet` with no new
+  files).
 - Column grants limit API updates to `workouts.ended_at` and, on `sets`, the decline, the
   file paths, similarity, feedback, and attempts. Nothing is deleted.
 - Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
@@ -641,12 +645,14 @@ Still open, outside the build plan:
   not a set from the camera, on RAG_SYSTEM `3fa3a09` (prompt v15a, which does not send the
   medical history). Free-tier requests may be used by Google, so not for real testers' data.
   Session log 2026-11-01.
-- Feedback (Sujira): prompt v15 uses the medical history and the similarity fields more
-  (SCORE_INTERPRETATION), and drops v14's bar and weight advice, wrong for bodyweight
-  exercises. v14's markdown shows as raw `*` and `**` on the set-complete, finished, and
-  feedback pages, and set-complete and finished collapse its line breaks. Not checked: a set
-  recorded through the camera with feedback from the model. The workout e2e expects the
-  medical history verbatim, which holds only for the stub.
+- Feedback (Sujira): prompt v15 (RAG_SYSTEM `b76ce5c`) answers in plain text opening with a
+  four-line summary, and reads the medical history, body part scores, `kind`, and
+  `ended_by`. It is on RAG_SYSTEM's `prompt-v15` branch, not yet on the `main` that
+  `docs/FEEDBACK_SETUP.md` clones, which still serves v15a's markdown. Sujira ran a set
+  through the camera on 2026-10-30 with v15 on Gemini: the feedback was usable and showed no
+  markdown. Still to fix in the app: set-complete and finished collapse its line breaks,
+  and level 4's `line-clamp-4` cuts four lines on screen, not the summary's four lines.
+  The workout e2e expects the medical history verbatim, which holds only for the stub.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
   the T pose facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is

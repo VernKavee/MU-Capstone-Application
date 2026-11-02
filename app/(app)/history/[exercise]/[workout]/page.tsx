@@ -7,6 +7,7 @@ import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { Replay } from "./replay";
+import { RetryFeedback } from "./retry-feedback";
 
 const setName = (s: { set_no: number; kind: string }) => `${s.kind === "repair" ? "Repair set" : "Set"} ${s.set_no}`;
 
@@ -17,7 +18,7 @@ const setName = (s: { set_no: number; kind: string }) => `${s.kind === "repair" 
 // files themselves only when Play is pressed.
 export default async function WorkoutPage({ params, searchParams }: PageProps<"/history/[exercise]/[workout]">) {
   const { exercise: exerciseId, workout: id } = await params;
-  const { set: chosen } = await searchParams;
+  const { set: chosen, error } = await searchParams;
   if (!isUuid(id)) notFound();
   const supabase = await createClient();
   const tz = await userTimeZone();
@@ -108,7 +109,10 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                 </Link>
               </div>
             ) : (
-              <p className="text-sm opacity-70">No feedback was written for this set.</p>
+              <div className="space-y-2">
+                <p className="text-sm opacity-70">No feedback was written for this set.</p>
+                <RetryFeedback exercise={exerciseId} workout={id} set={selected.id} from="history" error={typeof error === "string" ? error : undefined} />
+              </div>
             )}
           </section>
         }
