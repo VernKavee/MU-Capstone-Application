@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
-import type { SetSimilarity, Totals } from "@/lib/set";
+import type { Attempt, SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { RetryFeedback } from "../../../../history/[exercise]/[workout]/retry-feedback";
+import { SetFeedback } from "../../../../set-feedback";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
@@ -56,7 +57,7 @@ export default async function DonePage({ params, searchParams }: PageProps<"/wor
                 {set.repair_declined && ", repair set skipped"}.
               </p>
               {set.llm_feedback ? (
-                <p className="leading-relaxed">{set.llm_feedback}</p>
+                <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} />
               ) : (
                 <>
                   <p className="leading-relaxed">No feedback yet. If it is still being written, it appears when you reload this page.</p>

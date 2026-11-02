@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic } from "@/lib/exercise";
-import { ENDED_BY, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
+import { readFeedback } from "@/lib/feedback-text";
+import { ENDED_BY, feedbackSummary, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import { jointIndices } from "@/lib/live/skeleton";
 import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
+import { WhatToFix } from "../../../set-feedback";
 import { Replay } from "./replay";
 import { RetryFeedback } from "./retry-feedback";
 
@@ -34,6 +36,9 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const selected = sets.find((s) => s.id === chosen) ?? sets[0];
   // The same policies just returned this set, so exactly one row comes back.
   const { data: detail } = await supabase.from("sets").select("attempts, llm_feedback, video_url, keypoints_url").eq("id", selected.id).single().throwOnError();
+  // Prompt v16's list of what to fix, else v15's opening paragraph, else the clamped text.
+  const fixes = detail.llm_feedback ? readFeedback(detail.llm_feedback).summary : null;
+  const summary = detail.llm_feedback ? feedbackSummary(detail.llm_feedback) : null;
 
   const name = workout.exercises.name;
   const totals = sets.map((s) => s.totals as Totals);
@@ -103,7 +108,13 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
             </h2>
             {detail.llm_feedback ? (
               <div className="space-y-2">
-                <p className="line-clamp-4 leading-relaxed">{detail.llm_feedback}</p>
+                {fixes ? (
+                  <WhatToFix summary={fixes} attempts={detail.attempts as unknown as Attempt[]} />
+                ) : summary ? (
+                  <p className="whitespace-pre-line leading-relaxed">{summary}</p>
+                ) : (
+                  <p className="line-clamp-4 leading-relaxed">{detail.llm_feedback}</p>
+                )}
                 <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm underline">
                   Read the full feedback
                 </Link>

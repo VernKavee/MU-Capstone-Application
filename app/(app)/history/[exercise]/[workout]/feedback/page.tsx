@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatWhen, isUuid } from "@/lib/history";
+import type { Attempt } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
+import { SetFeedback } from "../../../../set-feedback";
 
 // The feedback detail screen (REQUIREMENTS section 6): the full coaching text of one set
-// (?set=), which level 4 shows only the start of. Fetches that set's feedback and labels.
+// (?set=), which level 4 shows only the start of. Fetches that set's feedback, its attempts
+// for the counts beside what to fix, and labels.
 export default async function FeedbackPage({ params, searchParams }: PageProps<"/history/[exercise]/[workout]/feedback">) {
   const { exercise: exerciseId, workout: workoutId } = await params;
   const { set: setId } = await searchParams;
@@ -14,7 +17,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
   const tz = await userTimeZone();
   const { data: set } = await supabase
     .from("sets")
-    .select("set_no, kind, llm_feedback, workouts!inner(started_at, target_sets, exercise_id, exercises!inner(name))")
+    .select("set_no, kind, llm_feedback, attempts, workouts!inner(started_at, target_sets, exercise_id, exercises!inner(name))")
     .eq("id", setId)
     .eq("workout_id", workoutId)
     .eq("workouts.exercise_id", exerciseId)
@@ -34,7 +37,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
         </h1>
       </header>
       {set.llm_feedback ? (
-        <p className="max-w-prose whitespace-pre-line text-lg leading-relaxed">{set.llm_feedback}</p>
+        <div className="max-w-prose text-lg">
+          <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} />
+        </div>
       ) : (
         <p className="opacity-70">No feedback was written for this set.</p>
       )}

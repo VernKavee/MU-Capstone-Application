@@ -2,9 +2,11 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import type { Setup } from "@/lib/exercise";
+import { readFeedback } from "@/lib/feedback-text";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
+import { SetFeedback } from "../../../set-feedback";
 import type { JobStatus } from "./pipeline";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
@@ -68,6 +70,8 @@ export function SetComplete({
   }[capture.endedBy];
   const counts = new Map<string, number>();
   for (const attempt of attempts) for (const v of attempt.violations) counts.set(v.message, (counts.get(v.message) ?? 0) + 1);
+  // The rule messages stand until feedback with its own list of what to fix arrives.
+  const fixList = entry.feedback !== null && readFeedback(entry.feedback).summary !== null;
   // ADR-0004: the repair offer, the rest before the next set, or the end of the workout.
   const next = afterSet(entry, setup.sets, declined);
   const offerRepair = next === "repair";
@@ -105,7 +109,7 @@ export function SetComplete({
           <Stat label="attempts" value={report.total_attempts} />
           <Stat label="abandoned" value={report.total_attempts_abandoned} />
         </dl>
-        {counts.size > 0 && (
+        {counts.size > 0 && !fixList && (
           <ul className="space-y-1 text-sm">
             {[...counts].map(([message, n]) => (
               <li key={message} className="flex justify-between gap-4">
@@ -120,7 +124,7 @@ export function SetComplete({
 
         <div aria-live="polite" className="space-y-3 border-t border-ink/20 pt-4">
           {entry.similarity && <SimilarityRow similarity={entry.similarity} />}
-          {entry.feedback && <p className="leading-relaxed">{entry.feedback}</p>}
+          {entry.feedback && <SetFeedback text={entry.feedback} attempts={attempts} />}
           {STATUS_TEXT[entry.status] && <p className="text-sm opacity-70 motion-safe:animate-pulse">{STATUS_TEXT[entry.status]}</p>}
           {entry.status === "failed" && (
             <p role="alert" className="text-sm">

@@ -588,6 +588,24 @@ Decided 2026-10-25, feedback, recorded in ADR-0007, `docs/HANDOVER.md` section 3
 - `npm run db:reset` empties the two KB tables; `npx supabase stop` and `start` keep them.
   After a reset, load them again with `tools/copy_kb.py`.
 
+Decided 2026-11-02, how feedback is shown, recorded in the 2026-11-02 session log (Sujira):
+
+- Prompt v16 (RAG_SYSTEM `rag_core/prompt.py`, on `main`) opens with labelled lines before the
+  first blank line: `Fault <rule>: ...` and `Fix: ...` per fault, or `Keep: ...` on a clean set,
+  then a three-line overview, the fault paragraphs, and a `Next Session Plan:` over numbered
+  lines. `lib/feedback-text.ts` parses it (`readFeedback`); RAG_SYSTEM's `test_app_input.py`
+  checks the labels, so change both together.
+- `app/(app)/set-feedback.tsx` shows it on set-complete, the finished summary, and the feedback
+  detail page: "What went wrong, and how to fix it" with each fault's name (`faultName`, the rule
+  key in words), its count of attempts from the attempt records (never the model's), and the fix
+  in a tape band; then "Full feedback" as headed paragraphs and lists. Level 4 shows the list
+  only. Text that does not parse (the stub, v15, a model that strayed) shows whole, with level 4
+  falling back to its first paragraph (`feedbackSummary`, `lib/history.ts`).
+- v16 shipped without a model run first (Sujira); its first two sets on Gemini (curl, one with
+  two faults, one clean repair set) parsed.
+- RAG_SYSTEM's `FEEDBACK_CAPTURE` keeps every request (input, context, answer, version) in its
+  gitignored `capture/` as the eval's inputs. It holds medical histories.
+
 Still open, outside the build plan:
 
 - The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
@@ -645,14 +663,13 @@ Still open, outside the build plan:
   not a set from the camera, on RAG_SYSTEM `3fa3a09` (prompt v15a, which does not send the
   medical history). Free-tier requests may be used by Google, so not for real testers' data.
   Session log 2026-11-01.
-- Feedback (Sujira): prompt v15 (RAG_SYSTEM `b76ce5c`) answers in plain text opening with a
-  four-line summary, and reads the medical history, body part scores, `kind`, and
-  `ended_by`. It is on RAG_SYSTEM's `prompt-v15` branch, not yet on the `main` that
-  `docs/FEEDBACK_SETUP.md` clones, which still serves v15a's markdown. Sujira ran a set
-  through the camera on 2026-10-30 with v15 on Gemini: the feedback was usable and showed no
-  markdown. Still to fix in the app: set-complete and finished collapse its line breaks,
-  and level 4's `line-clamp-4` cuts four lines on screen, not the summary's four lines.
-  The workout e2e expects the medical history verbatim, which holds only for the stub.
+- Feedback (Sujira): prompt v16 on RAG_SYSTEM `main` (above) reads the medical history, body part
+  scores, `kind`, and `ended_by`. Squat and curl sets through the camera on Gemini (2026-11-02,
+  v15 then v16): usable, but v15 advised lightening the load on a bodyweight squat, and v16
+  keeps the cause (the prompt's setup-change list names load). Only curl has run through v16. Fault names are rule
+  keys in words, so `knee_valgus` and `knee_varus` read as jargon; plainer names would be a data
+  column like `landscape`, Vern's to agree. The workout e2e expects the medical history verbatim,
+  which holds only for the stub.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
   the T pose facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is

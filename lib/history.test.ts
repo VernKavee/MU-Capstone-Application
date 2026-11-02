@@ -2,7 +2,7 @@
 // days stop ending today, or the mean starts counting unscored sets.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeDays, attemptAt, formatWhen, frameAt, isUuid, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
+import { activeDays, attemptAt, feedbackSummary, formatWhen, frameAt, isUuid, lastSevenDays, localDate, meanSimilarity, setOrder, timeZone, WEEK_FETCH_MS, weeklySummary } from "./history.ts";
 import type { SetSimilarity } from "./set.ts";
 
 const BKK = "Asia/Bangkok";
@@ -79,4 +79,11 @@ test("an unknown zone in the cookie falls back to the server's", () => {
   assert.equal(timeZone(BKK), BKK);
   assert.equal(timeZone("Not/AZone"), Intl.DateTimeFormat().resolvedOptions().timeZone);
   assert.equal(timeZone(undefined), Intl.DateTimeFormat().resolvedOptions().timeZone);
+});
+
+test("level 4 shows the feedback up to its first blank line, or null to clamp the whole", () => {
+  const v15 = "You hit 8 of 8.\nNo faults.\nBetter than set 1.\nKeep it up.\n\nNext Session Plan:\n1. Keep still.";
+  assert.equal(feedbackSummary(v15), "You hit 8 of 8.\nNo faults.\nBetter than set 1.\nKeep it up.");
+  assert.equal(feedbackSummary("\n\nLead.\n \nRest."), "Lead.", "leading blank lines, then a line of spaces");
+  assert.equal(feedbackSummary("One paragraph, as the stub writes.\nSecond line."), null);
 });

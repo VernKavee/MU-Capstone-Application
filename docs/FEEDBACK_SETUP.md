@@ -122,7 +122,7 @@ It listens on 127.0.0.1:8100 only. In a second terminal, check it:
 curl http://127.0.0.1:8100/health
 ```
 
-You should see `"ok":true`, `"rows":2197`, `"prompt":"v15a"`, and `"llm":"groq:qwen/qwen3.8-27b"`.
+You should see `"ok":true`, `"rows":2197`, `"prompt":"v16"`, and `"llm":"groq:qwen/qwen3.8-27b"`.
 
 ## 5. Point the app at the service
 
@@ -179,18 +179,21 @@ the pull changed `app_setup/kb_dump.sql.gz`, load it again (step 3); if it chang
 
 ## What to expect from the text today
 
-The feedback is real but not finished (prompt v15a, a free model):
+The feedback is real but not finished (prompt v16 since 2026-11-02):
 
-- It is written in markdown, and the app does not render markdown, so `*` and `**` show as they
-  are.
-- It may speak of dropping the weight, which does not fit these bodyweight exercises.
+- It is plain text. It opens with one "Fault" and "Fix" line per fault (or a "Keep" line on a
+  clean set), which the app shows as a list with each fault's name and count, then the full text
+  in paragraphs. If the model strays from that form, the app shows the whole text instead.
+- It may still speak of lightening the load, which does not fit these bodyweight exercises
+  (seen on Gemini with v15 on 2026-11-02).
 - It sees only each fault's rule name, so it can misread one: in one test it described
   `knee_varus` (knees outside the toe line, "Keep knees in line") as knees caving in.
 - Groq's free model is smaller than the Gemini model planned for the evaluation, and answers vary
   from run to run.
 
-The medical history is not sent to the model yet; it waits for the consent wording and the rules
-for using it (RAG_SYSTEM `docs/plans/app_integration_plan.md`, D6).
+The medical history is sent to the model since v15, with rules for using it. The consent text
+does not yet say it goes to an outside model (RAG_SYSTEM `docs/plans/app_integration_plan.md`,
+D6), so use test profiles, not real testers.
 
 ## For Sujira: making the two files again
 
