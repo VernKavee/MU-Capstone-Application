@@ -627,8 +627,9 @@ Still open, outside the build plan:
   picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
   the frame height on a portrait phone, in the session log), and History replay. Android
   Chrome is not tested.
-- Feedback (2026-11-01): runs on Vern's Mac through a free Gemini key, tested with the example
-  input only, not a set from the camera. Free-tier requests may be used by Google, so not for real
+- Feedback (2026-11-01): runs on Vern's Mac through a free Gemini key. The 2026-11-03 phone run
+  passed with camera sets of all four exercises; the free quota ran out after about 20 requests and
+  Gemini's 503 bursts outlast the app's one retry (session log 2026-11-03). Free-tier requests may be used by Google, so not for real
   testers' data. Medical history does not reach the model yet, against the invariant above; it
   waits on the consent wording. The prompt is Sujira's to tune. Session log 2026-11-01.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
