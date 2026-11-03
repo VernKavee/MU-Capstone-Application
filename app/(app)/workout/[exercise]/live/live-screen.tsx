@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createEngine, ENGINE_VERSION } from "@/lib/engine/engine";
 import { setupQuery, type RuleBasedLogic, type Setup } from "@/lib/exercise";
+import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 import type { PoseModel } from "@/lib/live/pose";
 import { CameraError, LiveSession, TURN_CUE, type SetCapture, type Snapshot } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
@@ -51,6 +52,9 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
   const lastSave = useRef<Promise<unknown>>(Promise.resolve());
   const workoutId = useRef(resume?.workoutId ?? crypto.randomUUID());
   const savedAny = useRef(Boolean(resume));
+  // The pose model, loaded once per model for the whole visit rather than once per set. The
+  // download starts on the preflight screen, while the user reads it.
+  const landmarkers = useRef(new Map<PoseModel, Promise<PoseLandmarker>>());
   const attemptCap = 2 * setup.reps;
   const guideHref = `/workout/${exercise.id}/guide?${setupQuery(setup)}`;
 
@@ -90,6 +94,30 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
     void job.run();
   });
 
+  function landmarker(which: PoseModel) {
+    let loading = landmarkers.current.get(which);
+    if (!loading) {
+      const begun = performance.now();
+      loading = import("@/lib/live/pose").then((pose) => pose.loadPoseLandmarker(which));
+      loading.then(
+        () => console.info(`[live] pose model ${which} loaded in ${Math.round(performance.now() - begun)} ms`),
+        () => landmarkers.current.delete(which), // so Try again downloads it afresh
+      );
+      landmarkers.current.set(which, loading);
+    }
+    return loading;
+  }
+
+  // Start the download at once, and close what was loaded when the visit ends.
+  useEffect(() => {
+    const loaded = landmarkers.current;
+    void landmarker(localStorage.getItem(MODEL_KEY) === "lite" ? "lite" : "full").catch(() => {});
+    return () => {
+      for (const loading of loaded.values()) loading.then((l) => l.close(), () => {});
+      loaded.clear();
+    };
+  }, []);
+
   useEffect(() => {
     if (stage.kind !== "live" || !videoRef.current || !canvasRef.current) return;
     const session = new LiveSession({
@@ -97,7 +125,7 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
       rules: exercise.logic.rules,
       target: setup.reps,
       attemptCap,
-      model,
+      landmarker: () => landmarker(model),
       landscape: exercise.landscape,
       readyCue: READY_SPOKEN[exercise.logic.state_machine.ready_pose],
       video: videoRef.current,

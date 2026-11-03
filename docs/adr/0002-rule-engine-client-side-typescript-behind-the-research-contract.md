@@ -157,3 +157,9 @@ sitting of the same day.
   arming tilt 60, so the counter switched off and counted, and so warned, none of the sitting's
   five sags. A machine-level choice in `fsm.ts`, not a row field. Over all 33 saved push-up sets
   only those five sags and two older attempts change; the `pushup_sag` fixture holds it.
+
+## Amended 2026-11-03: the pose model is loaded once per visit
+
+- The live screen loads the landmarker for the chosen model when its preflight screen opens and lends it to every set's `LiveSession` (`landmarker` option), which no longer loads or closes it. Before, each set loaded the wasm and the model again and closed them at its end. The screen closes them when the visit ends. Each loaded model stays until then, so switching between full and lite keeps both in memory.
+- The landmarker keeps its VIDEO-mode tracking across sets, as one long recording would in the Python, with timestamps from `performance.now()` that only grow.
+- Each set logs `[live] start:` with the camera, camera and model, and first-frame times, to find where the phone's slow start goes.

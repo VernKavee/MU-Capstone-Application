@@ -74,8 +74,9 @@ Conventions the code follows, because the docs changed since the plan was writte
   `lib/live/pose.ts` the MediaPipe adapter, `lib/live/sound.ts` the beep and speech,
   `lib/live/session.ts` the frame loop outside React, and
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
-  renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
-  the overlay, the recorder, and the keypoint capture. The overlay canvas draws the camera
+  renders snapshots. The loop, not React, owns the camera, the engine, the overlay, the
+  recorder, and the keypoint capture; the landmarker is the screen's, loaded once per visit
+  and lent to each set's loop (2026-11-03). The overlay canvas draws the camera
   frame under the skeleton, because iOS Safari drops `object-fit` on the video once
   MediaRecorder starts; the `<video>` stays under it as the source.
 - The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
@@ -652,10 +653,13 @@ Still open, outside the build plan:
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
   should cover the phone raised and on the floor.
-- The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
-  (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
-  the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`
-  section 1 describes the port.
+- The workout is slow to start on the phone (Vern, 2026-10-17). Since 2026-11-03 the live
+  screen loads the pose model once per visit, starting on the preflight screen, and every set
+  reuses it (it used to load again each set), and each set logs one `[live] start:` line
+  (camera, camera and model, first frame) plus `[live] pose model ... loaded in`. On the Mac
+  with Chrome's fake camera: the model in about 1.5 s during the preflight, then 162 ms from
+  the tap to camera and model, 386 ms to the first frame. Not measured on the phone yet: read
+  both lines in Safari's Web Inspector on the next phone run.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be
