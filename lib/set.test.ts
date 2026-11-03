@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { emptyKeypoints, type SessionReport } from "./engine/types.ts";
 import type { Rule } from "./exercise";
 import type { KeypointFrame } from "./live/session.ts";
-import { afterSet, buildAttempts, hasViolation, labelFrames, toKeypointFile, totalsOf } from "./set.ts";
+import { afterSet, buildAttempts, hasViolation, labelFrames, resumePoint, toKeypointFile, totalsOf } from "./set.ts";
 
 const rules: Rule[] = [
   { name: "knee_depth", check: "knee_depth", priority: 1, scope: "rep", debounce_s: 0, threshold: { depth_target: 100 }, messages: { en: "Lower to 90 degrees" }, highlight_joints: [] },
@@ -105,4 +105,16 @@ test("one repair set follows an initial set with any violation, then the rest or
   assert.equal(afterSet({ kind: "repair", setNo: 1, attempts }, 3, false), "rest", "never a repair set after a repair set");
   assert.equal(afterSet({ kind: "initial", setNo: 3, attempts: clean }, 3, false), "finish");
   assert.equal(afterSet({ kind: "repair", setNo: 3, attempts }, 3, false), "finish");
+});
+
+test("a reload under five minutes after the last set resumes at the next set", () => {
+  const now = new Date("2026-11-03T10:10:00Z");
+  const sets = [
+    { set_no: 1, ended_at: "2026-11-03T10:00:00Z" },
+    { set_no: 1, ended_at: "2026-11-03T10:06:00Z" }, // its repair set
+  ];
+  assert.equal(resumePoint({ ended_at: null, sets }, now), 2);
+  assert.equal(resumePoint({ ended_at: null, sets }, new Date("2026-11-03T10:11:00Z")), null, "five minutes is too late");
+  assert.equal(resumePoint({ ended_at: "2026-11-03T10:07:00Z", sets }, now), null, "a finished workout is not resumed");
+  assert.equal(resumePoint({ ended_at: null, sets: [] }, now), null, "nor one with nothing saved");
 });

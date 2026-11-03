@@ -16,6 +16,7 @@ import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set
 type Props = {
   exercise: { id: string; name: string; engineKey: string; landscape: boolean; logic: RuleBasedLogic };
   setup: Setup;
+  resume: { workoutId: string; setNo: number } | null; // a reload picked up this workout
 };
 
 type Stage = { kind: "preflight" } | { kind: "live" } | { kind: "error"; error: CameraError["kind"] };
@@ -31,14 +32,14 @@ const MODEL_KEY = "poseModel";
 const LAG_FPS = 15;
 
 // One workout per visit (ADR-0004): its sets, each repair set, and the rest between them.
-export function LiveScreen({ exercise, setup }: Props) {
+export function LiveScreen({ exercise, setup, resume }: Props) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>({ kind: "preflight" });
   const [model, setModel] = useState<PoseModel>("full");
   const [muted, setMuted] = useState(false);
   const [run, setRun] = useState(0); // bumps to start the next set
   const [snap, setSnap] = useState<Snapshot | null>(null);
-  const [progress, setProgress] = useState<Progress>({ setNo: 1, kind: "initial" });
+  const [progress, setProgress] = useState<Progress>({ setNo: resume?.setNo ?? 1, kind: "initial" });
   const [entries, setEntries] = useState<SetEntry[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,8 +49,8 @@ export function LiveScreen({ exercise, setup }: Props) {
   // the same workout row (ADR-0004).
   const jobs = useRef(new Map<number, Job>());
   const lastSave = useRef<Promise<unknown>>(Promise.resolve());
-  const workoutId = useRef(crypto.randomUUID());
-  const savedAny = useRef(false);
+  const workoutId = useRef(resume?.workoutId ?? crypto.randomUUID());
+  const savedAny = useRef(Boolean(resume));
   const attemptCap = 2 * setup.reps;
   const guideHref = `/workout/${exercise.id}/guide?${setupQuery(setup)}`;
 
@@ -77,7 +78,10 @@ export function LiveScreen({ exercise, setup }: Props) {
       capture,
       after: lastSave.current,
       onSaved: () => {
+        if (savedAny.current) return;
         savedAny.current = true;
+        // So a reload within five minutes picks this workout up (page.tsx).
+        window.history.replaceState(null, "", `?${setupQuery(setup)}&workout=${workoutId.current}`);
       },
       onUpdate: (update) => setEntries((list) => list.map((e) => (e.key === key ? { ...e, ...update } : e))),
     });
@@ -153,6 +157,9 @@ export function LiveScreen({ exercise, setup }: Props) {
     router.push(`/workout/${exercise.id}/done/${id}`);
     return null;
   }
+
+  // A resumed workout whose every set was saved before the reload: only Finish is left.
+  if (progress.setNo > setup.sets) return <AllSaved name={exercise.name} onFinish={finish} />;
 
   if (stage.kind === "preflight" || stage.kind === "error") {
     return (
@@ -328,6 +335,32 @@ function centreText(phase: string, frame: Snapshot["frame"], readyPose: RuleBase
 
 function phaseLabel(phase: string) {
   return { starting: "starting", waiting: "ready pose", countdown: "countdown", ended: "ended" }[phase] ?? phase;
+}
+
+function AllSaved({ name, onFinish }: { name: string; onFinish: () => Promise<string | null> }) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <main className="fixed inset-0 z-20 flex flex-col justify-center gap-6 bg-background p-8 text-foreground">
+      <div className="mx-auto w-full max-w-md space-y-5">
+        <p className="text-sm opacity-60">{name}</p>
+        <p className="text-lg leading-snug">Every set of this workout is saved.</p>
+        {error && <p role="alert" className="alert">{error}</p>}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setError(await onFinish());
+            setBusy(false);
+          }}
+          className="btn"
+        >
+          {busy ? "Finishing" : "Finish workout"}
+        </button>
+      </div>
+    </main>
+  );
 }
 
 function ModelChoice({ model, onChange }: { model: PoseModel; onChange: (model: PoseModel) => void }) {

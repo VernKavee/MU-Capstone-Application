@@ -159,6 +159,18 @@ export function afterSet(set: { kind: "initial" | "repair"; setNo: number; attem
   return set.setNo < sets ? "rest" : "finish";
 }
 
+// A reload mid-workout (ADR-0004, 2026-11-03, Vern): the live page picks up the same workout
+// when its last set ended under five minutes ago, at the set after the highest saved one. A
+// repair set not yet taken is dropped. Null starts a new workout, and the old one stays in
+// History as not finished. Past the target sets means every set is saved.
+export const RESUME_WINDOW_MS = 5 * 60_000;
+export function resumePoint(workout: { ended_at: string | null; sets: { set_no: number; ended_at: string }[] }, now: Date): number | null {
+  if (workout.ended_at || !workout.sets.length) return null;
+  const last = Math.max(...workout.sets.map((s) => Date.parse(s.ended_at)));
+  if (now.getTime() - last >= RESUME_WINDOW_MS) return null;
+  return Math.max(...workout.sets.map((s) => s.set_no)) + 1;
+}
+
 // The keypoint file (ADR-0005): JSON, gzipped on upload. Every frame's 33 landmarks at
 // capture rate as one flat row of numbers, joints then fields, so the file is the
 // `landmarks` object the similarity contract takes (ADR-0007) and what replay draws.
