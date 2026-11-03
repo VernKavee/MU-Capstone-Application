@@ -26,7 +26,6 @@ const capture: SetCapture = {
   videoMimeType: "video/webm;codecs=vp9",
 };
 const saved: SaveSetResult = {
-  workoutId: "w1",
   setId: "s1",
   uploads: { video: { path: "u/s1/video.webm", token: "t1" }, keypoints: { path: "u/s1/keypoints.json.gz", token: "t2" } },
 };
@@ -59,13 +58,12 @@ function job(api: JobApi, after: Promise<unknown> = Promise.resolve()) {
   const updates: JobUpdate[] = [];
   const handle = createJob(api, {
     input: {
-      exerciseId: "squat", setup: { reps: 10, sets: 3, rest: 60, side: null }, setNo: 1, kind: "initial", endedBy: "target_reached",
+      workoutId: "w0", setId: "s1", exerciseId: "squat", setup: { reps: 10, sets: 3, rest: 60, side: null }, setNo: 1, kind: "initial", endedBy: "target_reached",
       startedAt: "", endedAt: "", totals: { attempts: 0, completed_reps: 0, correct_reps: 0, abandoned_attempts: 0 },
       attempts: [], engineReport: report, engineVersion: "stub-1",
     },
     capture,
     after,
-    workoutId: () => "w0",
     onSaved: () => {},
     onUpdate: (update) => updates.push(update),
   });
@@ -118,6 +116,7 @@ test("the save waits for the previous set's save, and a failed save is retried",
   offline = false;
   await j.run();
   assert.equal(calls.save.length, 2);
+  assert.deepEqual(calls.save.map((s) => [s.workoutId, s.setId]), [["w0", "s1"], ["w0", "s1"]], "the retry names the same rows");
   assert.equal(j.updates.at(-1)!.status, "done");
 });
 

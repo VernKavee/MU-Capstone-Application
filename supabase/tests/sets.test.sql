@@ -3,7 +3,7 @@
 -- bucket is one folder per user. User A tries to read B's workout, its sets, and its
 -- files by id, and gets nothing.
 begin;
-select plan(24);
+select plan(29);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.local'),
@@ -78,6 +78,29 @@ select throws_ok(
   $$ insert into public.workouts (user_id, exercise_id, target_reps, target_sets, rest_seconds, side)
      values ('00000000-0000-0000-0000-000000000001', 'bicep-curl', 10, 3, 60, 'both') $$,
   '23514', null, 'and only left or right');
+-- The save names its rows by ids the browser made and skips what is already there, so a
+-- retry saves nothing twice (ADR-0004).
+select lives_ok(
+  $$ insert into public.workouts (id, user_id, exercise_id, target_reps, target_sets, rest_seconds)
+     values ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'squat', 10, 3, 60)
+     on conflict (id) do nothing;
+     insert into public.sets (id, workout_id, set_no, kind, ended_by, started_at, ended_at, totals, attempts, engine_report, engine_version)
+     values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 1, 'initial', 'target_reached', now(), now(), '{}', '[]', '{}', 'stub')
+     on conflict (id) do nothing $$,
+  'saving the same workout and set again is accepted');
+select is((select count(*) from public.sets where workout_id = '10000000-0000-0000-0000-000000000001' and kind = 'initial'), 1::bigint,
+  'and leaves one set');
+select lives_ok(
+  $$ insert into public.workouts (id, user_id, exercise_id, target_reps, target_sets, rest_seconds)
+     values ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'squat', 10, 3, 60)
+     on conflict (id) do nothing $$,
+  'a save naming B''s workout id writes nothing');
+select throws_ok(
+  $$ insert into public.sets (id, workout_id, set_no, kind, ended_by, started_at, ended_at, totals, attempts, engine_report, engine_version)
+     values ('20000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000002', 3, 'initial', 'user_ended', now(), now(), '{}', '[]', '{}', 'stub')
+     on conflict (id) do nothing $$,
+  '42501', null, 'and its set is refused');
+
 select throws_ok($$ delete from public.sets $$, '42501', null, 'sets are never deleted through the API');
 select throws_ok($$ delete from public.workouts $$, '42501', null, 'nor workouts');
 
@@ -97,6 +120,8 @@ select is((select count(*) from storage.objects where name like '00000000-0000-0
 reset role;
 select is((select llm_feedback from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
   'B''s set is unchanged');
+select is((select user_id from public.workouts where id = '10000000-0000-0000-0000-000000000002'), '00000000-0000-0000-0000-000000000002'::uuid,
+  'and B''s workout is still B''s');
 
 select * from finish();
 rollback;

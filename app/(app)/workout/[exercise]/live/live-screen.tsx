@@ -43,11 +43,13 @@ export function LiveScreen({ exercise, setup }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<LiveSession | null>(null);
-  // Across sets: each set's saving job, the last save (the next save waits for it so every
-  // set lands in the same workout row), and the workout id once the first save returns it.
+  // Across sets: each set's saving job, the last save (the next save waits for it so sets
+  // are saved in order), and the workout id, made here so every set and every retry names
+  // the same workout row (ADR-0004).
   const jobs = useRef(new Map<number, Job>());
   const lastSave = useRef<Promise<unknown>>(Promise.resolve());
-  const workoutId = useRef<string | null>(null);
+  const workoutId = useRef(crypto.randomUUID());
+  const savedAny = useRef(false);
   const attemptCap = 2 * setup.reps;
   const guideHref = `/workout/${exercise.id}/guide?${setupQuery(setup)}`;
 
@@ -58,6 +60,8 @@ export function LiveScreen({ exercise, setup }: Props) {
     setEntries((list) => [...list, { key, ...progress, capture, attempts, status: "saving", similarity: null, feedback: null, error: null }]);
     const job = createJob({
       input: {
+        workoutId: workoutId.current,
+        setId: crypto.randomUUID(),
         exerciseId: exercise.id,
         setup,
         setNo: progress.setNo,
@@ -72,9 +76,8 @@ export function LiveScreen({ exercise, setup }: Props) {
       },
       capture,
       after: lastSave.current,
-      workoutId: () => workoutId.current,
-      onSaved: (id) => {
-        workoutId.current = id;
+      onSaved: () => {
+        savedAny.current = true;
       },
       onUpdate: (update) => setEntries((list) => list.map((e) => (e.key === key ? { ...e, ...update } : e))),
     });
@@ -141,7 +144,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   async function finish(): Promise<string | null> {
     await lastSave.current;
     const id = workoutId.current;
-    if (!id) {
+    if (!savedAny.current) {
       router.push("/"); // nothing was saved
       return null;
     }

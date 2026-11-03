@@ -51,3 +51,9 @@ The report's setup screen collects reps per set and a number of sets, but its da
 - What follows a set, one repair set after an initial set with any violation, abandoned attempts included, unless it was skipped, then the rest or the end, is `afterSet` in `lib/set.ts`, tested in `lib/set.test.ts`.
 - The job that saves a set, uploads its files, and analyses it is `lib/set-job.ts`. `lib/set-job.test.ts` proves the order, that a retry redoes only what is missing, that each save waits for the previous set's, and that a skip before the save lands is still recorded.
 - The workout end-to-end test takes one repair set and skips another, and checks that the rest timer follows a repair set rather than a second offer.
+
+## Amended 2026-11-03: the browser names the rows
+
+- The live screen makes the workout id once, and each set's id when the set ends (`crypto.randomUUID()`). `saveSet` inserts the workout and the set by those ids and skips either one already there (`on conflict (id) do nothing`). So the first set's save creates the workout, a later set's save finds it, and a retry saves nothing twice and only signs the uploads afresh.
+- Why: the database used to hand out the workout id only when the first save worked. A failed first save left the next set without one, so it made a second workout. A set insert that failed after the workout insert left an empty workout, and a signing failure after the set insert saved the set again on retry.
+- A save naming another user's workout id writes no workout, and its set is refused by `owns_workout`. Proven in `supabase/tests/sets.test.sql`.
