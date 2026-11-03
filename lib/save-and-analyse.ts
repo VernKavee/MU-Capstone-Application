@@ -99,8 +99,11 @@ export async function saveSet(supabase: Client, input: SaveSetInput): Promise<Sa
 // Record which files arrived, score similarity from the keypoint file in storage, then
 // write feedback with the workout's earlier sets and the user's past workouts of the
 // exercise as context. Whatever step fails, what came before it stays written. Similarity
-// may be empty (ADR-0007): when it fails, feedback is still written without it.
-export async function analyseSet(supabase: Client, setId: string, files: SetFiles): Promise<AnalyseResult> {
+// may be empty (ADR-0007): when it fails, feedback is still written without it. Reads and
+// the file paths go through the user's client, so row-level security proves the set is
+// theirs; the analysis itself is written by `admin`, the server's own client, because the
+// API does not let a user change it (2026-11-03).
+export async function analyseSet(supabase: Client, admin: Client, setId: string, files: SetFiles): Promise<AnalyseResult> {
   // Only paths that arrived are written, so a retry never erases one an earlier call stored.
   const paths = { ...(files.video && { video_url: files.video }), ...(files.keypoints && { keypoints_url: files.keypoints }) };
   if (Object.keys(paths).length) {
@@ -142,7 +145,7 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
       });
       const byNo = new Map(scored.attempts.map((a) => [a.attempt_no, a.similarity]));
       const scoredAttempts = attempts.map((a) => ({ ...a, similarity: byNo.get(a.attempt_no) ?? null }));
-      const { error } = await supabase.from("sets").update({ similarity: scored.set, attempts: scoredAttempts as unknown as Json }).eq("id", setId);
+      const { error } = await admin.from("sets").update({ similarity: scored.set, attempts: scoredAttempts as unknown as Json }).eq("id", set.id);
       if (error) throw error;
       attempts = scoredAttempts;
       similarity = scored.set;
@@ -159,7 +162,7 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
     const input = await feedbackInput(supabase, set, similarity, attempts);
     if (!input) return { similarity, feedback: null, error: withSimilarityError("The profile could not be read.") };
     const { feedback } = await writeFeedback(input);
-    const { error } = await supabase.from("sets").update({ llm_feedback: feedback }).eq("id", setId);
+    const { error } = await admin.from("sets").update({ llm_feedback: feedback }).eq("id", set.id);
     if (error) throw error;
     return { similarity, feedback, error: similarityError };
   } catch (e) {

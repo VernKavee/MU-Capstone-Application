@@ -421,7 +421,8 @@ npm run dev
 ```
 
 `.env.local` comes from `.env.example` plus the publishable key printed by
-`npx supabase status -o env`. At http://localhost:3000, register, accept the three
+`npx supabase status -o env`, and its `SERVICE_ROLE_KEY` as `SUPABASE_SERVICE_ROLE_KEY`: since
+2026-11-03 the server writes similarity and feedback with it, and without it no set is analysed. At http://localhost:3000, register, accept the three
 consents, fill in the profile, pick an exercise, and open the camera. Stand back facing the
 camera with your whole body in view, where the screen stops asking you to move, and hold
 your arms straight out until the countdown,

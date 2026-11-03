@@ -3,7 +3,7 @@
 -- bucket is one folder per user. User A tries to read B's workout, its sets, and its
 -- files by id, and gets nothing.
 begin;
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.local'),
@@ -51,13 +51,22 @@ select throws_ok(
   '23505', null, 'but only one repair set per set');
 
 select lives_ok(
-  $$ update public.sets set similarity = '{"mean_score":90}', llm_feedback = 'Good', repair_declined = true,
-       keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm', attempts = '[{"attempt_no":1}]'
+  $$ update public.sets set repair_declined = true, keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm'
      where id = '20000000-0000-0000-0000-000000000001' $$,
-  'the analyse step and the uploads write their columns');
+  'the uploads and a skipped repair set write their columns');
 select lives_ok(
-  $$ update public.sets set llm_feedback = 'overwritten' where id = '20000000-0000-0000-0000-000000000002' $$,
+  $$ update public.sets set video_url = 'overwritten' where id = '20000000-0000-0000-0000-000000000002' $$,
   'an update aimed at B''s set is filtered, not errored');
+-- The analysis is the server's to write (2026-11-03): the user cannot change it.
+select throws_ok(
+  $$ update public.sets set attempts = '[{"attempt_no":1}]' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'a user cannot rewrite their attempt records');
+select throws_ok(
+  $$ update public.sets set similarity = '{"mean_score":100}' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'nor their similarity');
+select throws_ok(
+  $$ update public.sets set llm_feedback = 'Perfect' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'nor their feedback');
 select throws_ok(
   $$ update public.sets set engine_report = '{}' where id = '20000000-0000-0000-0000-000000000001' $$,
   '42501', null, 'the engine report is never rewritten');
@@ -118,7 +127,7 @@ select is((select count(*) from storage.objects where name like '00000000-0000-0
   'and cannot read B''s video');
 
 reset role;
-select is((select llm_feedback from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
+select is((select video_url from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
   'B''s set is unchanged');
 select is((select user_id from public.workouts where id = '10000000-0000-0000-0000-000000000002'), '00000000-0000-0000-0000-000000000002'::uuid,
   'and B''s workout is still B''s');

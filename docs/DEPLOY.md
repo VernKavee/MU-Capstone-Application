@@ -27,7 +27,9 @@ phone, registers, and does a workout.
 The app reads two settings, `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, in `lib/supabase/client.ts`, `server.ts`, and
 `proxy.ts`. Both are fixed into the build, so they are written before `npm run build`.
-No route needs a code change.
+No route needs a code change. One more, read on the server only and not fixed into the build:
+`SUPABASE_SERVICE_ROLE_KEY`, the compose stack's service role key, for the analyse step's
+writes (2026-11-03); without it every set saves but none is analysed.
 
 ## The demo secrets, which decide the design
 
@@ -110,7 +112,8 @@ Python services ── localhost ──> Postgres (expert_motions, knowledge_bas
 6. Apply the schema from this repo: `npx supabase db push --db-url <the Postgres address
    on localhost>`. The four migrations carry the exercise catalogue and the `sets` bucket,
    so nothing is typed by hand. Check at the rehearsal.
-7. Write `.env.production` with the API hostname and the compose stack's anon key, then
+7. Write `.env.production` with the API hostname, the compose stack's anon key, and its
+   service role key as `SUPABASE_SERVICE_ROLE_KEY`, then
    `npm ci` and `npm run build`.
 8. Install the systemd unit and the Caddyfile, and start both.
 9. Start the Python services. Similarity: a Python 3.10 venv with

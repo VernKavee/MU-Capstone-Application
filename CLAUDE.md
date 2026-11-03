@@ -283,7 +283,10 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
 - Finish workout writes `ended_at` and opens the finished summary, which reads from the
   database and has no retry; the retry lives on the set-complete screen.
 - Column grants limit API updates to `workouts.ended_at` and, on `sets`, the decline, the
-  file paths, similarity, feedback, and attempts. Nothing is deleted.
+  file paths, similarity, feedback, and attempts. Nothing is deleted. Since 2026-11-03
+  similarity, feedback, and attempts are written by the server's service-role client
+  (`lib/supabase/admin.ts`, `SUPABASE_SERVICE_ROLE_KEY`) after the user's client has read the
+  set, and the API refuses them to a user (migration `analysis_server_only`).
 - Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
   object; `value` is `rep_stats[rule name]` or null.
 
@@ -610,8 +613,8 @@ Still open, outside the build plan:
 - Replay out of step (Vern, 2026-10-22): workout `44bd485d`, set 1's repair set (59 s, 1,639
   frames at 28 fps) plays with the skeleton out of step with the video; set 1 (26 s) did not.
   Not investigated (session log 2026-10-21, last section).
-- `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
-  so a user can rewrite their own attempt records. Narrowing it needs a database function.
+- The first save of a set runs in the user's session, so a user could send made-up attempt
+  records at that moment; since 2026-11-03 they cannot change them, or the analysis, after.
 - The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found
   the shrinking video, the T pose from too far, and no sound on silent. Run 2 found no
   speech, fixed by a silent utterance in the Start camera tap. After that Vern reported it

@@ -121,7 +121,8 @@ npx supabase start
 ```
 
 Copy `.env.example` to `.env.local` and paste the publishable key printed by
-`npx supabase status -o env`. Then:
+`npx supabase status -o env`, and its `SERVICE_ROLE_KEY` as `SUPABASE_SERVICE_ROLE_KEY` (the
+server writes each set's analysis with it). Then:
 
 ```bash
 npm run dev
