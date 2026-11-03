@@ -273,7 +273,8 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
 - After a set: save the row, upload both files, then analyse. A retry redoes only what is
   missing. Each set's save waits for the previous one so sets save in order. Since
   2026-11-03 the browser makes the workout and set ids and the save skips rows already
-  there, so every set and retry lands in one workout row (ADR-0004).
+  there, so every set and retry lands in one workout row (ADR-0004). A retry with a file
+  still to send saves again for fresh upload URLs, which last two hours.
 - The repair set follows an initial set with any violation, abandoned attempts included,
   starts without rest, and keeps the set number. Skipping writes `repair_declined` on the
   initial set, even when the skip comes before the save lands.
@@ -609,7 +610,6 @@ Still open, outside the build plan:
   Not investigated (session log 2026-10-21, last section).
 - A reload mid-workout gives the next set a new workout row. (A failed first save no longer
   does: fixed 2026-11-03, ADR-0004.)
-- Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
 - `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
   so a user can rewrite their own attempt records. Narrowing it needs a database function.
 - The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found

@@ -85,17 +85,30 @@ test("a set is saved, both files uploaded, then analysed", async () => {
   assert.equal(j.updates.at(-1)!.feedback, "Good set.");
 });
 
-test("a retry redoes only what is missing", async () => {
+test("a retry redoes only what is missing, with fresh upload URLs", async () => {
   let videoFails = true;
-  const { api, calls } = fakeApi({ uploadError: (path) => (path.endsWith("video.webm") && videoFails ? "network down" : null) });
+  let signed = 0;
+  const tokens: string[] = [];
+  const { api, calls } = fakeApi({
+    save: async () => {
+      signed++;
+      return { ...saved, uploads: { video: { path: "u/s1/video.webm", token: `v${signed}` }, keypoints: { path: "u/s1/keypoints.json.gz", token: `k${signed}` } } };
+    },
+    uploadError: (path) => (path.endsWith("video.webm") && videoFails ? "network down" : null),
+  });
+  const upload = api.upload;
+  api.upload = (to, body, type) => (tokens.push(to.token), upload(to, body, type));
   const j = job(api);
   await j.run();
   assert.deepEqual(j.updates.at(-1), { status: "failed", error: "The video did not upload.", similarity: null, feedback: "Good set." });
   assert.deepEqual(calls.analyse[0], { video: null, keypoints: "u/s1/keypoints.json.gz" }, "the analysis runs on what arrived");
   videoFails = false;
   await j.run();
-  assert.equal(calls.save.length, 1, "the set is not saved twice");
+  assert.equal(calls.save.length, 2, "the retry saves again, which only signs the uploads afresh");
   assert.deepEqual(calls.upload, ["u/s1/video.webm", "u/s1/keypoints.json.gz", "u/s1/video.webm"], "only the video is sent again");
+  assert.deepEqual(tokens, ["v1", "k1", "v2"], "with the new URL");
+  await j.run();
+  assert.equal(calls.save.length, 2, "once both files are in, a retry does not save again");
   assert.deepEqual(calls.analyse[1], { video: "u/s1/video.webm", keypoints: "u/s1/keypoints.json.gz" });
   assert.equal(j.updates.at(-1)!.status, "done");
 });

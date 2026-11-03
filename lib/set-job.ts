@@ -80,9 +80,13 @@ export function createJob(
     ]);
   }
 
+  // A file still to send needs a fresh upload URL: the last ones may have expired (they
+  // last two hours). Saving again is safe, as the save skips the rows already there.
+  const filesMissing = () => Boolean(capture.video && videoType && !uploaded.video) || !uploaded.keypoints;
+
   async function run() {
     try {
-      if (!saved) {
+      if (!saved || filesMissing()) {
         opts.onUpdate({ status: "saving", error: null });
         saved = await save();
       }
