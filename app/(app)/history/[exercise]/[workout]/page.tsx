@@ -23,7 +23,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const tz = await userTimeZone();
   const { data: workout } = await supabase
     .from("workouts")
-    .select("id, started_at, target_reps, target_sets, exercises!inner(name, rule_based_logic), sets(id, set_no, kind, ended_by, repair_declined, totals, similarity)")
+    .select("id, started_at, ended_at, target_reps, target_sets, exercises!inner(name, rule_based_logic), sets(id, set_no, kind, ended_by, repair_declined, totals, similarity)")
     .eq("id", id)
     .eq("exercise_id", exerciseId)
     .maybeSingle()
@@ -53,7 +53,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
         <p className="text-sm opacity-70">
           {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
           {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}. {correct} correct reps in {tries} attempts
-          {mean !== null && `, ${mean}% mean similarity`}.
+          {mean !== null && `, ${mean}% mean similarity`}.{!workout.ended_at && " Not finished."}
         </p>
       </header>
 

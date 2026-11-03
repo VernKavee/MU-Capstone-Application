@@ -294,7 +294,9 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   part way included.
 - An active day needs a finished workout, dated by its start, over the same seven days.
   Level 3 lists finished workouts only, so a workout left part way shows on the chart and
-  nowhere else in History.
+  nowhere else in History. Since 2026-11-03 (Vern) Level 3 lists every workout with a saved
+  set, a workout left part way marked "Not finished", twenty to a page with `?before=`;
+  active days stay finished-only.
 - Level 4 lists every set of the workout and shows the one in `?set=` in full; only that
   set's attempts, feedback, and file paths are fetched. The feedback detail screen is per
   set.
@@ -604,8 +606,7 @@ Still open, outside the build plan:
   real camera through the app is not measured yet. The keypoint file follows the device's
   frame rate, 60 fps on Vern's Mac, about 1.7 MB per minute. Storage refuses a file over
   500 MiB, about 25 minutes of video.
-- A workout left part way cannot be opened in History; Level 3 has no paging; a set
-  missing one file is not replayed.
+- A set missing one file is not replayed.
 - Replay out of step (Vern, 2026-10-22): workout `44bd485d`, set 1's repair set (59 s, 1,639
   frames at 28 fps) plays with the skeleton out of step with the video; set 1 (26 s) did not.
   Not investigated (session log 2026-10-21, last section).
