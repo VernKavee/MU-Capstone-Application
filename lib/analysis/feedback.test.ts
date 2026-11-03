@@ -62,8 +62,43 @@ test("feedback client: a failure answer becomes the service's own sentence", asy
     res.end("the language model is busy right now, try again in a minute");
   });
   try {
-    await assert.rejects(requestFeedback(s.url, input),
+    await assert.rejects(requestFeedback(s.url, input, 1000, 0),
       { message: "the feedback service answered 503: the language model is busy right now, try again in a minute" });
+  } finally {
+    await s.close();
+  }
+});
+
+test("feedback client: a busy answer is retried once, and the retry's feedback is returned", async () => {
+  let calls = 0;
+  const s = await serve((_req, _body, res) => {
+    calls++;
+    if (calls === 1) {
+      res.writeHead(502, { "content-type": "text/plain" });
+      res.end("the language model could not write feedback this time, try again");
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ feedback: "Slow down." }));
+  });
+  try {
+    assert.deepEqual(await requestFeedback(s.url, input, 1000, 0), { feedback: "Slow down." });
+    assert.equal(calls, 2);
+  } finally {
+    await s.close();
+  }
+});
+
+test("feedback client: a refused input is not retried", async () => {
+  let calls = 0;
+  const s = await serve((_req, _body, res) => {
+    calls++;
+    res.writeHead(422, { "content-type": "text/plain" });
+    res.end("the feedback input does not match the contract (set)");
+  });
+  try {
+    await assert.rejects(requestFeedback(s.url, input, 1000, 0), { message: /answered 422/ });
+    assert.equal(calls, 1);
   } finally {
     await s.close();
   }

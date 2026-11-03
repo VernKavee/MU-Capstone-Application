@@ -8,13 +8,30 @@ import type { FeedbackInput, FeedbackOutput } from "./contracts.ts";
 const DELAY_MS = 1500; // a short artificial wait so the loading state is exercised
 // The service keeps its own budget under this (45 s), so its answer, even a failure, arrives first.
 export const TIMEOUT_MS = 60_000;
+// Gemini's free tier often answers "503, high demand" for a few seconds, which the service
+// passes on as 502 (or 503 for its own busy states). One quiet retry after a short wait saves
+// the user a Retry tap (2026-11-03 phone run). A 504 already waited the service's 45 s.
+const RETRY_STATUSES = [502, 503];
+export const RETRY_WAIT_MS = 3000;
 
 export async function writeFeedback(input: FeedbackInput, delayMs = DELAY_MS): Promise<FeedbackOutput> {
   const url = process.env.FEEDBACK_URL;
   return url ? requestFeedback(url, input) : stubFeedback(input, delayMs);
 }
 
-export async function requestFeedback(url: string, input: FeedbackInput, timeoutMs = TIMEOUT_MS): Promise<FeedbackOutput> {
+export async function requestFeedback(url: string, input: FeedbackInput, timeoutMs = TIMEOUT_MS, retryWaitMs = RETRY_WAIT_MS): Promise<FeedbackOutput> {
+  try {
+    return await requestOnce(url, input, timeoutMs);
+  } catch (e) {
+    if (!(e instanceof RetryableError)) throw e;
+    await new Promise((resolve) => setTimeout(resolve, retryWaitMs));
+    return requestOnce(url, input, timeoutMs);
+  }
+}
+
+class RetryableError extends Error {}
+
+async function requestOnce(url: string, input: FeedbackInput, timeoutMs: number): Promise<FeedbackOutput> {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -28,7 +45,10 @@ export async function requestFeedback(url: string, input: FeedbackInput, timeout
     throw new Error("the feedback service is not reachable");
   }
   // The service answers a failure with one plain-text sentence meant for the user.
-  if (!res.ok) throw new Error(`the feedback service answered ${res.status}: ${(await res.text()).trim() || res.statusText}`);
+  if (!res.ok) {
+    const Failure = RETRY_STATUSES.includes(res.status) ? RetryableError : Error;
+    throw new Failure(`the feedback service answered ${res.status}: ${(await res.text()).trim() || res.statusText}`);
+  }
   const body: unknown = await res.json().catch(() => null);
   const feedback = (body as { feedback?: unknown } | null)?.feedback;
   if (typeof feedback !== "string" || !feedback.trim()) throw new Error("the feedback service answered without feedback");
