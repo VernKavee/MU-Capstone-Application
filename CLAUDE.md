@@ -610,9 +610,11 @@ Still open, outside the build plan:
   frame rate, 60 fps on Vern's Mac, about 1.7 MB per minute. Storage refuses a file over
   500 MiB, about 25 minutes of video.
 - A set missing one file is not replayed.
-- Replay out of step (Vern, 2026-10-22): workout `44bd485d`, set 1's repair set (59 s, 1,639
-  frames at 28 fps) plays with the skeleton out of step with the video; set 1 (26 s) did not.
-  Not investigated (session log 2026-10-21, last section).
+- A loaded phone loses the end of a recording (2026-11-03): workout `44bd485d`'s repair set,
+  whose keypoint rate fell from 35 to 14 fps in its last 20 s, has 56.8 s of video against 59.0 s
+  of keypoints; the video is on time to its end (motion lag 50 to 100 ms throughout), the last
+  2.2 s were never written. Replay no longer reads this as a start delay (fixed, ADR-0005); the
+  lost seconds themselves are not.
 - The first save of a set runs in the user's session, so a user could send made-up attempt
   records at that moment; since 2026-11-03 they cannot change them, or the analysis, after.
 - The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found

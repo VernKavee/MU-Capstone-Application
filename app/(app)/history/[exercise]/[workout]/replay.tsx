@@ -14,26 +14,12 @@ const OUTCOME = { correct: "Correct", incorrect: "Incorrect", abandoned: "Abando
 const SEGMENT = { correct: "bg-ink/70", incorrect: "bg-tape", abandoned: "bg-ink/25" } as const;
 const MARKER = { correct: "bg-foreground", incorrect: "bg-tape", abandoned: "bg-foreground/25" } as const;
 
-// The recorder's first video frame lands after the keypoint clock starts, so the video is
-// shorter than the keypoint file by that start-up delay. A MediaRecorder file reports an
-// infinite duration until it is seeked to the end, which also makes the browser find the
-// real one.
-async function videoSeconds(v: HTMLVideoElement): Promise<number> {
-  if (!Number.isFinite(v.duration)) {
-    await new Promise<void>((done) => {
-      const timer = setTimeout(done, 3000);
-      v.addEventListener("durationchange", () => (clearTimeout(timer), done()), { once: true });
-      v.currentTime = 1e7;
-    });
-  }
-  return v.duration;
-}
-
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 
 // Level 4's player and attempt list for one set. The video plays as recorded, not mirrored,
 // with the skeleton drawn over it from the keypoint file. Both start at the end of the
-// countdown, so a frame's t is the video's time (ADR-0005). The file holds no violations
+// countdown; the video's 0 is the file's `video_start_ms` on the t clock, or 0 in files from
+// before 2026-11-03, measured there at 50 to 100 ms (ADR-0005). The file holds no violations
 // per frame, so an attempt's violations light their joints for the whole attempt. Both
 // files are fetched from storage by the browser, and only when Play is pressed.
 export function Replay({
@@ -59,8 +45,8 @@ export function Replay({
   const headRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLSpanElement>(null);
   const pending = useRef(0); // the frame to start from once the files are in
-  const offset = useRef(0); // keypoint ms minus the video's ms: the recorder's start-up delay
   const file = state.kind === "ready" ? state.file : null;
+  const offset = file?.video_start_ms ?? 0; // keypoint ms minus the video's ms
   const end = file ? file.frames[file.frames.length - 1].t : 0;
   const canPlay = Boolean(video && keypoints) && state.kind !== "empty";
 
@@ -88,7 +74,7 @@ export function Replay({
       void load();
       return;
     }
-    v.currentTime = Math.max(0, (file.frames[frame]?.t ?? 0) - offset.current) / 1000;
+    v.currentTime = Math.max(0, (file.frames[frame]?.t ?? 0) - offset) / 1000;
     void v.play();
   }
 
@@ -105,7 +91,7 @@ export function Replay({
     let last = -1;
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const ms = v.currentTime * 1000 + offset.current;
+      const ms = v.currentTime * 1000 + offset;
       if (ms === last || !v.videoWidth) return;
       last = ms;
       if (canvas.width !== v.videoWidth || canvas.height !== v.videoHeight) {
@@ -123,7 +109,7 @@ export function Replay({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [file, end, attempts, highlight]);
+  }, [file, end, offset, attempts, highlight]);
 
   const shown = attempts.find((a) => a.attempt_no === current);
   const at = (frame: number) => (file ? ((file.frames[frame]?.t ?? 0) / end) * 100 : 0);
@@ -142,12 +128,9 @@ export function Replay({
                 playsInline
                 preload="auto"
                 className="absolute inset-0 h-full w-full object-contain"
-                onLoadedMetadata={async (e) => {
+                onLoadedMetadata={(e) => {
                   const v = e.currentTarget;
-                  const seconds = await videoSeconds(v);
-                  // ponytail: a constant shift; a scale too if a drift ever shows.
-                  offset.current = Number.isFinite(seconds) ? Math.min(2000, Math.max(0, end - seconds * 1000)) : 0;
-                  v.currentTime = Math.max(0, (state.file.frames[pending.current]?.t ?? 0) - offset.current) / 1000;
+                  v.currentTime = Math.max(0, (state.file.frames[pending.current]?.t ?? 0) - offset) / 1000;
                   void v.play();
                 }}
                 onPlay={() => setPlaying(true)}

@@ -78,6 +78,8 @@ test("the keypoint file is one flat row of 231 numbers per frame at capture rate
   assert.equal(file.joints.length, 33);
   assert.equal(file.frame_size, null, "no picture size given");
   assert.deepEqual(toKeypointFile(frames, [1080, 1920]).frame_size, [1080, 1920]);
+  assert.equal(file.video_start_ms, null, "no recording");
+  assert.equal(toKeypointFile(frames, null, 61.6).video_start_ms, 62, "the recorder's start, in whole ms");
   assert.deepEqual(file.frames[13], { t: 1300, state: "Idle", event: "rep_completed", points: file.frames[13].points });
 });
 

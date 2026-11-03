@@ -24,6 +24,7 @@ const capture: SetCapture = {
   frameSize: [1080, 1920],
   video: new Blob(["video bytes"], { type: "video/webm" }),
   videoMimeType: "video/webm;codecs=vp9",
+  videoStartMs: 60,
 };
 const saved: SaveSetResult = {
   setId: "s1",

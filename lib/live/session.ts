@@ -30,6 +30,7 @@ export type SetCapture = {
   frameSize: FrameSize | null; // the picture MediaPipe saw, [width, height] in pixels; similarity needs it (ADR-0007)
   video: Blob | null; // null when MediaRecorder is unavailable
   videoMimeType: string | null;
+  videoStartMs: number | null; // the recorder's start on the t clock, so replay can line the two up
 };
 
 export type Snapshot = {
@@ -85,6 +86,7 @@ export class LiveSession {
   private fpsWindow: number[] = [];
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
+  private videoStartMs: number | null = null;
   private frames: KeypointFrame[] = [];
   private frameSize: FrameSize | null = null;
   private startedAt: Date | null = null;
@@ -243,6 +245,12 @@ export class LiveSession {
     this.recorder.ondataavailable = (event) => {
       if (event.data.size) this.chunks.push(event.data);
     };
+    // The video's 0 on the keypoint clock. Not inferred from the video's length at replay:
+    // a loaded phone drops the recording's last seconds on stop, which once read as a 2 s
+    // start delay and put the skeleton 2 s ahead of the picture (2026-11-03).
+    this.recorder.onstart = () => {
+      this.videoStartMs = performance.now() - this.t0;
+    };
     this.recorder.start(1000);
   }
 
@@ -294,6 +302,7 @@ export class LiveSession {
         frameSize: this.frameSize,
         video,
         videoMimeType,
+        videoStartMs: video ? this.videoStartMs : null,
       };
       this.opts.onChange({ status: "ended", frame: this.lastFrame, fps: 0, capture });
     };

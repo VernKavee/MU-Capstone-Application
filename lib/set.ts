@@ -184,12 +184,15 @@ export type KeypointFile = {
   // [width, height] in pixels of the picture MediaPipe saw; x and y are fractions of it. Added
   // 2026-10-27 within version 1 for similarity, which refuses a file without it; older files lack it.
   frame_size?: FrameSize | null;
+  // When the recorder started, in ms on the same clock as t: the video's 0 is this t. Added
+  // 2026-11-03 within version 1 for replay; older files lack it and replay takes 0.
+  video_start_ms?: number | null;
   frames: { t: number; state: string; event: KeypointFrame["event"]; points: number[] }[];
 };
 
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
 
-export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | null = null): KeypointFile {
+export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | null = null, videoStartMs: number | null = null): KeypointFile {
   const span = frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / 1000 : 0;
   return {
     schema_version: KEYPOINT_FILE_VERSION,
@@ -197,6 +200,7 @@ export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | n
     fields: KEYPOINT_FIELDS,
     fps: span > 0 ? Math.round((frames.length - 1) / span) : 0,
     frame_size: frameSize,
+    video_start_ms: videoStartMs === null ? null : Math.round(videoStartMs),
     frames: frames.map((f) => ({
       t: Math.round(f.t),
       state: f.state,
