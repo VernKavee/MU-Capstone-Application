@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic } from "@/lib/exercise";
 import { ENDED_BY, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
+import { plainFeedback } from "@/lib/feedback-text";
 import { jointIndices } from "@/lib/live/skeleton";
 import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
@@ -102,7 +103,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
             </h2>
             {detail.llm_feedback ? (
               <div className="space-y-2">
-                <p className="line-clamp-4 leading-relaxed">{detail.llm_feedback}</p>
+                <p className="line-clamp-4 leading-relaxed">{plainFeedback(detail.llm_feedback)}</p>
                 <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm underline">
                   Read the full feedback
                 </Link>

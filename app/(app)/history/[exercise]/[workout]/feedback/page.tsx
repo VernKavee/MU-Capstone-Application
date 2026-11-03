@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatWhen, isUuid } from "@/lib/history";
+import { FeedbackText } from "../../../../feedback-text";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 
@@ -34,7 +35,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
         </h1>
       </header>
       {set.llm_feedback ? (
-        <p className="max-w-prose whitespace-pre-line text-lg leading-relaxed">{set.llm_feedback}</p>
+        <FeedbackText text={set.llm_feedback} className="text-lg" />
       ) : (
         <p className="opacity-70">No feedback was written for this set.</p>
       )}

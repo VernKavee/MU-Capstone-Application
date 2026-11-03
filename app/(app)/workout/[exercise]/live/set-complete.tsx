@@ -6,6 +6,7 @@ import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
 import type { JobStatus } from "./pipeline";
+import { FeedbackText } from "../../../feedback-text";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
 
@@ -120,7 +121,7 @@ export function SetComplete({
 
         <div aria-live="polite" className="space-y-3 border-t border-ink/20 pt-4">
           {entry.similarity && <SimilarityRow similarity={entry.similarity} />}
-          {entry.feedback && <p className="leading-relaxed">{entry.feedback}</p>}
+          {entry.feedback && <FeedbackText text={entry.feedback} />}
           {STATUS_TEXT[entry.status] && <p className="text-sm opacity-70 motion-safe:animate-pulse">{STATUS_TEXT[entry.status]}</p>}
           {entry.status === "failed" && (
             <p role="alert" className="text-sm">

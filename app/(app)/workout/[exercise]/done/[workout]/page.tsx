@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import type { SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
+import { FeedbackText } from "../../../../feedback-text";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
@@ -53,7 +54,11 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
                 {similarity && `, ${Math.round(similarity.mean_score)}% similarity`}
                 {set.repair_declined && ", repair set skipped"}.
               </p>
-              <p className="leading-relaxed">{set.llm_feedback ?? "No feedback yet. If it is still being written, it appears when you reload this page."}</p>
+              {set.llm_feedback ? (
+                <FeedbackText text={set.llm_feedback} />
+              ) : (
+                <p className="leading-relaxed">No feedback yet. If it is still being written, it appears when you reload this page.</p>
+              )}
             </li>
           );
         })}
