@@ -606,10 +606,11 @@ Still open, outside the build plan:
   needs ten straight-arm frames in the set before it acts; both as in the Python.
 
 - Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
-  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75; the size on a
-  real camera through the app is not measured yet. The keypoint file follows the device's
-  frame rate, 60 fps on Vern's Mac, about 1.7 MB per minute. Storage refuses a file over
-  500 MiB, about 25 minutes of video.
+  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75. Measured
+  2026-11-03 on every saved set since (84 sets, 47 minutes, 2026-10-10 to 10-27, phone and
+  laptop, all webm): 18.4 MB per minute, each set between 17.1 and 18.7. Keypoint files
+  0.9 to 1.9 MB per minute, following the device's frame rate. Storage refuses a file over
+  500 MiB, about 28 minutes of video.
 - A set missing one file is not replayed.
 - A loaded phone loses the end of a recording (2026-11-03): workout `44bd485d`'s repair set,
   whose keypoint rate fell from 35 to 14 fps in its last 20 s, has 56.8 s of video against 59.0 s

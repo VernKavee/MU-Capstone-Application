@@ -85,13 +85,15 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   ADR-0007; the feedback stub quotes the medical history back. The server side is
   `lib/save-and-analyse.ts`.
 - The set-complete screen shows the counts and the violations, then similarity and
-  feedback as they arrive, with a retry. It then offers one repair set after any
+  feedback as they arrive, with a retry. A reload under five minutes after the last set
+  picks the same workout up at the next set. It then offers one repair set after any
   violation (a skip is recorded), runs the rest timer, or finishes the workout.
 - `/workout/[exercise]/done/[workout]` is the finished summary, read back from the
   database: each set with its counts, similarity, and feedback, and a link to its replay.
 - History drills down in four levels, each fetching only what it shows. `/history`: active
   days per exercise over the last seven days. `/history/[exercise]`: that exercise's
-  finished workouts, newest first, with date and mean similarity.
+  workouts, newest first, twenty to a page, with date and mean similarity, and a workout
+  left part way marked "Not finished".
   `/history/[exercise]/[workout]`: every set of one workout and the chosen set in full,
   its video replayed with the skeleton drawn from its keypoint file, an attempt strip to
   jump to any attempt, similarity per body part, every violation, and the start of the
