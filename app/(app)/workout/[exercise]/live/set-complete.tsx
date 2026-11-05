@@ -122,7 +122,8 @@ export function SetComplete({
           <p className="text-xl leading-snug">{reason}</p>
         </header>
 
-        {hasNext && <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />}
+        {/* Gone while End workout runs, so the timer cannot start the next set meanwhile. */}
+        {hasNext && !busy && <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />}
 
         <dl className="card grid grid-cols-3 divide-x divide-line py-3 text-center">
           <Stat label="correct" value={report.total_reps_correct} className="text-ok" />
@@ -192,7 +193,7 @@ export function SetComplete({
               </div>
             </>
           ) : hasNext ? (
-            <button type="button" onClick={onNext} className="btn w-full">
+            <button type="button" onClick={onNext} disabled={busy} className="btn w-full">
               Start now
             </button>
           ) : (
