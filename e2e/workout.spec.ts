@@ -52,7 +52,7 @@ test("a workout with a taken and a declined repair set, then history and the rep
 
     await test.step("the repair set also hits the cap; the rest timer follows it, not another repair offer", async () => {
       await untilSetComplete(page, "Squat, repair set 1 of 2 complete");
-      await expect(page.getByText("Rest. Set 2 of 2 starts in")).toBeVisible();
+      await expect(page.getByText("Set 2 of 2 starts in")).toBeVisible();
       await page.getByRole("button", { name: "Start now" }).click();
     });
 

@@ -12,7 +12,8 @@ import { sound } from "@/lib/live/sound";
 import { buildAttempts, totalsOf } from "@/lib/set";
 import { endWorkout } from "./actions";
 import { createJob, type Job } from "./pipeline";
-import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
+import { pill, round, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
+import { ChevronLeft, Speaker, SpeakerOff, Warning } from "../../../icons";
 import { BackLink } from "@/app/(app)/back-link";
 
 type Props = {
@@ -255,21 +256,36 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
         )
       ) : (
         <>
-          <header className="absolute inset-x-0 top-0 flex items-center gap-2 p-3 text-sm">
-            <Link href={guideHref} className={pill}>Back</Link>
-            <span className={`${pill} truncate`}>
+          <header className="absolute inset-x-0 top-0 flex items-center gap-2 p-3">
+            <Link href={guideHref} aria-label="Back to the guide" className={round}>
+              <ChevronLeft />
+            </Link>
+            <span className="outlined truncate font-semibold [--stroke:4px]">
               {exercise.name}, {setLabel(progress, setup.sets)}
             </span>
             <span className="flex-1" />
-            <button type="button" onClick={toggleMute} className={pill} aria-pressed={muted}>
-              {muted ? "Unmute" : "Mute"}
+            <button type="button" onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"} aria-pressed={muted} className={round}>
+              {muted ? <SpeakerOff /> : <Speaker />}
             </button>
-            {phase === "active" && (
-              <button type="button" onClick={() => sessionRef.current?.endSet()} className={pill}>
-                End set
-              </button>
-            )}
           </header>
+
+          {/* The count and the target as one outlined number in the top corner (2026-11-05,
+              Vern): nothing solid in front of the body, and the outline reads on a light wall. */}
+          <div className={`pointer-events-none absolute right-4 top-16 text-right transition-opacity ${phase === "active" ? "" : "opacity-60"}`}>
+            <p className="outlined font-display leading-[0.85] tabular-nums">
+              <span key={frame?.correct_rep_count ?? 0} className="inline-block text-[clamp(72px,14vh,128px)] text-live motion-safe:animate-pop">
+                {frame?.correct_rep_count ?? 0}
+              </span>
+              <span className="text-[clamp(44px,8.5vh,76px)]">/{setup.reps}</span>
+            </p>
+            <p className="outlined mt-1 text-lg font-semibold [--stroke:4px]">
+              {frame?.attempt_count ?? 0} {frame?.attempt_count === 1 ? "attempt" : "attempts"}
+            </p>
+            <p className="outlined text-sm [--stroke:3px]">
+              {phase === "active" ? frame?.state : phaseLabel(phase)}
+              {snap?.status === "running" && `, ${snap.fps} fps ${model}`}
+            </p>
+          </div>
 
           {/* The centre text covers the whole stage and the HUD its bottom. Neither takes
               clicks, so the header and the Lagging button stay usable in every phase. */}
@@ -302,30 +318,22 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-3 p-4 pb-6">
-            <p role="status" aria-live="assertive" className={`min-h-12 max-w-md rounded-md px-4 py-2.5 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}>
+          {/* A slim warning band at the foot, End set beside it. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-3 p-3 pb-5">
+            <p
+              role="status"
+              aria-live="assertive"
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3.5 py-2 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}
+            >
+              {warning && <Warning className="size-5 shrink-0" />}
               {warning ?? " "}
             </p>
-            <div className={`flex items-end gap-3 transition-opacity ${phase === "active" ? "" : "opacity-50"}`}>
-              <span
-                key={frame?.correct_rep_count ?? 0}
-                className="font-display text-[clamp(96px,22vh,180px)] leading-[0.85] tabular-nums motion-safe:animate-pop"
-              >
-                {frame?.correct_rep_count ?? 0}
-              </span>
-              <span className="pb-2 text-2xl leading-none">of {setup.reps}</span>
-            </div>
-            <p className="flex gap-4 text-sm">
-              <span>
-                {frame?.attempt_count ?? 0} {frame?.attempt_count === 1 ? "attempt" : "attempts"}
-              </span>
-              <span className="opacity-70">{phase === "active" ? frame?.state : phaseLabel(phase)}</span>
-              {snap?.status === "running" && (
-                <span className="opacity-40">
-                  {snap.fps} fps, {model}
-                </span>
-              )}
-            </p>
+            <span className="flex-1" />
+            {phase === "active" && (
+              <button type="button" onClick={() => sessionRef.current?.endSet()} className={`${pill} pointer-events-auto shrink-0`}>
+                End set
+              </button>
+            )}
           </div>
         </>
       )}
@@ -372,7 +380,7 @@ function AllSaved({ name, onFinish }: { name: string; onFinish: () => Promise<st
   return (
     <main className="fixed inset-0 z-20 flex flex-col justify-center gap-6 bg-background p-8 text-foreground">
       <div className="mx-auto w-full max-w-md space-y-5">
-        <p className="text-sm opacity-60">{name}</p>
+        <p className="text-sm text-muted">{name}</p>
         <p className="text-lg leading-snug">Every set of this workout is saved.</p>
         {error && <p role="alert" className="alert">{error}</p>}
         <button
@@ -394,7 +402,7 @@ function AllSaved({ name, onFinish }: { name: string; onFinish: () => Promise<st
 
 function ModelChoice({ model, onChange }: { model: PoseModel; onChange: (model: PoseModel) => void }) {
   return (
-    <p className="text-sm opacity-70">
+    <p className="text-sm text-muted">
       Pose model: {model === "full" ? "full" : "lite"}.{" "}
       <button type="button" onClick={() => onChange(model === "full" ? "lite" : "full")} className="underline">
         {model === "full" ? "Use the lighter model on a slow phone" : "Use the full model"}

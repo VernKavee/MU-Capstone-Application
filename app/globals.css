@@ -17,6 +17,7 @@
   --color-accent-hover: #3358d4;
   --color-accent-ink: #ffffff;
   --color-ok: #2a7e3b;
+  --color-live: #65e39a; /* correct reps over video: grass, lifted to read on any picture */
   --animate-pop: pop 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-rise: rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   @keyframes rise {
@@ -78,6 +79,9 @@
   .stage :focus-visible {
     outline-color: var(--color-ink);
   }
+  .stage .on-page :focus-visible {
+    outline-color: var(--color-accent);
+  }
 }
 
 @layer components {
@@ -94,6 +98,14 @@
   /* A raised group on the page: a set of rows, a chart, a summary. */
   .card {
     @apply rounded-2xl bg-surface ring-1 ring-line;
+  }
+  /* Text over video with a dark outline behind the fill, so it reads on a light wall or a
+     dark one without a box in front of the body. --stroke is the outline's full width. */
+  .outlined {
+    color: var(--color-ink);
+    -webkit-text-stroke: var(--stroke, 0.12em) rgb(8 12 16 / 0.85);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
   }
   /* The live screen's warning band, for anything to fix before going on. */
   .alert {
