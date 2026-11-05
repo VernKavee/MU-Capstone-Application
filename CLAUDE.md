@@ -597,13 +597,13 @@ Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session l
   similarity, similarity by body part (the lowest marked), the rules broken, then the
   coach's feedback last, four lines that open in place (leaving `/live` mid-rest drops
   the visit). End workout at the top is the Finish workout path, and the rest timer stops
-  while it runs.
+  while it runs. Ending from a repair offer records the skip first (`repair_declined`, as
+  Skip it does), Vern's choice.
 - Every page under a tab opens with one back button; the underlined back links are gone.
 
 Still open, outside the build plan:
 
-- The redesign (2026-11-05), for Vern: ending a workout from a repair offer does not write
-  `repair_declined` (ADR-0004 writes it on Skip it); not built from the mockup, the setup
+- The redesign (2026-11-05): not built from the mockup, the setup
   steppers and the camera hint under each exercise on Home; not seen on the iPhone, the
   outline (`paint-order` on HTML text) and the light pages. `npm run build` now fetches
   Barlow from Google, so it needs the network.

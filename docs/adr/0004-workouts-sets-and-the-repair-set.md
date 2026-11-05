@@ -33,7 +33,7 @@ The report's setup screen collects reps per set and a number of sets, but its da
 
 - `keypoints_url` and `video_url` hold object paths in the private `sets` bucket, `<user_id>/<set_id>/...`, not URLs. A reader signs a download URL when it needs one. Both stay null when an upload failed.
 - `sets` also has `created_at`, which orders a workout's sets for the feedback context.
-- `repair_declined` is recorded on the set whose repair set was skipped. A repair set is offered only after an initial set, never after a repair set, and the unique constraint allows one per set number.
+- `repair_declined` is recorded on the set whose repair set was skipped. Ending the workout from the repair offer (End workout on the rest screen, 2026-11-05, Vern) records it too. A repair set is offered only after an initial set, never after a repair set, and the unique constraint allows one per set number.
 - The repair set starts at once, without rest. After it, or after a skip, the rest timer runs before the next set.
 - The rest timer counts down on the set-complete screen and starts the next set on its own at zero, back through the placement guide and the ready gate. Start now skips the wait. A rest of zero starts the next set at once, so that set's feedback is first read on the finished summary.
 - `ended_at` on the workout is written when the user presses Finish workout after the last set. A workout left part way keeps a null `ended_at` and its saved sets.

@@ -98,13 +98,29 @@ export function SetComplete({
     setActionError(error);
   }
 
+  // Ending the workout while the repair set is on offer skips it (Vern, 2026-11-05), so
+  // repair_declined is written as by Skip it, then the workout ends the same way.
+  async function end() {
+    if (offerRepair) {
+      setBusy(true);
+      setActionError(null);
+      const error = await onDecline();
+      if (error) {
+        setBusy(false);
+        setActionError(error);
+        return;
+      }
+    }
+    await finish();
+  }
+
   return (
     <section className="on-page absolute inset-0 overflow-y-auto bg-background text-foreground">
       <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 p-5 pb-6">
         {(offerRepair || hasNext) && (
           <button
             type="button"
-            onClick={finish}
+            onClick={end}
             disabled={busy}
             className="-ml-1 inline-flex items-center gap-2 self-start rounded-full pr-3 font-medium text-muted hover:text-foreground disabled:opacity-60"
           >
