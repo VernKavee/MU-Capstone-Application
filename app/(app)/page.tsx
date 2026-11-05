@@ -15,7 +15,7 @@ export default async function HomePage() {
   // profile it runs while the layout's gate redirects: no row is not a failure here.
   const [{ data: profile }, { data: exercises }, { data: sets }] = await Promise.all([
     supabase.from("profiles").select("display_name").maybeSingle().throwOnError(),
-    supabase.from("exercises").select("id, name, thumbnail_url").order("sort_order").throwOnError(),
+    supabase.from("exercises").select("id, name, camera_hint, thumbnail_url").order("sort_order").throwOnError(),
     supabase.from("sets").select("started_at, similarity").gte("started_at", new Date(now.getTime() - WEEK_FETCH_MS).toISOString()).throwOnError(),
   ]);
   const week = weeklySummary(
@@ -45,7 +45,10 @@ export default async function HomePage() {
                       <Figure className="size-6" />
                     )}
                   </span>
-                  {exercise.name}
+                  <span className="min-w-0">
+                    {exercise.name}
+                    <span className="block text-sm font-normal text-muted">{exercise.camera_hint}</span>
+                  </span>
                   <ChevronRight className="ml-auto size-5 text-muted" />
                 </Link>
               </li>

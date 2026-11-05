@@ -50,8 +50,9 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
 - Profile setup before the first workout and editing in Settings.
 - App shell: Home, History, Settings tabs.
 - Home shows the last seven days as a chart of mean similarity per day, today on the
-  right, then the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
-  number of sets, and rest seconds (default 60), and for the bicep curl the arm (Left or
+  right, then the four exercises as rows, each with how to stand to the camera
+  (`exercises.camera_hint`). `/workout/[exercise]/setup` asks reps per set, number of
+  sets, and rest seconds (default 60), each with − and + beside a typeable field, and for the bicep curl the arm (Left or
   Right, no default; any exercise whose row has `state_machine.chooses_side`), stored on
   the workout; `/workout/[exercise]/guide` shows the
   guide text, the demonstration video or a placeholder, and the rules the coach checks.

@@ -13,6 +13,8 @@ function Icon({ className = "size-5", children }: { className?: string; children
 type P = { className?: string };
 export const ChevronLeft = (p: P) => <Icon {...p}><path d="M15 5l-7 7 7 7" /></Icon>;
 export const ChevronRight = (p: P) => <Icon {...p}><path d="M9 5l7 7-7 7" /></Icon>;
+export const Minus = (p: P) => <Icon {...p}><path d="M6 12h12" /></Icon>;
+export const Plus = (p: P) => <Icon {...p}><path d="M6 12h12M12 6v12" /></Icon>;
 export const Close = (p: P) => <Icon {...p}><path d="M6 6l12 12M18 6L6 18" /></Icon>;
 export const Speaker = (p: P) => <Icon {...p}><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11" /></Icon>;
 export const SpeakerOff = (p: P) => <Icon {...p}><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6" /></Icon>;

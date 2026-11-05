@@ -600,11 +600,14 @@ Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session l
   while it runs. Ending from a repair offer records the skip first (`repair_declined`, as
   Skip it does), Vern's choice.
 - Every page under a tab opens with one back button; the underlined back links are gone.
+- Setup's three numbers have − and + (one rep, one set, 5 s of rest a tap) beside a field
+  that stays typeable (`setup/stepper.tsx`). Home lists each exercise with how to stand to
+  the camera, from `exercises.camera_hint` (migration `exercise_camera_hint`), an app
+  column outside the export like `landscape`; a new exercise needs one.
 
 Still open, outside the build plan:
 
-- The redesign (2026-11-05): not built from the mockup, the setup
-  steppers and the camera hint under each exercise on Home; not seen on the iPhone, the
+- The redesign (2026-11-05): not seen on the iPhone, the
   outline (`paint-order` on HTML text) and the light pages. `npm run build` now fetches
   Barlow from Google, so it needs the network.
 

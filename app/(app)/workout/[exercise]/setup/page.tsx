@@ -2,10 +2,9 @@ import Form from "next/form";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic, SETUP_LIMITS } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
+import { Stepper } from "./stepper";
 import { BackLink } from "@/app/(app)/back-link";
 
-// The three numbers in the counter's face, as they will read on the live screen.
-const field = "w-24 rounded-lg border border-line bg-surface px-2 py-1 text-right font-display text-4xl leading-none tabular-nums";
 const row = "flex items-center justify-between gap-4 py-3 text-lg";
 // The arm, as two pills: the radio itself is hidden, the pill shows the choice and the focus.
 const pill =
@@ -33,18 +32,9 @@ export default async function SetupPage({ params, searchParams }: PageProps<"/wo
       )}
       <Form action={`/workout/${exercise.id}/guide`} className="space-y-6">
         <div className="card divide-y divide-line px-4">
-          <label className={row}>
-            Reps per set
-            <input name="reps" type="number" required {...SETUP_LIMITS.reps} defaultValue={SETUP_LIMITS.reps.default} className={field} />
-          </label>
-          <label className={row}>
-            Number of sets
-            <input name="sets" type="number" required {...SETUP_LIMITS.sets} defaultValue={SETUP_LIMITS.sets.default} className={field} />
-          </label>
-          <label className={row}>
-            Rest between sets (seconds)
-            <input name="rest" type="number" required {...SETUP_LIMITS.rest} defaultValue={SETUP_LIMITS.rest.default} className={field} />
-          </label>
+          <Stepper name="reps" label="Reps per set" min={SETUP_LIMITS.reps.min} max={SETUP_LIMITS.reps.max} initial={SETUP_LIMITS.reps.default} />
+          <Stepper name="sets" label="Sets" min={SETUP_LIMITS.sets.min} max={SETUP_LIMITS.sets.max} initial={SETUP_LIMITS.sets.default} />
+          <Stepper name="rest" label="Rest (seconds)" min={SETUP_LIMITS.rest.min} max={SETUP_LIMITS.rest.max} initial={SETUP_LIMITS.rest.default} by={5} />
           {choosesSide && (
             <div role="radiogroup" aria-labelledby="arm" className={row}>
               <span id="arm">Arm</span>
