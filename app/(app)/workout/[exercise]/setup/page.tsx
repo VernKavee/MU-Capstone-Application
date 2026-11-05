@@ -2,6 +2,7 @@ import Form from "next/form";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic, SETUP_LIMITS } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
+import { BackLink } from "@/app/(app)/back-link";
 
 // The three numbers in the counter's face, as they will read on the live screen.
 const field = "w-24 rounded-lg border border-line bg-surface px-2 py-1 text-right font-display text-4xl leading-none tabular-nums";
@@ -23,6 +24,7 @@ export default async function SetupPage({ params, searchParams }: PageProps<"/wo
 
   return (
     <main className="max-w-md space-y-6 p-6">
+      <BackLink href="/">Home</BackLink>
       <h1>{exercise.name}</h1>
       {error && (
         <p role="alert" className="alert">

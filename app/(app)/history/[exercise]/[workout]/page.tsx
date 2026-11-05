@@ -8,6 +8,7 @@ import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { Replay } from "./replay";
+import { BackLink } from "@/app/(app)/back-link";
 
 const setName = (s: { set_no: number; kind: string }) => `${s.kind === "repair" ? "Repair set" : "Set"} ${s.set_no}`;
 
@@ -47,9 +48,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   return (
     <main className="space-y-6 p-6">
       <header className="space-y-2">
-        <Link href={`/history/${exerciseId}`} className="text-sm underline">
-          {name}
-        </Link>
+        <BackLink href={`/history/${exerciseId}`}>{name}</BackLink>
         <h1>{formatWhen(workout.started_at, tz)}</h1>
         <p className="text-sm text-muted">
           {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}

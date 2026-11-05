@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatWhen, isUuid } from "@/lib/history";
 import { FeedbackText } from "../../../../feedback-text";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
+import { BackLink } from "@/app/(app)/back-link";
 
 // The feedback detail screen (REQUIREMENTS section 6): the full coaching text of one set
 // (?set=), which level 4 shows only the start of. Fetches that set's feedback and labels.
@@ -27,9 +27,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
   return (
     <main className="space-y-6 p-6">
       <header className="space-y-2">
-        <Link href={`/history/${exerciseId}/${workoutId}?set=${setId}`} className="text-sm underline">
+        <BackLink href={`/history/${exerciseId}/${workoutId}?set=${setId}`}>
           {workout.exercises.name}, {formatWhen(workout.started_at, tz)}
-        </Link>
+        </BackLink>
         <h1>
           Feedback on {set.kind === "repair" ? "repair set" : "set"} {set.set_no} of {workout.target_sets}
         </h1>

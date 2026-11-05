@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { parseSetup, ruleBasedLogic, setupError, setupQuery } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
+import { BackLink } from "@/app/(app)/back-link";
 
 // Section 4.2: guide text and the demonstration video before the camera opens.
 export default async function GuidePage({ params, searchParams }: PageProps<"/workout/[exercise]/guide">) {
@@ -16,12 +17,12 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
 
   return (
     <main className="space-y-6 p-6">
+      <BackLink href={`/workout/${exercise.id}/setup`}>Setup</BackLink>
       <header className="space-y-2">
         <h1>{exercise.name}</h1>
         <p className="text-sm text-muted">
           {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest
-          {setup.side && `, ${setup.side} arm`}.{" "}
-          <Link href={`/workout/${exercise.id}/setup`} className="underline">Change</Link>
+          {setup.side && `, ${setup.side} arm`}.
         </p>
       </header>
 

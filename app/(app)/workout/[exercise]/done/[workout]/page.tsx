@@ -4,6 +4,7 @@ import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import type { SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { FeedbackText } from "../../../../feedback-text";
+import { BackLink } from "@/app/(app)/back-link";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
@@ -29,6 +30,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
 
   return (
     <main className="max-w-2xl space-y-6 p-6">
+      <BackLink href="/">Home</BackLink>
       <header className="space-y-2">
         <p className="text-sm text-muted">{name}, workout finished</p>
         <h1>

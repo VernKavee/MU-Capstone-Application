@@ -13,6 +13,7 @@ import { buildAttempts, totalsOf } from "@/lib/set";
 import { endWorkout } from "./actions";
 import { createJob, type Job } from "./pipeline";
 import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
+import { BackLink } from "@/app/(app)/back-link";
 
 type Props = {
   exercise: { id: string; name: string; engineKey: string; landscape: boolean; logic: RuleBasedLogic };
@@ -193,7 +194,8 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
     return (
       <main className="fixed inset-0 z-20 flex flex-col justify-center gap-6 bg-background p-8 text-foreground">
         <div className="mx-auto w-full max-w-md space-y-5">
-          <p className="text-sm opacity-60">
+          <BackLink href={guideHref}>Guide</BackLink>
+          <p className="text-sm text-muted">
             {exercise.name}, {setLabel(progress, setup.sets)}, {setup.reps} correct reps
           </p>
           {stage.kind === "error" ? (
@@ -208,7 +210,6 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
             <button type="button" onClick={startCamera} className="btn">
               {stage.kind === "error" ? "Try again" : "Start camera"}
             </button>
-            <Link href={guideHref} className="text-sm underline">Back to the guide</Link>
           </div>
           <ModelChoice model={model} onChange={chooseModel} />
         </div>

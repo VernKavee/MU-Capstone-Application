@@ -4,6 +4,7 @@ import { formatWhen, meanSimilarity } from "@/lib/history";
 import type { SetSimilarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
+import { BackLink } from "@/app/(app)/back-link";
 
 const PAGE = 20;
 
@@ -34,9 +35,7 @@ export default async function ExerciseHistoryPage({ params, searchParams }: Page
   return (
     <main className="max-w-2xl space-y-6 p-6">
       <header className="space-y-2">
-        <Link href="/history" className="text-sm underline">
-          History
-        </Link>
+        <BackLink href="/history">History</BackLink>
         <h1>{exercise.name}</h1>
         <p className="text-sm text-muted">
           {before ? "Older workouts" : "Workouts"}, newest first.{" "}
