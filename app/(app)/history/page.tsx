@@ -27,7 +27,7 @@ export default async function HistoryPage() {
     <main className="space-y-6 p-6">
       <header className="space-y-2">
         <h1>History</h1>
-        <p className="text-sm opacity-70">Days with a finished workout in the last 7 days, today on the right.</p>
+        <p className="text-sm text-muted">Days with a finished workout in the last 7 days, today on the right.</p>
       </header>
       {/* The first thing a new user sees here (Phase 6). The exercises stay listed below:
           each still leads to its workouts from before these 7 days. */}

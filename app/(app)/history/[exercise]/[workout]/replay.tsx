@@ -117,7 +117,7 @@ export function Replay({
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start">
-      <div className="overflow-hidden rounded-xl bg-black text-ink lg:sticky lg:top-6">
+      <div className="stage overflow-hidden rounded-xl bg-black text-ink lg:sticky lg:top-6">
         <div className="relative aspect-video">
           {state.kind === "ready" ? (
             <>
@@ -235,7 +235,7 @@ export function Replay({
             <h2 id="attempts-title" className="font-semibold">
               Attempts
             </h2>
-            <p className="text-sm opacity-70">
+            <p className="text-sm text-muted">
               {attempts.length === 0
                 ? "None: the set was ended before the first attempt."
                 : `${counts}. Every violation is listed${canPlay ? "; press an attempt to watch it" : ""}.`}
@@ -277,13 +277,13 @@ function AttemptRow({ attempt: a }: { attempt: Attempt }) {
             </span>
           )}
         </span>
-        <span className="block text-sm opacity-70">
+        <span className="block text-sm text-muted">
           {OUTCOME[a.outcome]}
           {seconds > 0 && `, ${seconds.toFixed(1)} s`}
         </span>
         {a.violations.map((v) => (
           <span key={v.rule} className="mt-1 block text-sm">
-            {v.message} <span className="opacity-60">({detail(v)})</span>
+            {v.message} <span className="text-muted">({detail(v)})</span>
           </span>
         ))}
       </span>

@@ -38,7 +38,7 @@ export default async function ExerciseHistoryPage({ params, searchParams }: Page
           History
         </Link>
         <h1>{exercise.name}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {before ? "Older workouts" : "Workouts"}, newest first.{" "}
           {before && (
             <Link href={`/history/${exercise.id}`} className="underline">
@@ -59,16 +59,16 @@ export default async function ExerciseHistoryPage({ params, searchParams }: Page
                   <span>
                     <span className="block font-medium">
                       {formatWhen(workout.started_at, tz)}
-                      {!workout.ended_at && <span className="ml-2 text-sm font-normal opacity-70">Not finished</span>}
+                      {!workout.ended_at && <span className="ml-2 text-sm font-normal text-muted">Not finished</span>}
                     </span>
-                    <span className="block text-sm opacity-70">
+                    <span className="block text-sm text-muted">
                       {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
                       {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}
                     </span>
                   </span>
                   <span className="text-right">
                     <span className="block font-display text-4xl leading-none tabular-nums">{mean === null ? "–" : `${mean}%`}</span>
-                    <span className="block text-xs opacity-70">similarity</span>
+                    <span className="block text-xs text-muted">similarity</span>
                   </span>
                 </Link>
               </li>

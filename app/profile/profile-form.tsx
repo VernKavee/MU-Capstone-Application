@@ -53,7 +53,7 @@ export function ProfileForm({ mode, profile, error }: Props) {
           defaultValue={profile?.medical_history}
           className="field"
         />
-        <span className="mt-1 block text-xs opacity-70">
+        <span className="mt-1 block text-xs text-muted">
           Coaching feedback reads this to keep its advice safe for you. Editable any time in Settings.
         </span>
       </label>

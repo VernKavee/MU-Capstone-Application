@@ -229,7 +229,7 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
   const centre = snap?.turn ? TURN_CUE : centreText(phase, frame, exercise.logic.state_machine.ready_pose);
 
   return (
-    <main className="fixed inset-0 z-20 overflow-hidden bg-black text-ink">
+    <main className="stage fixed inset-0 z-20 overflow-hidden bg-black text-ink">
       {/* Mirrored, like a mirror in a gym. The recording itself is not mirrored. */}
       <div className="absolute inset-0 -scale-x-100">
         <video ref={videoRef} muted playsInline className="absolute inset-0 h-full w-full object-cover" />

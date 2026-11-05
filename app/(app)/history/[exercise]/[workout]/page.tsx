@@ -51,7 +51,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
           {name}
         </Link>
         <h1>{formatWhen(workout.started_at, tz)}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
           {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}. {correct} correct reps in {tries} attempts
           {mean !== null && `, ${mean}% mean similarity`}.{!workout.ended_at && " Not finished."}
@@ -76,10 +76,10 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                     <span className="whitespace-nowrap text-sm font-medium">{setName(s)}</span>
                     <span className="font-semibold tabular-nums">{score === undefined ? "–" : `${Math.round(score)}%`}</span>
                   </span>
-                  <span className="mt-1 block text-xs opacity-70">
+                  <span className="mt-1 block text-xs text-muted">
                     {totals[i].correct_reps} correct, {totals[i].attempts} attempts
                   </span>
-                  {notes.length > 0 && <span className="block text-xs opacity-70">{notes.join(", ")}</span>}
+                  {notes.length > 0 && <span className="block text-xs text-muted">{notes.join(", ")}</span>}
                 </Link>
               </li>
             );
@@ -109,7 +109,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                 </Link>
               </div>
             ) : (
-              <p className="text-sm opacity-70">No feedback was written for this set.</p>
+              <p className="text-sm text-muted">No feedback was written for this set.</p>
             )}
           </section>
         }
@@ -121,12 +121,12 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
 // The set's similarity: the mean score as the page's one big figure, then the body parts the
 // exercise is scored on as meters on the same 0 to 100 scale.
 function BodyParts({ similarity }: { similarity: SetSimilarity | null }) {
-  if (!similarity) return <p className="text-sm opacity-70">Similarity was not scored for this set.</p>;
+  if (!similarity) return <p className="text-sm text-muted">Similarity was not scored for this set.</p>;
   return (
     <section aria-label="Similarity to the expert motion" className="space-y-4">
       <p className="flex items-end gap-3">
         <span className="font-display text-7xl leading-[0.8]">{Math.round(similarity.mean_score)}</span>
-        <span className="text-sm leading-snug opacity-70">% similar to the expert motion, over the scored reps</span>
+        <span className="text-sm leading-snug text-muted">% similar to the expert motion, over the scored reps</span>
       </p>
       <dl className="space-y-2">
         {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (

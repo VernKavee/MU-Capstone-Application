@@ -18,7 +18,7 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
     <main className="space-y-6 p-6">
       <header className="space-y-2">
         <h1>{exercise.name}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest
           {setup.side && `, ${setup.side} arm`}.{" "}
           <Link href={`/workout/${exercise.id}/setup`} className="underline">Change</Link>
@@ -30,7 +30,7 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
         {exercise.guide_video_url ? (
           <video src={exercise.guide_video_url} controls playsInline className="w-full rounded-xl bg-black" />
         ) : (
-          <div className="flex aspect-video items-center justify-center rounded-xl bg-black text-sm text-ink/50 ring-1 ring-ink/10">
+          <div className="flex aspect-video items-center justify-center rounded-xl bg-surface-2 text-sm text-muted">
             Demonstration video not available yet
           </div>
         )}
@@ -40,13 +40,13 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">What the coach checks</h2>
-            <p className="text-sm opacity-70">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
+            <p className="text-sm text-muted">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
             {/* Each rule as its warning band looks on the live screen, in priority order. */}
             <ol className="space-y-2">
               {rules.map((rule) => (
                 <li key={rule.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="rounded-md bg-tape px-3 py-1 font-semibold text-tape-ink">{rule.messages.en}</span>
-                  <span className="text-xs opacity-60">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
+                  <span className="text-xs text-muted">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
                 </li>
               ))}
             </ol>

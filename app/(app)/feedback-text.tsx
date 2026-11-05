@@ -18,7 +18,7 @@ export function FeedbackText({ text, className = "" }: { text: string; className
           <ul key={i} className="space-y-1.5">
             {g.map((item, j) => (
               <li key={j} className="flex gap-2" style={{ paddingLeft: `${item.depth * 1.25}rem` }}>
-                <span aria-hidden="true" className="shrink-0 opacity-60">
+                <span aria-hidden="true" className="shrink-0 text-muted">
                   {item.marker}
                 </span>
                 <span>
@@ -38,7 +38,7 @@ export function FeedbackText({ text, className = "" }: { text: string; className
             </h4>
           )
         ) : g.kind === "rule" ? (
-          <hr key={i} className="border-ink/20" />
+          <hr key={i} className="border-line" />
         ) : (
           <p key={i}>
             <Spans spans={g.spans} />

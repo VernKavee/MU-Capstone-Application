@@ -37,9 +37,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
       {set.llm_feedback ? (
         <FeedbackText text={set.llm_feedback} className="text-lg" />
       ) : (
-        <p className="opacity-70">No feedback was written for this set.</p>
+        <p className="text-muted">No feedback was written for this set.</p>
       )}
-      <p className="max-w-prose text-sm opacity-70">
+      <p className="max-w-prose text-sm text-muted">
         Written by the coaching component from this set&apos;s attempts and similarity, your earlier sets and past workouts of this
         exercise, and your profile, medical history included.
       </p>

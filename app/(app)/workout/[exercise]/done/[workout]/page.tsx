@@ -30,11 +30,11 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
   return (
     <main className="max-w-2xl space-y-6 p-6">
       <header className="space-y-2">
-        <p className="text-sm opacity-60">{name}, workout finished</p>
+        <p className="text-sm text-muted">{name}, workout finished</p>
         <h1>
           {sum("correct_reps")} correct reps in {sum("attempts")} attempts
         </h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {sets.filter((s) => s.kind === "initial").length} of {workout.target_sets} sets of {workout.target_reps} reps
           {mean !== null && `, ${mean}% mean similarity`}.
         </p>
@@ -49,7 +49,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
               <h2 className="font-semibold">
                 {set.kind === "repair" ? "Repair set" : "Set"} {set.set_no}
               </h2>
-              <p className="text-sm opacity-70">
+              <p className="text-sm text-muted">
                 {t.correct_reps} correct of {t.attempts} attempts, {t.abandoned_attempts} abandoned, {ENDED_BY[set.ended_by]}
                 {similarity && `, ${Math.round(similarity.mean_score)}% similarity`}
                 {set.repair_declined && ", repair set skipped"}.

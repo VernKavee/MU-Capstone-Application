@@ -4,11 +4,11 @@ import { ruleBasedLogic, SETUP_LIMITS } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
 
 // The three numbers in the counter's face, as they will read on the live screen.
-const field = "w-24 rounded-lg border border-ink/25 bg-ink/5 px-2 py-1 text-right font-display text-4xl leading-none tabular-nums";
+const field = "w-24 rounded-lg border border-line bg-surface px-2 py-1 text-right font-display text-4xl leading-none tabular-nums";
 const row = "flex items-center justify-between gap-4 py-3";
 // The arm, as two pills: the radio itself is hidden, the pill shows the choice and the focus.
 const pill =
-  "cursor-pointer rounded-lg border border-ink/25 bg-ink/5 px-4 py-2 font-display text-3xl leading-none has-checked:border-ink has-checked:bg-ink has-checked:text-background has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-tape";
+  "cursor-pointer rounded-lg border border-line bg-surface px-4 py-2 font-display text-3xl leading-none has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-tape";
 
 // Section 4.1. The three numbers, and the arm where the row asks for one, travel to the
 // guide screen in the query string; nothing is stored until the first set is saved

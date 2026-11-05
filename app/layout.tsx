@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: "Live form checking and rep counting for Squat, Push-up, Lunge, and Bicep curl",
 };
 
-// The one theme is dark: native controls and the phone's browser bar match it before the CSS loads.
-export const viewport: Viewport = { colorScheme: "dark", themeColor: "#1b1a16" };
+// Light pages (Daylight): native controls and the phone's browser bar match them before the CSS loads.
+export const viewport: Viewport = { colorScheme: "light", themeColor: "#f9f9f8" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
