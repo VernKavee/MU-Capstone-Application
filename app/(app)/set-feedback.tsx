@@ -5,7 +5,8 @@ import { FeedbackText } from "./feedback-text";
 type Attempts = Pick<Attempt, "violations">[];
 
 // One set's coaching text (lib/feedback-text.ts): what went wrong and how to fix it, from the
-// summary lines with the counts from the attempt records, then the full text. Rendered on the
+// summary lines with the counts from the attempt records, then the full text. Daylight: the
+// fault's dot is amber, the warning colour, and its fix an indigo band, the accent. Rendered on the
 // server for the finished summary and History, and inside the live screen's set-complete.
 // Feedback saved before v16 as Markdown (the 2026-11-03 phone run) goes to the Markdown reader.
 export function SetFeedback({ text, attempts }: { text: string; attempts: Attempts }) {
@@ -23,7 +24,7 @@ export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; att
   if (summary.kind === "keep")
     return (
       <section className="space-y-1">
-        <h3 className="text-sm opacity-70">What went well</h3>
+        <h3 className="text-sm font-semibold text-muted">What went well</h3>
         <p className="leading-relaxed">{summary.text}</p>
       </section>
     );
@@ -33,22 +34,25 @@ export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; att
   const faults = [...summary.faults].sort((a, b) => priority(a.rule) - priority(b.rule));
   return (
     <section className="space-y-3">
-      <h3 className="text-sm opacity-70">What went wrong, and how to fix it</h3>
-      <ol className="space-y-4">
+      <h3 className="text-sm font-semibold text-muted">What went wrong, and how to fix it</h3>
+      <ol className="divide-y divide-line">
         {faults.map(({ rule, fault, fix }, i) => {
           const n = counts.get(rule)?.attempts;
           return (
-            <li key={i} className="space-y-1.5">
+            <li key={i} className="space-y-1.5 py-3 first:pt-0 last:pb-0">
               <h4 className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <span className="font-semibold">{faultName(rule)}</span>
+                <span className="flex items-center gap-2 font-semibold">
+                  <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-tape" />
+                  {faultName(rule)}
+                </span>
                 {n !== undefined && (
-                  <span className="text-sm opacity-70">
+                  <span className="text-sm text-muted">
                     {n} of {attempts.length} {attempts.length === 1 ? "attempt" : "attempts"}
                   </span>
                 )}
               </h4>
               <p className="leading-snug">{fault}</p>
-              <p className="rounded-md bg-tape px-3 py-1.5 font-semibold leading-snug text-tape-ink">
+              <p className="rounded-lg bg-accent/10 px-3 py-2 font-semibold leading-snug">
                 <span className="sr-only">Fix: </span>
                 {fix}
               </p>
@@ -63,7 +67,7 @@ export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; att
 function FullFeedback({ blocks, titled }: { blocks: FeedbackBlock[]; titled: boolean }) {
   return (
     <section className="space-y-3 leading-relaxed">
-      {titled && <h3 className="border-t pt-4 text-sm opacity-70">Full feedback</h3>}
+      {titled && <h3 className="border-t border-line pt-4 text-sm font-semibold text-muted">Full feedback</h3>}
       {blocks.map((block, i) => (
         <div key={i} className="space-y-1">
           {block.heading && <h4 className="font-semibold">{block.heading}</h4>}
