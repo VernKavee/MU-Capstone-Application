@@ -104,12 +104,18 @@ Conventions the code follows, because the docs changed since the plan was writte
 - Next shows only the loading file of the folder whose child segment a navigation
   changes, so every folder whose pages link to each other has a `loading.tsx` that
   re-exports `app/(app)/loading.tsx`.
-- Design (Phase 6): one dark theme, with no light palette and no `dark:` variants. Tokens
-  in `app/globals.css`: `ink`, `tape`, `tape-ink`, with `background` and `foreground`
-  naming the page's ground and text. Shared classes: `.btn` for the one main action,
-  `.btn-quiet`, `.field`, and `.alert`, the tape band for anything to fix; over video, the
-  live screen's `pill`. Every `h1` is Big Shoulders through a base rule, and the tape
-  focus ring is global. Tape yellow marks only what needs attention.
+- Design (Daylight, 2026-11-05, replacing Phase 6's one dark theme): light pages and a dark
+  stage, from Radix Colors scales, with no `dark:` variants. Page tokens in
+  `app/globals.css`: `background`, `surface`, `surface-2`, `line`, `foreground`, `muted`,
+  `accent` (indigo, the main action and progress), `ok` (correct reps). Over video: `ink`,
+  `tape`, `tape-ink`, `live` (the count). Tape amber marks only a warning, on the page too.
+  Shared classes: `.btn`, `.btn-quiet`, `.field`, `.card`, `.alert` (the tape band), and
+  `.outlined` for text over video; over video, `pill` and `round` from `set-complete.tsx`.
+  Every `h1` and `font-display` number is Barlow Condensed 700, text is Barlow (both via
+  `next/font`). The focus ring is the accent, off-white inside `.stage` (the live screen and
+  the replay player) and the accent again inside its `.on-page` (the set-complete page).
+  Muted text uses `text-muted`, never opacity. Icons are inline SVG in `app/(app)/icons.tsx`;
+  every page under a tab opens with `BackLink` (`app/(app)/back-link.tsx`).
 - Layout: the (app) column is `max-w-5xl` on every page and each page sets its own
   measure inside it, left aligned. The tab bar is one `nav` named Primary, at the bottom
   on a phone and at the top from `md` up.
@@ -197,7 +203,9 @@ Smaller decisions without an ADR, so no phase re-decides them:
 - Laptops and phones are both first-class.
 - Skills: adopt `supabase/agent-skills@supabase` and
   `supabase/agent-skills@supabase-postgres-best-practices` at the start of Phase 1 and a
-  Playwright skill at Phase 6. Nothing else in the ecosystem was worth adopting.
+  Playwright skill at Phase 6. On 2026-11-05 `frontend-design` (anthropics) and
+  `ui-ux-pro-max` (nextlevelbuilder) were added in `.claude/skills/` for the UI redesign,
+  installed in the repo, never globally (Vern).
 
 Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
 
@@ -308,8 +316,9 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   comes from the keypoint file's `t`, never the video's duration; an attempt's violations
   light their joints for the whole attempt; a set missing a file, or whose keypoint file
   holds fewer than two frames, is not replayed.
-- The chart sits on a dark ground because tape yellow on white fails contrast; since
-  Phase 6 every page does. Big Shoulders also sets the deep-dive's similarity number.
+- The chart sat on a dark ground because tape yellow on white fails contrast; since
+  2026-11-05 its bars are the indigo accent on a white card. The display face also sets
+  the deep-dive's similarity number.
 - No migration: the Phase 4 policies cover every read.
 
 Decided in Phase 6, recorded in ADR-0001, 0002, 0004, 0005, 0007, `docs/HANDOVER.md`, and
@@ -324,7 +333,8 @@ the Phase 6 session log:
   stops hydration. A not-found page streams inside a 200, so tests check the page.
 - Every screen has loading, empty, and error states, checked at 375 and 1280 px.
 - One dark theme on every page, and Big Shoulders for every page title and big number,
-  both Vern's choices; the system light/dark switch and `data-wide` are gone. The guide
+  both Vern's choices (both replaced 2026-11-05, below); the system light/dark switch and
+  `data-wide` are gone. The guide
   shows each rule as its warning band, in priority order.
 - Password resets are one SQL statement in Studio's SQL editor; backups are a data-only
   `db dump` plus `docker cp` of the storage volume. All three were run on the local stack.
@@ -573,6 +583,24 @@ Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVE
   violations say what to fix.
 - Whether the scores separate correct from incorrect reps is Punnapat's to judge; the app's
   check is only that a set is scored, stored, and shown.
+
+Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session log:
+
+- Daylight: light pages from Radix sand, indigo, grass, and amber, chosen over two rounds of
+  mockups (https://claude.ai/artifact/1SYEcngZMnnE2BPPvDiq7W); the stage stays dark. Barlow
+  Condensed and Barlow replace Big Shoulders (the ui-ux-pro-max sports pairing).
+- Live: the user's body stays as large as possible, with nothing solid in front of it
+  (Vern). The count and target are one outlined number ("7/10") in the top right, attempts
+  under it; back and mute are round 44 px buttons; the warning is a slim band at the foot,
+  End set beside it. The outline uses `paint-order`, checked in Chrome only.
+- Set complete and rest is a light page: the timer small at the top, correct, attempts and
+  similarity, similarity by body part (the lowest marked), the rules broken, then the
+  coach's feedback last, four lines that open in place (leaving `/live` mid-rest drops
+  the visit). End workout at the top is the Finish workout path; ending during a repair
+  offer does not write `repair_declined`.
+- Every page under a tab opens with one back button; the underlined back links are gone.
+- Not built from the mockup: the setup steppers (the number fields stay) and the camera
+  hint under each exercise on Home.
 
 Still open, outside the build plan:
 

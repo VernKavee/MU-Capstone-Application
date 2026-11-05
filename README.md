@@ -101,10 +101,12 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   to the server in a `tz` cookie. The plain-data part is `lib/history.ts`.
 - Every screen has a loading state, an empty state wherever there can be nothing yet, and
   an error screen with a retry; an address that matches nothing gets a not-found page.
-- One dark design, carried from the live screen to every page: a charcoal ground,
-  off-white ink, tape yellow only for what needs attention, and Big Shoulders Display for
-  titles and big numbers. A bottom tab bar on a phone, a top bar on a laptop; every
-  screen is checked at 375 and 1280 px.
+- Daylight design: light pages on Radix Colors scales (sand, indigo for actions and
+  progress, green for correct reps, amber only for a warning) and a dark camera stage,
+  Barlow Condensed for titles and numbers and Barlow for text. The live screen keeps the
+  body full size, with the count outlined in the top corner. Every page under a tab has a
+  back button; a bottom tab bar with icons on a phone, a top bar on a laptop; every screen
+  is checked at 375 and 1280 px.
 - Tests at three levels: unit tests under `lib/` (the engine and its parity with the
   Python, similarity's answer and stub, the feedback stub,
   the frame loop, the set job, the attempt records, History's data), pgTAP in
