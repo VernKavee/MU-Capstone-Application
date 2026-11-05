@@ -12,7 +12,7 @@ const OUTCOME = { correct: "Correct", incorrect: "Incorrect", abandoned: "Abando
 // Tape yellow means a rule fired, as on the live screen: on the black stage's strip and on
 // the page's attempt markers alike.
 const SEGMENT = { correct: "bg-ink/70", incorrect: "bg-tape", abandoned: "bg-ink/25" } as const;
-const MARKER = { correct: "bg-foreground", incorrect: "bg-tape", abandoned: "bg-foreground/25" } as const;
+const MARKER = { correct: "bg-ok", incorrect: "bg-tape", abandoned: "bg-line" } as const;
 
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 

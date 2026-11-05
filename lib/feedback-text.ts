@@ -40,10 +40,11 @@ export function spans(text: string): Span[] {
   return out;
 }
 
-// One line of plain prose for a clamped preview: headings, list items, and paragraphs joined
-// by spaces, the markup dropped.
+// One line of plain prose for a clamped preview: list items and paragraphs joined by spaces,
+// the markup dropped. Headings are left out, so a preview never opens on a label such as
+// "Error Breakdown" (2026-11-05).
 export function plainFeedback(text: string): string {
   return parseFeedback(text)
-    .flatMap((b) => (b.kind === "rule" ? [] : [b.spans.map((s) => s.text).join("")]))
+    .flatMap((b) => (b.kind === "para" || b.kind === "item" ? [b.spans.map((s) => s.text).join("")] : []))
     .join(" ");
 }

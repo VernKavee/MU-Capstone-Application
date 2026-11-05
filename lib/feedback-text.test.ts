@@ -38,5 +38,5 @@ test("feedback text: plain prose without Markdown passes through as one paragrap
 });
 
 test("feedback text: the preview drops the markup", () => {
-  assert.equal(plainFeedback("### Progress\n\n* **Target:** hit.\n---\nDone."), "Progress Target: hit. Done.");
+  assert.equal(plainFeedback("### Progress\n\n* **Target:** hit.\n---\nDone."), "Target: hit. Done.");
 });

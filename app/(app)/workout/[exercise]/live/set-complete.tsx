@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import type { Setup } from "@/lib/exercise";
-import { parseFeedback } from "@/lib/feedback-text";
+import { plainFeedback } from "@/lib/feedback-text";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
@@ -279,7 +279,7 @@ function Feedback({ text, pending }: { text: string | null; pending: boolean }) 
         <Spark className="size-4" />
         Coach feedback
       </h2>
-      {open ? <FeedbackText text={text} /> : <p className="line-clamp-4 leading-relaxed">{preview(text)}</p>}
+      {open ? <FeedbackText text={text} /> : <p className="line-clamp-4 leading-relaxed">{plainFeedback(text)}</p>}
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-sm font-semibold text-accent">
         {open ? "Show less" : "Read all feedback"}
       </button>
@@ -295,11 +295,5 @@ function Stat({ label, value, className = "" }: { label: string; value: number |
     </div>
   );
 }
-
-// The preview reads the prose only: headings like "Error Breakdown" would open it with a label.
-const preview = (text: string) =>
-  parseFeedback(text)
-    .flatMap((b) => (b.kind === "para" || b.kind === "item" ? [b.spans.map((s) => s.text).join("")] : []))
-    .join(" ");
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);

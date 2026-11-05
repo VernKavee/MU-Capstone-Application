@@ -69,16 +69,16 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                   href={href(s.id)}
                   scroll={false}
                   aria-current={on ? "page" : undefined}
-                  className={`block h-full rounded-xl border p-3 ${on ? "border-foreground bg-foreground text-background" : "hover:border-foreground/50"}`}
+                  className={`block h-full rounded-xl border p-3 ${on ? "border-accent bg-accent text-accent-ink" : "bg-surface hover:border-accent"}`}
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-2">
                     <span className="whitespace-nowrap text-sm font-medium">{setName(s)}</span>
                     <span className="font-semibold tabular-nums">{score === undefined ? "–" : `${Math.round(score)}%`}</span>
                   </span>
-                  <span className="mt-1 block text-xs text-muted">
+                  <span className={`mt-1 block text-xs ${on ? "text-accent-ink/85" : "text-muted"}`}>
                     {totals[i].correct_reps} correct, {totals[i].attempts} attempts
                   </span>
-                  {notes.length > 0 && <span className="block text-xs text-muted">{notes.join(", ")}</span>}
+                  {notes.length > 0 && <span className={`block text-xs ${on ? "text-accent-ink/85" : "text-muted"}`}>{notes.join(", ")}</span>}
                 </Link>
               </li>
             );
@@ -103,7 +103,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
             {detail.llm_feedback ? (
               <div className="space-y-2">
                 <p className="line-clamp-4 leading-relaxed">{plainFeedback(detail.llm_feedback)}</p>
-                <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm underline">
+                <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm font-semibold text-accent">
                   Read the full feedback
                 </Link>
               </div>
@@ -124,15 +124,15 @@ function BodyParts({ similarity }: { similarity: SetSimilarity | null }) {
   return (
     <section aria-label="Similarity to the expert motion" className="space-y-4">
       <p className="flex items-end gap-3">
-        <span className="font-display text-7xl leading-[0.8]">{Math.round(similarity.mean_score)}</span>
+        <span className="font-display text-7xl leading-[0.8] text-accent">{Math.round(similarity.mean_score)}</span>
         <span className="text-sm leading-snug text-muted">% similar to the expert motion, over the scored reps</span>
       </p>
       <dl className="space-y-2">
         {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (
           <div key={part} className="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-3 text-sm">
             <dt className="first-letter:uppercase">{part.replace("_", " ")}</dt>
-            <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-foreground/10">
-              <span className="block h-full rounded-full bg-foreground" style={{ width: `${similarity.body_parts[part]}%` }} />
+            <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-surface-2">
+              <span className="block h-full rounded-full bg-accent" style={{ width: `${similarity.body_parts[part]}%` }} />
             </dd>
             <dd className="text-right tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
           </div>
