@@ -78,6 +78,10 @@ The exact TypeScript types are fixed in Phase 4, below.
 - The built-in reference is a placeholder: the expert's recorded sets will be the reference. The trained model is unchanged by that; only the reference rep changes. The route (a rebuilt built-in reference or a `reference` package per request) is to agree with Punnapat.
 - Judging whether similarity separates correct from incorrect reps is Punnapat's; the app's check is that a set is scored, stored, and shown.
 
+## Decided 2026-10-30
+
+- The embedding model is `gemini-embedding-2` (Sujira), the model the knowledge base's vectors in `langchain_pg_embedding` were made with; queries are embedded with it too. The open question of the column's dimension above no longer applies to `public.knowledge_base`, which stays empty and unused since the service reads langchain_postgres's own tables (migration `kb_langchain_tables`, 2026-10-25).
+
 ## Amended 2026-11-03: the analysis is written by the server only
 
 - `analyseSet(supabase, admin, setId, files)`: the file paths, the set read, and the keypoint download go through the user's client, so row-level security proves the set is theirs and storage guards the file. Similarity, the scores merged into the attempt records, and the feedback are then written by `admin`, the service-role client of `lib/supabase/admin.ts`, by the id that read returned.

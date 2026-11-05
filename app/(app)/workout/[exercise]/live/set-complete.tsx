@@ -2,12 +2,12 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import type { Setup } from "@/lib/exercise";
-import { plainFeedback } from "@/lib/feedback-text";
+import { plainFeedback, readFeedback } from "@/lib/feedback-text";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
+import { SetFeedback, WhatToFix } from "../../../set-feedback";
 import type { JobStatus } from "./pipeline";
-import { FeedbackText } from "../../../feedback-text";
 import { Close, Spark } from "../../../icons";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
@@ -72,6 +72,8 @@ export function SetComplete({
   }[capture.endedBy];
   const counts = new Map<string, number>();
   for (const attempt of attempts) for (const v of attempt.violations) counts.set(v.message, (counts.get(v.message) ?? 0) + 1);
+  // The rule messages stand until feedback with its own list of what to fix arrives.
+  const fixList = entry.feedback !== null && readFeedback(entry.feedback).summary !== null;
   // ADR-0004: the repair offer, the rest before the next set, or the end of the workout.
   const next = afterSet(entry, setup.sets, declined);
   const offerRepair = next === "repair";
@@ -153,7 +155,7 @@ export function SetComplete({
         <div aria-live="polite" className="space-y-4">
           {STATUS_TEXT[entry.status] && <p className="text-sm text-muted motion-safe:animate-pulse">{STATUS_TEXT[entry.status]}</p>}
           <BodyParts similarity={entry.similarity} pending={analysing} />
-          {counts.size > 0 && (
+          {counts.size > 0 && !fixList && (
             <section className="space-y-1.5">
               <h2 className="font-semibold">What broke a rule</h2>
               <ul className="card divide-y divide-line px-4">
@@ -171,7 +173,7 @@ export function SetComplete({
               </ul>
             </section>
           )}
-          <Feedback text={entry.feedback} pending={analysing} />
+          <Feedback text={entry.feedback} attempts={attempts} pending={analysing} />
           {entry.status === "failed" && (
             <p role="alert" className="alert">
               {entry.error}{" "}
@@ -284,18 +286,26 @@ function BodyParts({ similarity, pending }: { similarity: SetSimilarity | null; 
   );
 }
 
-// The coach's feedback last: four lines of it, and the whole text in place on Read all, so
-// the workout visit is never left mid-rest.
-function Feedback({ text, pending }: { text: string | null; pending: boolean }) {
+// The coach's feedback last: what to fix when the text has v16's list (lib/feedback-text.ts),
+// else four lines of it, and the whole text in place on Read all, so the workout visit is
+// never left mid-rest.
+function Feedback({ text, attempts, pending }: { text: string | null; attempts: Attempt[]; pending: boolean }) {
   const [open, setOpen] = useState(false);
   if (!text) return pending ? <p className="text-sm text-muted motion-safe:animate-pulse">Writing feedback</p> : null;
+  const { summary } = readFeedback(text);
   return (
-    <section className="card space-y-2 p-4">
+    <section className="card space-y-3 p-4">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold text-accent">
         <Spark className="size-4" />
         Coach feedback
       </h2>
-      {open ? <FeedbackText text={text} /> : <p className="line-clamp-4 leading-relaxed">{plainFeedback(text)}</p>}
+      {open ? (
+        <SetFeedback text={text} attempts={attempts} />
+      ) : summary ? (
+        <WhatToFix summary={summary} attempts={attempts} />
+      ) : (
+        <p className="line-clamp-4 leading-relaxed">{plainFeedback(text)}</p>
+      )}
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-sm font-semibold text-accent">
         {open ? "Show less" : "Read all feedback"}
       </button>

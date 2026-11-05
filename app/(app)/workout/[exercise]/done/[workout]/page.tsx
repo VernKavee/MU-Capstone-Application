@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ENDED_BY, isUuid, meanSimilarity, setOrder } from "@/lib/history";
-import type { SetSimilarity, Totals } from "@/lib/set";
+import type { Attempt, SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
-import { FeedbackText } from "../../../../feedback-text";
+import { RetryFeedback } from "../../../../history/[exercise]/[workout]/retry-feedback";
+import { SetFeedback } from "../../../../set-feedback";
 import { BackLink } from "@/app/(app)/back-link";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
-// as not there yet; the retry lives on the set-complete screen (ADR-0007).
-export default async function DonePage({ params }: PageProps<"/workout/[exercise]/done/[workout]">) {
+// as not there yet, with a button to write it, since a failure looks the same (ADR-0007).
+export default async function DonePage({ params, searchParams }: PageProps<"/workout/[exercise]/done/[workout]">) {
   const { exercise, workout: id } = await params;
+  const { set: failedSet, error } = await searchParams;
   if (!isUuid(id)) notFound();
   const supabase = await createClient();
   const { data: workout } = await supabase
@@ -57,9 +59,18 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
                 {set.repair_declined && ", repair set skipped"}.
               </p>
               {set.llm_feedback ? (
-                <FeedbackText text={set.llm_feedback} />
+                <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} />
               ) : (
-                <p className="leading-relaxed">No feedback yet. If it is still being written, it appears when you reload this page.</p>
+                <>
+                  <p className="leading-relaxed">No feedback yet. If it is still being written, it appears when you reload this page.</p>
+                  <RetryFeedback
+                    exercise={exercise}
+                    workout={id}
+                    set={set.id}
+                    from="done"
+                    error={failedSet === set.id && typeof error === "string" ? error : undefined}
+                  />
+                </>
               )}
             </li>
           );

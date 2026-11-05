@@ -66,6 +66,14 @@ export const ENDED_BY: Record<string, string> = {
   attempt_cap: "stopped at the attempt cap",
 };
 
+// The start of a set's feedback that level 4 shows: everything before the first blank line,
+// which feedback prompt v15 makes a four-line summary. Null when there is no blank line (the
+// stub, older prompts), and the page clamps the whole text instead.
+export function feedbackSummary(text: string): string | null {
+  const [first, ...rest] = text.trim().split(/\n\s*\n/);
+  return rest.length ? first : null;
+}
+
 // Sets in the order they happened: by set number, each repair set after its initial set.
 export const setOrder = (a: { set_no: number; kind: string }, b: { set_no: number; kind: string }) =>
   a.set_no - b.set_no || Number(a.kind === "repair") - Number(b.kind === "repair");
