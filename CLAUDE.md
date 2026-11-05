@@ -596,13 +596,17 @@ Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session l
 - Set complete and rest is a light page: the timer small at the top, correct, attempts and
   similarity, similarity by body part (the lowest marked), the rules broken, then the
   coach's feedback last, four lines that open in place (leaving `/live` mid-rest drops
-  the visit). End workout at the top is the Finish workout path; ending during a repair
-  offer does not write `repair_declined`.
+  the visit). End workout at the top is the Finish workout path, and the rest timer stops
+  while it runs.
 - Every page under a tab opens with one back button; the underlined back links are gone.
-- Not built from the mockup: the setup steppers (the number fields stay) and the camera
-  hint under each exercise on Home.
 
 Still open, outside the build plan:
+
+- The redesign (2026-11-05), for Vern: ending a workout from a repair offer does not write
+  `repair_declined` (ADR-0004 writes it on Skip it); not built from the mockup, the setup
+  steppers and the camera hint under each exercise on Home; not seen on the iPhone, the
+  outline (`paint-order` on HTML text) and the light pages. `npm run build` now fetches
+  Barlow from Google, so it needs the network.
 
 - The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
   the raised phone at 13 to 22 fps, the case it is for, is not tested. At 13 fps 3 glitch frames
