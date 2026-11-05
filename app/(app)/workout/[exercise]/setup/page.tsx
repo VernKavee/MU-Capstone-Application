@@ -6,7 +6,7 @@ import { BackLink } from "@/app/(app)/back-link";
 
 // The three numbers in the counter's face, as they will read on the live screen.
 const field = "w-24 rounded-lg border border-line bg-surface px-2 py-1 text-right font-display text-4xl leading-none tabular-nums";
-const row = "flex items-center justify-between gap-4 py-3";
+const row = "flex items-center justify-between gap-4 py-3 text-lg";
 // The arm, as two pills: the radio itself is hidden, the pill shows the choice and the focus.
 const pill =
   "cursor-pointer rounded-lg border border-line bg-surface px-4 py-2 font-display text-3xl leading-none has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-tape";
@@ -32,7 +32,7 @@ export default async function SetupPage({ params, searchParams }: PageProps<"/wo
         </p>
       )}
       <Form action={`/workout/${exercise.id}/guide`} className="space-y-6">
-        <div className="divide-y border-y">
+        <div className="card divide-y divide-line px-4">
           <label className={row}>
             Reps per set
             <input name="reps" type="number" required {...SETUP_LIMITS.reps} defaultValue={SETUP_LIMITS.reps.default} className={field} />

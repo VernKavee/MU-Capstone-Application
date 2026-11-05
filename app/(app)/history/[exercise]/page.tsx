@@ -48,13 +48,13 @@ export default async function ExerciseHistoryPage({ params, searchParams }: Page
       </header>
 
       {list.length ? (
-        <ol className="divide-y border-y">
+        <ol className="card divide-y divide-line px-4">
           {list.map((workout) => {
             const repairs = workout.sets.filter((s) => s.kind === "repair").length;
             const mean = meanSimilarity(workout.sets.map((s) => s.similarity as SetSimilarity | null));
             return (
               <li key={workout.id}>
-                <Link href={`/history/${exercise.id}/${workout.id}`} className="flex items-center justify-between gap-4 px-1 py-3 hover:bg-foreground/5">
+                <Link href={`/history/${exercise.id}/${workout.id}`} className="flex items-center justify-between gap-4 py-3 hover:text-accent">
                   <span>
                     <span className="block font-medium">
                       {formatWhen(workout.started_at, tz)}
@@ -66,7 +66,7 @@ export default async function ExerciseHistoryPage({ params, searchParams }: Page
                     </span>
                   </span>
                   <span className="text-right">
-                    <span className="block font-display text-4xl leading-none tabular-nums">{mean === null ? "–" : `${mean}%`}</span>
+                    <span className={`block font-display text-4xl leading-none tabular-nums ${mean === null ? "text-muted" : "text-accent"}`}>{mean === null ? "–" : `${mean}%`}</span>
                     <span className="block text-xs text-muted">similarity</span>
                   </span>
                 </Link>

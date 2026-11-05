@@ -12,6 +12,7 @@ function Icon({ className = "size-5", children }: { className?: string; children
 
 type P = { className?: string };
 export const ChevronLeft = (p: P) => <Icon {...p}><path d="M15 5l-7 7 7 7" /></Icon>;
+export const ChevronRight = (p: P) => <Icon {...p}><path d="M9 5l7 7-7 7" /></Icon>;
 export const Close = (p: P) => <Icon {...p}><path d="M6 6l12 12M18 6L6 18" /></Icon>;
 export const Speaker = (p: P) => <Icon {...p}><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11" /></Icon>;
 export const SpeakerOff = (p: P) => <Icon {...p}><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6" /></Icon>;
@@ -23,5 +24,11 @@ export const Gear = (p: P) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="3" />
     <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+  </Icon>
+);
+export const Figure = (p: P) => (
+  <Icon {...p}>
+    <circle cx="12" cy="4.5" r="1.8" fill="currentColor" />
+    <path d="M12 7.5v5.5M8 10l4-1 4 1M12 13l-3 3 1 5M12 13l3 3-1 5" />
   </Icon>
 );

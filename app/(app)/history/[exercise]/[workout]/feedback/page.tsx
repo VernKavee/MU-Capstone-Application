@@ -35,7 +35,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
         </h1>
       </header>
       {set.llm_feedback ? (
-        <FeedbackText text={set.llm_feedback} className="text-lg" />
+        <FeedbackText text={set.llm_feedback} />
       ) : (
         <p className="text-muted">No feedback was written for this set.</p>
       )}

@@ -47,7 +47,7 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
           const t = totals[i];
           const similarity = set.similarity as SetSimilarity | null;
           return (
-            <li key={set.id} className="space-y-2 border-t pt-4">
+            <li key={set.id} className="card space-y-2 p-4">
               <h2 className="font-semibold">
                 {set.kind === "repair" ? "Repair set" : "Set"} {set.set_no}
               </h2>
@@ -66,14 +66,14 @@ export default async function DonePage({ params }: PageProps<"/workout/[exercise
         })}
       </ol>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Link href="/" className="btn">
           Home
         </Link>
-        <Link href={`/history/${exercise}/${id}`} className="text-sm underline">
+        <Link href={`/history/${exercise}/${id}`} className="btn-quiet">
           Replay it in History
         </Link>
-        <Link href={`/workout/${exercise}/setup`} className="text-sm underline">
+        <Link href={`/workout/${exercise}/setup`} className="btn-quiet">
           Another {name.toLowerCase()} workout
         </Link>
       </div>

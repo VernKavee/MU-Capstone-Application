@@ -12,7 +12,7 @@ export function FeedbackText({ text, className = "" }: { text: string; className
     else groups.push(b.kind === "item" ? [b] : b);
   }
   return (
-    <div className={`max-w-prose space-y-3 leading-relaxed ${className}`}>
+    <div className={`max-w-prose space-y-3 text-lg leading-relaxed ${className}`}>
       {groups.map((g, i) =>
         Array.isArray(g) ? (
           <ul key={i} className="space-y-1.5">
@@ -29,7 +29,7 @@ export function FeedbackText({ text, className = "" }: { text: string; className
           </ul>
         ) : g.kind === "heading" ? (
           g.level <= 3 ? (
-            <h3 key={i} className="pt-1 text-lg font-semibold">
+            <h3 key={i} className="pt-1 text-xl font-semibold">
               <Spans spans={g.spans} />
             </h3>
           ) : (

@@ -4,6 +4,7 @@ import type { SetSimilarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { WeeklySummary } from "./weekly-summary";
+import { ChevronRight, Figure } from "./icons";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -31,25 +32,21 @@ export default async function HomePage() {
         <WeeklySummary days={week} />
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Start a workout</h2>
-          <ul className="grid grid-cols-2 gap-3">
+          {/* Rows on one card, as in the mockup: the thumbnail in its square once it exists. */}
+          <ul className="card divide-y divide-line px-4">
             {exercises.map((exercise) => (
               <li key={exercise.id}>
-                {/* A tile: the thumbnail fills it once it exists, the name sits at its foot. */}
-                <Link
-                  href={`/workout/${exercise.id}/setup`}
-                  className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl bg-surface p-2.5 ring-1 ring-line hover:ring-accent"
-                >
-                  {exercise.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={exercise.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  ) : (
-                    <span aria-hidden className="absolute left-3 top-3 text-xs text-muted">
-                      Thumbnail not available yet
-                    </span>
-                  )}
-                  <span className="relative self-start rounded-md bg-surface/85 px-1.5 py-1 font-display text-3xl leading-none backdrop-blur-sm">
-                    {exercise.name}
+                <Link href={`/workout/${exercise.id}/setup`} className="flex items-center gap-3 py-3 text-lg font-semibold hover:text-accent">
+                  <span aria-hidden className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-2 text-accent">
+                    {exercise.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={exercise.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Figure className="size-6" />
+                    )}
                   </span>
+                  {exercise.name}
+                  <ChevronRight className="ml-auto size-5 text-muted" />
                 </Link>
               </li>
             ))}

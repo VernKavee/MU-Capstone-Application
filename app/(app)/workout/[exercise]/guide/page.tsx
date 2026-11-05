@@ -37,17 +37,17 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
         )}
 
         <div className="max-w-prose space-y-6">
-          <p className="whitespace-pre-line leading-relaxed">{exercise.guide_text}</p>
+          <p className="whitespace-pre-line text-lg leading-relaxed">{exercise.guide_text}</p>
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">What the coach checks</h2>
-            <p className="text-sm text-muted">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
+            <p className="text-muted">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
             {/* Each rule as its warning band looks on the live screen, in priority order. */}
             <ol className="space-y-2">
               {rules.map((rule) => (
                 <li key={rule.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="rounded-md bg-tape px-3 py-1 font-semibold text-tape-ink">{rule.messages.en}</span>
-                  <span className="text-xs text-muted">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
+                  <span className="rounded-lg bg-tape px-3.5 py-1.5 text-lg font-semibold text-tape-ink">{rule.messages.en}</span>
+                  <span className="text-sm text-muted">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
                 </li>
               ))}
             </ol>
