@@ -38,7 +38,8 @@
 @theme inline {
   --color-background: #f9f9f8;
   --color-foreground: #21201c;
-  --font-display: var(--font-big-shoulders), "Arial Narrow", system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-barlow), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 @layer base {
@@ -55,15 +56,19 @@
   body {
     background: var(--color-background);
     color: var(--color-foreground);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-sans);
   }
   /* Every page title in the counter's face. */
   h1 {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: 700;
     font-size: 2.75rem;
     line-height: 0.95;
     text-wrap: balance;
+  }
+  /* The display face is loaded at 600 and 700; numbers and titles use 700 unless a class says otherwise. */
+  .font-display {
+    font-weight: 700;
   }
   /* Indigo on the light page (amber fails 3:1 on sand); off-white over video. */
   :focus-visible {
