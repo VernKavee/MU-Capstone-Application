@@ -273,12 +273,12 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
               Vern): nothing solid in front of the body, and the outline reads on a light wall. */}
           <div className={`pointer-events-none absolute right-4 top-16 text-right transition-opacity ${phase === "active" ? "" : "opacity-60"}`}>
             <p className="outlined font-display leading-[0.85] tabular-nums">
-              <span key={frame?.correct_rep_count ?? 0} className="inline-block text-[clamp(72px,14vh,128px)] text-live motion-safe:animate-pop">
+              <span key={frame?.correct_rep_count ?? 0} className="inline-block text-[clamp(110px,22vh,220px)] text-live motion-safe:animate-pop">
                 {frame?.correct_rep_count ?? 0}
               </span>
-              <span className="text-[clamp(44px,8.5vh,76px)]">/{setup.reps}</span>
+              <span className="text-[clamp(60px,12vh,120px)]">/{setup.reps}</span>
             </p>
-            <p className="outlined mt-1 text-lg font-semibold [--stroke:4px]">
+            <p className="outlined mt-1.5 text-2xl font-semibold [--stroke:5px]">
               {frame?.attempt_count ?? 0} {frame?.attempt_count === 1 ? "attempt" : "attempts"}
             </p>
             <p className="outlined text-sm [--stroke:3px]">
@@ -318,22 +318,23 @@ export function LiveScreen({ exercise, setup, resume }: Props) {
             </div>
           )}
 
-          {/* A slim warning band at the foot, End set beside it. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-3 p-3 pb-5">
-            <p
-              role="status"
-              aria-live="assertive"
-              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3.5 py-2 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}
-            >
-              {warning && <Warning className="size-5 shrink-0" />}
-              {warning ?? " "}
-            </p>
-            <span className="flex-1" />
+          {/* The warning band across the foot, big enough to read from where the user stands
+              (2026-11-08, Vern); End set sits above it so a long message never wraps against it.
+              The band keeps its space when empty, so End set never jumps. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-stretch gap-3 p-3 pb-5">
             {phase === "active" && (
-              <button type="button" onClick={() => sessionRef.current?.endSet()} className={`${pill} pointer-events-auto shrink-0`}>
+              <button type="button" onClick={() => sessionRef.current?.endSet()} className={`${pill} pointer-events-auto self-end`}>
                 End set
               </button>
             )}
+            <p
+              role="status"
+              aria-live="assertive"
+              className={`flex min-h-16 min-w-0 items-center gap-3 rounded-2xl px-5 py-3 font-display text-[clamp(26px,4.2vh,40px)] leading-tight ${warning ? "bg-tape text-tape-ink" : "invisible"}`}
+            >
+              {warning && <Warning className="size-8 shrink-0" />}
+              {warning ?? " "}
+            </p>
           </div>
         </>
       )}
