@@ -55,7 +55,7 @@ test("active days count each local day once per exercise", () => {
 
 test("replay finds the frame for a video time and the attempt it belongs to", () => {
   const frames = [0, 33, 67, 100, 133].map((t) => ({ t }));
-  assert.deepEqual([frameAt(frames, -5), frameAt(frames, 0), frameAt(frames, 66), frameAt(frames, 67), frameAt(frames, 9999)], [0, 0, 1, 2, 4]);
+  assert.deepEqual([frameAt(frames, -5), frameAt(frames, 0), frameAt(frames, 40), frameAt(frames, 50), frameAt(frames, 66), frameAt(frames, 9999)], [0, 0, 1, 1, 2, 4]);
   const attempts = [{ attempt_no: 1, frame_start: 1, frame_end: 2 }, { attempt_no: 2, frame_start: null, frame_end: null }, { attempt_no: 3, frame_start: 4, frame_end: 4 }];
   assert.deepEqual([0, 1, 2, 3, 4].map((i) => attemptAt(attempts, i)?.attempt_no ?? null), [null, 1, 1, null, 3]);
   const sets = [{ set_no: 2, kind: "initial" }, { set_no: 1, kind: "repair" }, { set_no: 1, kind: "initial" }];

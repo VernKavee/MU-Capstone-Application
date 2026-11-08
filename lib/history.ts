@@ -86,7 +86,8 @@ export function formatWhen(at: string, tz: string, now = new Date()): string {
   return `${date}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz })}`;
 }
 
-// Replay (level 4): the last keypoint frame at or before ms. Frames are in t order.
+// Replay (level 4): the keypoint frame nearest ms, the earlier on a tie. Frames are in t order.
+// Nearest, not the last one before: at 12 fps the last one before is up to 80 ms old.
 export function frameAt(frames: { t: number }[], ms: number): number {
   let lo = 0;
   let hi = frames.length - 1;
@@ -95,7 +96,7 @@ export function frameAt(frames: { t: number }[], ms: number): number {
     if (frames[mid].t <= ms) lo = mid;
     else hi = mid - 1;
   }
-  return lo;
+  return lo + 1 < frames.length && frames[lo + 1].t - ms < ms - frames[lo].t ? lo + 1 : lo;
 }
 
 // The attempt whose frame range holds frame i, if any (the ADR-0003 frame indices).

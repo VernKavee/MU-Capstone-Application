@@ -14,6 +14,13 @@ const OUTCOME = { correct: "Correct", incorrect: "Incorrect", abandoned: "Abando
 const SEGMENT = { correct: "bg-ink/70", incorrect: "bg-tape", abandoned: "bg-ink/25" } as const;
 const MARKER = { correct: "bg-ok", incorrect: "bg-tape", abandoned: "bg-line" } as const;
 
+// A keypoint's t is stamped when the frame loop reads the picture, after the camera took it, so
+// the pose at video time v carries t of about v plus this. Measured on the 8 phone sets of
+// 2026-11-08 (picture motion against keypoint motion): 20 to 70 ms, most 40 to 60.
+// ponytail: one constant for every device; stamp t from the frame's capture time in
+// LiveSession if a device turns out far from it.
+const CAMERA_LAG_MS = 50;
+
 const clock = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
 
 // Level 4's player and attempt list for one set. The video plays as recorded, not mirrored,
@@ -79,7 +86,9 @@ export function Replay({
   }
 
   // Draws the frame under the video's time. The playhead and the clock are written straight
-  // to the DOM, so React renders only when the attempt under the playhead changes.
+  // to the DOM, so React renders only when the attempt under the playhead changes. Drawn when
+  // the browser shows each video frame, at that frame's own time: iOS Safari's `currentTime`
+  // read on animation frames trailed the picture by about 0.2 s (2026-11-08).
   useEffect(() => {
     const v = videoRef.current;
     const canvas = canvasRef.current;
@@ -87,18 +96,16 @@ export function Replay({
     if (!file || !v || !canvas || !ctx) return;
     const n = file.fields.length;
     const [fx, fy, fs] = (["x", "y", "score"] as const).map((f) => file.fields.indexOf(f));
-    let raf = 0;
     let last = -1;
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      const ms = v.currentTime * 1000 + offset;
+    const draw = (videoMs: number) => {
+      const ms = videoMs + offset;
       if (ms === last || !v.videoWidth) return;
       last = ms;
       if (canvas.width !== v.videoWidth || canvas.height !== v.videoHeight) {
         canvas.width = v.videoWidth;
         canvas.height = v.videoHeight;
       }
-      const i = frameAt(file.frames, ms);
+      const i = frameAt(file.frames, ms + CAMERA_LAG_MS);
       const attempt = attemptAt(attempts, i);
       const p = file.frames[i].points;
       const lit = new Set(attempt?.violations.flatMap((x) => highlight[x.rule] ?? []));
@@ -106,6 +113,21 @@ export function Replay({
       if (headRef.current) headRef.current.style.left = `${Math.min(100, (ms / end) * 100)}%`;
       if (clockRef.current) clockRef.current.textContent = clock(ms);
       setCurrent(attempt?.attempt_no ?? null);
+    };
+    // Older browsers lack it (Safari before 15.4): fall back to animation frames.
+    if (v.requestVideoFrameCallback) {
+      let id = 0;
+      const onFrame = (_now: number, frame: VideoFrameCallbackMetadata) => {
+        id = v.requestVideoFrameCallback(onFrame);
+        draw(frame.mediaTime * 1000);
+      };
+      id = v.requestVideoFrameCallback(onFrame);
+      return () => v.cancelVideoFrameCallback(id);
+    }
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      draw(v.currentTime * 1000);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
