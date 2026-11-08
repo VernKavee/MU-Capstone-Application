@@ -636,8 +636,9 @@ Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session l
   Condensed and Barlow replace Big Shoulders (the ui-ux-pro-max sports pairing).
 - Live: the user's body stays as large as possible, with nothing solid in front of it
   (Vern). The count and target are one outlined number ("7/10") in the top right, attempts
-  under it; back and mute are round 44 px buttons; the warning is a slim band at the foot,
-  End set beside it. The outline uses `paint-order`, checked in Chrome only.
+  under it; back and mute are round 44 px buttons; the warning is a band across the foot,
+  End set above it. Enlarged 2026-11-08 (Vern, too small from where the user stands): the
+  count `clamp(110px,22vh,220px)`, the warning in Barlow Condensed `clamp(26px,4.2vh,40px)`. The outline uses `paint-order`, checked in Chrome only.
 - Set complete and rest is a light page: the timer small at the top, correct, attempts and
   similarity, similarity by body part (the lowest marked), the rules broken (hidden once
   feedback with v16's fault list arrives, as Sujira built it), then the coach's feedback
