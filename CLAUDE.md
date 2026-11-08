@@ -698,7 +698,19 @@ Still open, outside the build plan:
   whose keypoint rate fell from 35 to 14 fps in its last 20 s, has 56.8 s of video against 59.0 s
   of keypoints; the video is on time to its end (motion lag 50 to 100 ms throughout), the last
   2.2 s were never written. Replay no longer reads this as a start delay (fixed, ADR-0005); the
-  lost seconds themselves are not.
+  lost seconds themselves are not. Worse on 2026-11-08 with the iPhone's screen recording on:
+  squat set `eb5e6d9a` at 12.5 fps kept 7.3 s of video against 19.0 s of keypoints, and replay
+  freezes there. The other seven sets of that run match within 60 ms. Re-test with the screen
+  recording off (film the phone from a second device).
+- Replay sync (2026-11-08): on the iPhone the skeleton trailed the picture by about 0.2 s. The
+  files trail by 20 to 70 ms (8 sets); replay now draws on `requestVideoFrameCallback` at the
+  frame's `mediaTime`, looks `CAMERA_LAG_MS` (50) ahead, and `frameAt` takes the nearest frame.
+  Not seen on the iPhone yet.
+- Lunge out of frame (2026-11-08, set `090d8ce0`): "Raise your front knee" fired on attempts 1,
+  6 and 11 while the front knee and toe sat at or past the picture's left edge (x -0.05 to 0.02).
+  MediaPipe scored those guessed joints 0.95 to 1.00, so the confidence check passed, and the
+  knee read 60 to 69 against the bar of 70. Proposed, not built: a rep rule is not judged when a
+  joint it reads lies outside the picture at its measured frame (Python first, pass bar first).
 - The first save of a set runs in the user's session, so a user could send made-up attempt
   records at that moment; since 2026-11-03 they cannot change them, or the analysis, after.
 - The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found
