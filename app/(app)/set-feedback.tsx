@@ -1,4 +1,4 @@
-import { faultName, readFeedback, ruleCounts, type FeedbackBlock, type FeedbackSummary } from "@/lib/feedback-text";
+import { faultName, isLayered, readFeedback, ruleCounts, type Feedback, type FeedbackBlock, type FeedbackDetail } from "@/lib/feedback-text";
 import type { Attempt } from "@/lib/set";
 
 type Attempts = Pick<Attempt, "violations">[];
@@ -6,22 +6,32 @@ type Attempts = Pick<Attempt, "violations">[];
 // One set's coaching text (lib/feedback-text.ts): what went wrong and how to fix it, from the
 // summary lines with the counts from the attempt records, then the full text. Rendered on the
 // server for the finished summary and History, and inside the live screen's set-complete.
-export function SetFeedback({ text, attempts }: { text: string; attempts: Attempts }) {
-  const { summary, blocks } = readFeedback(text);
+// Prompt v17's text has no full text below the list: each fault's details fold under it,
+// closed unless `open` (the feedback detail page), and the plan follows untitled.
+export function SetFeedback({ text, attempts, open = false }: { text: string; attempts: Attempts; open?: boolean }) {
+  const feedback = readFeedback(text);
+  const { summary, blocks } = feedback;
   return (
     <div className="space-y-5">
-      {summary && <WhatToFix summary={summary} attempts={attempts} />}
-      <FullFeedback blocks={blocks} titled={summary !== null} />
+      {summary && <WhatToFix feedback={feedback} attempts={attempts} open={open} />}
+      {blocks.length > 0 && <FullFeedback blocks={blocks} titled={summary !== null && !isLayered(feedback)} />}
     </div>
   );
 }
 
-export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; attempts: Attempts }) {
+// Shows nothing unless `feedback.summary` parsed; callers show something else then.
+export function WhatToFix({ feedback, attempts, open = false }: { feedback: Feedback; attempts: Attempts; open?: boolean }) {
+  const { summary, details } = feedback;
+  if (!summary) return null;
   if (summary.kind === "keep")
     return (
-      <section className="space-y-1">
-        <h3 className="text-sm opacity-70">What went well</h3>
-        <p className="leading-relaxed">{summary.text}</p>
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-sm opacity-70">What went well</h3>
+          <p className="leading-relaxed">{summary.text}</p>
+        </div>
+        <HealthNote text={feedback.health} />
+        <Progress text={feedback.progress} />
       </section>
     );
   const counts = ruleCounts(attempts);
@@ -31,6 +41,7 @@ export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; att
   return (
     <section className="space-y-3">
       <h3 className="text-sm opacity-70">What went wrong, and how to fix it</h3>
+      <HealthNote text={feedback.health} />
       <ol className="space-y-4">
         {faults.map(({ rule, fault, fix }, i) => {
           const n = counts.get(rule)?.attempts;
@@ -49,11 +60,54 @@ export function WhatToFix({ summary, attempts }: { summary: FeedbackSummary; att
                 <span className="sr-only">Fix: </span>
                 {fix}
               </p>
+              {details[rule] && <FaultDetails details={details[rule]} open={open} />}
             </li>
           );
         })}
       </ol>
+      <Progress text={feedback.progress} />
     </section>
+  );
+}
+
+// Prompt v17's labelled lines for one fault (what it is, likely cause, setup change, drill,
+// check, in this set), folded so the list stays one screen.
+function FaultDetails({ details, open }: { details: FeedbackDetail[]; open: boolean }) {
+  return (
+    <details open={open} className="pt-1">
+      <summary className="cursor-pointer text-sm underline">Details</summary>
+      <dl className="mt-2 space-y-2">
+        {details.map(({ label, text }, i) => (
+          <div key={i} className="space-y-0.5">
+            <dt className="text-sm opacity-70">{label}</dt>
+            <dd className="leading-snug">{text}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  );
+}
+
+// The caution from the medical history: above the list, since every fix is meant within it, and
+// never folded away.
+function HealthNote({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <div className="space-y-0.5 rounded-md border border-tape px-3 py-2">
+      <h4 className="text-sm opacity-70">Health note</h4>
+      <p className="leading-snug">{text}</p>
+    </div>
+  );
+}
+
+// How the set compares with the earlier sets or the last workout.
+function Progress({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <div className="space-y-0.5">
+      <h4 className="text-sm opacity-70">Progress</h4>
+      <p className="leading-snug">{text}</p>
+    </div>
   );
 }
 

@@ -144,39 +144,42 @@ export function SetComplete({
           ))}
         </div>
 
-        {offerRepair ? (
-          <div className="space-y-3 border-t border-ink/20 pt-4">
-            <p className="leading-snug">
-              At least one attempt broke a rule, so you get one repair set at the same target. It is offered once.
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={onRepair} disabled={busy} className="btn">
-                Start the repair set
-              </button>
-              <button type="button" onClick={decline} disabled={busy} className={pill}>
-                Skip it
-              </button>
+        {/* The next step stays in reach while the feedback above it scrolls. */}
+        <div className="sticky bottom-0 -mx-6 -mb-8 bg-black px-6 pb-8">
+          {offerRepair ? (
+            <div className="space-y-3 border-t border-ink/20 pt-4">
+              <p className="leading-snug">
+                At least one attempt broke a rule, so you get one repair set at the same target. It is offered once.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" onClick={onRepair} disabled={busy} className="btn">
+                  Start the repair set
+                </button>
+                <button type="button" onClick={decline} disabled={busy} className={pill}>
+                  Skip it
+                </button>
+              </div>
+              {actionError && (
+                <p role="alert" className="text-sm">
+                  {actionError}
+                </p>
+              )}
             </div>
-            {actionError && (
-              <p role="alert" className="text-sm">
-                {actionError}
-              </p>
-            )}
-          </div>
-        ) : hasNext ? (
-          <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />
-        ) : (
-          <div className="space-y-3 border-t border-ink/20 pt-4">
-            <button type="button" onClick={finish} disabled={busy} className="btn">
-              {busy ? "Finishing" : "Finish workout"}
-            </button>
-            {actionError && (
-              <p role="alert" className="text-sm">
-                {actionError}
-              </p>
-            )}
-          </div>
-        )}
+          ) : hasNext ? (
+            <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />
+          ) : (
+            <div className="space-y-3 border-t border-ink/20 pt-4">
+              <button type="button" onClick={finish} disabled={busy} className="btn">
+                {busy ? "Finishing" : "Finish workout"}
+              </button>
+              {actionError && (
+                <p role="alert" className="text-sm">
+                  {actionError}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -38,7 +38,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
       </header>
       {set.llm_feedback ? (
         <div className="max-w-prose text-lg">
-          <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} />
+          <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} open />
         </div>
       ) : (
         <p className="opacity-70">No feedback was written for this set.</p>

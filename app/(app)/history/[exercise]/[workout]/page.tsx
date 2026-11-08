@@ -36,8 +36,10 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const selected = sets.find((s) => s.id === chosen) ?? sets[0];
   // The same policies just returned this set, so exactly one row comes back.
   const { data: detail } = await supabase.from("sets").select("attempts, llm_feedback, video_url, keypoints_url").eq("id", selected.id).single().throwOnError();
-  // Prompt v16's list of what to fix, else v15's opening paragraph, else the clamped text.
-  const fixes = detail.llm_feedback ? readFeedback(detail.llm_feedback).summary : null;
+  // Prompt v16's list of what to fix (v17's with its folded details), else v15's opening
+  // paragraph, else the clamped text.
+  const read = detail.llm_feedback ? readFeedback(detail.llm_feedback) : null;
+  const fixes = read?.summary ? read : null;
   const summary = detail.llm_feedback ? feedbackSummary(detail.llm_feedback) : null;
 
   const name = workout.exercises.name;
@@ -109,7 +111,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
             {detail.llm_feedback ? (
               <div className="space-y-2">
                 {fixes ? (
-                  <WhatToFix summary={fixes} attempts={detail.attempts as unknown as Attempt[]} />
+                  <WhatToFix feedback={fixes} attempts={detail.attempts as unknown as Attempt[]} />
                 ) : summary ? (
                   <p className="whitespace-pre-line leading-relaxed">{summary}</p>
                 ) : (

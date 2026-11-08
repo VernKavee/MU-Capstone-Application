@@ -2,7 +2,7 @@
 // loses a line, or the counts start trusting anything but the attempt records.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { faultName, readFeedback, ruleCounts } from "./feedback-text.ts";
+import { faultName, isLayered, readFeedback, ruleCounts } from "./feedback-text.ts";
 
 const V16 = `Fault partial_squat: You stopped above parallel on most reps.
 Fix: Sit your hips back until your thighs are level.
@@ -59,6 +59,62 @@ test("anything that strays from the form keeps every paragraph and has no summar
 test("a line ending in a colon heads its paragraph only when more lines follow", () => {
   assert.deepEqual(readFeedback("Note:").blocks, [{ heading: null, lines: ["Note:"], numbered: false }]);
   assert.deepEqual(readFeedback("Plan:\n1. One.\nTwo.").blocks, [{ heading: "Plan", lines: ["1. One.", "Two."], numbered: false }]);
+});
+
+// Prompt v17 as the RAG service builds it (rag_core/feedback_format.py), shortened from a squat set
+// on Gemini, 2026-11-07.
+const V17 = `Fault knee_varus: Your knees bowed outward past your feet.
+Fix: Keep your kneecaps over your second toe.
+Fault partial_squat: The attempt was cut short above parallel.
+Fix: Sink until your thighs are level with the floor.
+
+Health: With your right knee history, keep every squat pain-free.
+
+Progress: Score dropped to 62.8 from 68.3 in set 1.
+
+Details knee_varus:
+What it is: Your knees bow out away from the midline.
+Drill: Bodyweight squats tracking over the toes, 3 sets of 8.
+In this set: Attempts 1, 3, 5-9, 11, 15 and 16.
+
+Details partial_squat:
+Setup change: Squat to a box set at parallel height.
+
+Next Session Plan:
+1. Stop the set before your knees drift.
+2. Film one set from the side.`;
+
+test("a v17 answer: the list, the health note, progress, details per fault, then the plan", () => {
+  const read = readFeedback(V17);
+  assert.equal(read.summary?.kind === "faults" && read.summary.faults.length, 2);
+  assert.equal(read.health, "With your right knee history, keep every squat pain-free.");
+  assert.equal(read.progress, "Score dropped to 62.8 from 68.3 in set 1.");
+  assert.deepEqual(read.details, {
+    knee_varus: [
+      { label: "What it is", text: "Your knees bow out away from the midline." },
+      { label: "Drill", text: "Bodyweight squats tracking over the toes, 3 sets of 8." },
+      { label: "In this set", text: "Attempts 1, 3, 5-9, 11, 15 and 16." },
+    ],
+    partial_squat: [{ label: "Setup change", text: "Squat to a box set at parallel height." }],
+  });
+  assert.deepEqual(read.blocks, [{ heading: "Next Session Plan", lines: ["Stop the set before your knees drift.", "Film one set from the side."], numbered: true }]);
+  assert.equal(isLayered(read), true);
+});
+
+test("v17 labels are read only after a summary, and a v16 text is not layered", () => {
+  const stray = "Health: Fine.\n\nDetails knee_varus:\nDrill: Squats.";
+  assert.equal(readFeedback(stray).summary, null);
+  assert.equal(readFeedback(stray).health, null);
+  assert.equal(readFeedback(stray).blocks.length, 2, "every paragraph kept as written");
+  assert.equal(isLayered(readFeedback(V16)), false);
+  const clean = readFeedback("Keep: Smooth reps.\n\nProgress: First set on record.\n\nNext Session Plan:\n1. Same again.");
+  assert.deepEqual([clean.summary, clean.progress, clean.blocks.length], [{ kind: "keep", text: "Smooth reps." }, "First set on record.", 1]);
+});
+
+test("a details block with a line that is not labelled stays a paragraph", () => {
+  const read = readFeedback("Keep: Good.\n\nDetails knee_varus:\nWhat it is: Knees out.\njust a sentence");
+  assert.deepEqual(read.details, {});
+  assert.equal(read.blocks[0].heading, "Details knee_varus");
 });
 
 test("a fault's name is its rule key in words", () => {
