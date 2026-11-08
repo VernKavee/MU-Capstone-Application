@@ -5,6 +5,7 @@ import type { Attempt, SetSimilarity, Totals } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { RetryFeedback } from "../../../../history/[exercise]/[workout]/retry-feedback";
 import { SetFeedback } from "../../../../set-feedback";
+import { BackLink } from "@/app/(app)/back-link";
 
 // Section 4.5's finished summary, read back from the database so it shows what was saved:
 // every set with its counts, similarity, and feedback. Feedback still being written shows
@@ -31,12 +32,13 @@ export default async function DonePage({ params, searchParams }: PageProps<"/wor
 
   return (
     <main className="max-w-2xl space-y-6 p-6">
+      <BackLink href="/">Home</BackLink>
       <header className="space-y-2">
-        <p className="text-sm opacity-60">{name}, workout finished</p>
+        <p className="text-sm text-muted">{name}, workout finished</p>
         <h1>
           {sum("correct_reps")} correct reps in {sum("attempts")} attempts
         </h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {sets.filter((s) => s.kind === "initial").length} of {workout.target_sets} sets of {workout.target_reps} reps
           {mean !== null && `, ${mean}% mean similarity`}.
         </p>
@@ -47,11 +49,11 @@ export default async function DonePage({ params, searchParams }: PageProps<"/wor
           const t = totals[i];
           const similarity = set.similarity as SetSimilarity | null;
           return (
-            <li key={set.id} className="space-y-2 border-t pt-4">
+            <li key={set.id} className="card space-y-2 p-4">
               <h2 className="font-semibold">
                 {set.kind === "repair" ? "Repair set" : "Set"} {set.set_no}
               </h2>
-              <p className="text-sm opacity-70">
+              <p className="text-sm text-muted">
                 {t.correct_reps} correct of {t.attempts} attempts, {t.abandoned_attempts} abandoned, {ENDED_BY[set.ended_by]}
                 {similarity && `, ${Math.round(similarity.mean_score)}% similarity`}
                 {set.repair_declined && ", repair set skipped"}.
@@ -75,14 +77,14 @@ export default async function DonePage({ params, searchParams }: PageProps<"/wor
         })}
       </ol>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Link href="/" className="btn">
           Home
         </Link>
-        <Link href={`/history/${exercise}/${id}`} className="text-sm underline">
+        <Link href={`/history/${exercise}/${id}`} className="btn-quiet">
           Replay it in History
         </Link>
-        <Link href={`/workout/${exercise}/setup`} className="text-sm underline">
+        <Link href={`/workout/${exercise}/setup`} className="btn-quiet">
           Another {name.toLowerCase()} workout
         </Link>
       </div>

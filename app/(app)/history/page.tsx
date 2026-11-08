@@ -27,7 +27,7 @@ export default async function HistoryPage() {
     <main className="space-y-6 p-6">
       <header className="space-y-2">
         <h1>History</h1>
-        <p className="text-sm opacity-70">Days with a finished workout in the last 7 days, today on the right.</p>
+        <p className="text-sm text-muted">Days with a finished workout in the last 7 days, today on the right.</p>
       </header>
       {/* The first thing a new user sees here (Phase 6). The exercises stay listed below:
           each still leads to its workouts from before these 7 days. */}
@@ -44,7 +44,7 @@ export default async function HistoryPage() {
           const on = active.get(exercise.id) ?? new Set<string>();
           return (
             <li key={exercise.id}>
-              <Link href={`/history/${exercise.id}`} className="block space-y-3 rounded-xl border p-4 hover:border-foreground/50">
+              <Link href={`/history/${exercise.id}`} className="card block space-y-3 p-4 hover:ring-accent">
                 <span className="flex items-baseline justify-between gap-4">
                   <span className="font-display text-3xl leading-none">{exercise.name}</span>
                   <span className="text-sm">
@@ -54,7 +54,7 @@ export default async function HistoryPage() {
                 </span>
                 <span aria-hidden className="grid grid-cols-7 gap-1">
                   {days.map((date) => (
-                    <span key={date} className={`h-2 rounded-full ${on.has(date) ? "bg-foreground" : "bg-foreground/10"}`} />
+                    <span key={date} className={`h-2 rounded-full ${on.has(date) ? "bg-accent" : "bg-surface-2"}`} />
                   ))}
                 </span>
               </Link>

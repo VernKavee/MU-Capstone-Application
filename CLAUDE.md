@@ -76,8 +76,9 @@ Conventions the code follows, because the docs changed since the plan was writte
   `lib/live/pose.ts` the MediaPipe adapter, `lib/live/sound.ts` the beep and speech,
   `lib/live/session.ts` the frame loop outside React, and
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
-  renders snapshots. The loop, not React, owns the camera, the landmarker, the engine,
-  the overlay, the recorder, and the keypoint capture. The overlay canvas draws the camera
+  renders snapshots. The loop, not React, owns the camera, the engine, the overlay, the
+  recorder, and the keypoint capture; the landmarker is the screen's, loaded once per visit
+  and lent to each set's loop (2026-11-03). The overlay canvas draws the camera
   frame under the skeleton, because iOS Safari drops `object-fit` on the video once
   MediaRecorder starts; the `<video>` stays under it as the source.
 - The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
@@ -105,12 +106,18 @@ Conventions the code follows, because the docs changed since the plan was writte
 - Next shows only the loading file of the folder whose child segment a navigation
   changes, so every folder whose pages link to each other has a `loading.tsx` that
   re-exports `app/(app)/loading.tsx`.
-- Design (Phase 6): one dark theme, with no light palette and no `dark:` variants. Tokens
-  in `app/globals.css`: `ink`, `tape`, `tape-ink`, with `background` and `foreground`
-  naming the page's ground and text. Shared classes: `.btn` for the one main action,
-  `.btn-quiet`, `.field`, and `.alert`, the tape band for anything to fix; over video, the
-  live screen's `pill`. Every `h1` is Big Shoulders through a base rule, and the tape
-  focus ring is global. Tape yellow marks only what needs attention.
+- Design (Daylight, 2026-11-05, replacing Phase 6's one dark theme): light pages and a dark
+  stage, from Radix Colors scales, with no `dark:` variants. Page tokens in
+  `app/globals.css`: `background`, `surface`, `surface-2`, `line`, `foreground`, `muted`,
+  `accent` (indigo, the main action and progress), `ok` (correct reps). Over video: `ink`,
+  `tape`, `tape-ink`, `live` (the count). Tape amber marks only a warning, on the page too.
+  Shared classes: `.btn`, `.btn-quiet`, `.field`, `.card`, `.alert` (the tape band), and
+  `.outlined` for text over video; over video, `pill` and `round` from `set-complete.tsx`.
+  Every `h1` and `font-display` number is Barlow Condensed 700, text is Barlow (both via
+  `next/font`). The focus ring is the accent, off-white inside `.stage` (the live screen and
+  the replay player) and the accent again inside its `.on-page` (the set-complete page).
+  Muted text uses `text-muted`, never opacity. Icons are inline SVG in `app/(app)/icons.tsx`;
+  every page under a tab opens with `BackLink` (`app/(app)/back-link.tsx`).
 - Layout: the (app) column is `max-w-5xl` on every page and each page sets its own
   measure inside it, left aligned. The tab bar is one `nav` named Primary, at the bottom
   on a phone and at the top from `md` up.
@@ -198,7 +205,9 @@ Smaller decisions without an ADR, so no phase re-decides them:
 - Laptops and phones are both first-class.
 - Skills: adopt `supabase/agent-skills@supabase` and
   `supabase/agent-skills@supabase-postgres-best-practices` at the start of Phase 1 and a
-  Playwright skill at Phase 6. Nothing else in the ecosystem was worth adopting.
+  Playwright skill at Phase 6. On 2026-11-05 `frontend-design` (anthropics) and
+  `ui-ux-pro-max` (nextlevelbuilder) were added in `.claude/skills/` for the UI redesign,
+  installed in the repo, never globally (Vern).
 
 Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
 
@@ -273,7 +282,11 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
 - Feedback context: the workout's earlier sets plus the last five other workouts of the
   exercise (`HISTORY_WORKOUTS`), as set summaries without attempt records.
 - After a set: save the row, upload both files, then analyse. A retry redoes only what is
-  missing. Each set's save waits for the previous one so all sets share one workout row.
+  missing. Each set's save waits for the previous one so sets save in order. Since
+  2026-11-03 the browser makes the workout and set ids and the save skips rows already
+  there, so every set and retry lands in one workout row (ADR-0004). A retry with a file
+  still to send saves again for fresh upload URLs, which last two hours. A reload under
+  five minutes after the last set resumes the workout from `workout=` in the address.
 - The repair set follows an initial set with any violation, abandoned attempts included,
   starts without rest, and keeps the set number. Skipping writes `repair_declined` on the
   initial set, even when the skip comes before the save lands.
@@ -284,7 +297,10 @@ Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 sessi
   (`retryFeedback` in `history/[exercise]/[workout]/actions.ts`, `analyseSet` with no new
   files).
 - Column grants limit API updates to `workouts.ended_at` and, on `sets`, the decline, the
-  file paths, similarity, feedback, and attempts. Nothing is deleted.
+  file paths, similarity, feedback, and attempts. Nothing is deleted. Since 2026-11-03
+  similarity, feedback, and attempts are written by the server's service-role client
+  (`lib/supabase/admin.ts`, `SUPABASE_SERVICE_ROLE_KEY`) after the user's client has read the
+  set, and the API refuses them to a user (migration `analysis_server_only`).
 - Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
   object; `value` is `rep_stats[rule name]` or null.
 
@@ -295,7 +311,9 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   part way included.
 - An active day needs a finished workout, dated by its start, over the same seven days.
   Level 3 lists finished workouts only, so a workout left part way shows on the chart and
-  nowhere else in History.
+  nowhere else in History. Since 2026-11-03 (Vern) Level 3 lists every workout with a saved
+  set, a workout left part way marked "Not finished", twenty to a page with `?before=`;
+  active days stay finished-only.
 - Level 4 lists every set of the workout and shows the one in `?set=` in full; only that
   set's attempts, feedback, and file paths are fetched. The feedback detail screen is per
   set.
@@ -303,8 +321,9 @@ Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
   comes from the keypoint file's `t`, never the video's duration; an attempt's violations
   light their joints for the whole attempt; a set missing a file, or whose keypoint file
   holds fewer than two frames, is not replayed.
-- The chart sits on a dark ground because tape yellow on white fails contrast; since
-  Phase 6 every page does. Big Shoulders also sets the deep-dive's similarity number.
+- The chart sat on a dark ground because tape yellow on white fails contrast; since
+  2026-11-05 its bars are the indigo accent on a white card. The display face also sets
+  the deep-dive's similarity number.
 - No migration: the Phase 4 policies cover every read.
 
 Decided in Phase 6, recorded in ADR-0001, 0002, 0004, 0005, 0007, `docs/HANDOVER.md`, and
@@ -319,7 +338,8 @@ the Phase 6 session log:
   stops hydration. A not-found page streams inside a 200, so tests check the page.
 - Every screen has loading, empty, and error states, checked at 375 and 1280 px.
 - One dark theme on every page, and Big Shoulders for every page title and big number,
-  both Vern's choices; the system light/dark switch and `data-wide` are gone. The guide
+  both Vern's choices (both replaced 2026-11-05, below); the system light/dark switch and
+  `data-wide` are gone. The guide
   shows each rule as its warning band, in priority order.
 - Password resets are one SQL statement in Studio's SQL editor; backups are a data-only
   `db dump` plus `docker cp` of the storage volume. All three were run on the local stack.
@@ -600,13 +620,43 @@ Decided 2026-11-02, how feedback is shown, recorded in the 2026-11-02 session lo
   key in words), its count of attempts from the attempt records (never the model's), and the fix
   in a tape band; then "Full feedback" as headed paragraphs and lists. Level 4 shows the list
   only. Text that does not parse (the stub, v15, a model that strayed) shows whole, with level 4
-  falling back to its first paragraph (`feedbackSummary`, `lib/history.ts`).
+  falling back to its first paragraph (`feedbackSummary`, `lib/history.ts`). Feedback saved
+  before v16 as Markdown (the 2026-11-03 phone run) is rendered by the Markdown reader
+  (`isMarkdown`, `parseFeedback`, `app/(app)/feedback-text.tsx`), kept at the merge of
+  2026-11-05 (Vern), and level 4 clamps it with its marks dropped (`plainFeedback`).
 - v16 shipped without a model run first (Sujira); its first two sets on Gemini (curl, one with
   two faults, one clean repair set) parsed.
 - RAG_SYSTEM's `FEEDBACK_CAPTURE` keeps every request (input, context, answer, version) in its
   gitignored `capture/` as the eval's inputs. It holds medical histories.
 
+Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session log:
+
+- Daylight: light pages from Radix sand, indigo, grass, and amber, chosen over two rounds of
+  mockups (https://claude.ai/artifact/1SYEcngZMnnE2BPPvDiq7W); the stage stays dark. Barlow
+  Condensed and Barlow replace Big Shoulders (the ui-ux-pro-max sports pairing).
+- Live: the user's body stays as large as possible, with nothing solid in front of it
+  (Vern). The count and target are one outlined number ("7/10") in the top right, attempts
+  under it; back and mute are round 44 px buttons; the warning is a slim band at the foot,
+  End set beside it. The outline uses `paint-order`, checked in Chrome only.
+- Set complete and rest is a light page: the timer small at the top, correct, attempts and
+  similarity, similarity by body part (the lowest marked), the rules broken (hidden once
+  feedback with v16's fault list arrives, as Sujira built it), then the coach's feedback
+  last: the fault list (or four lines of older text), and all of it opens in place (leaving
+  `/live` mid-rest drops the visit). Fix lines are an indigo band, amber is only the fault's
+  dot (Vern, at the merge). End workout at the top is the Finish workout path, and the rest timer stops
+  while it runs. Ending from a repair offer records the skip first (`repair_declined`, as
+  Skip it does), Vern's choice.
+- Every page under a tab opens with one back button; the underlined back links are gone.
+- Setup's three numbers have − and + (one rep, one set, 5 s of rest a tap) beside a field
+  that stays typeable (`setup/stepper.tsx`). Home lists each exercise with how to stand to
+  the camera, from `exercises.camera_hint` (migration `exercise_camera_hint`), an app
+  column outside the export like `landscape`; a new exercise needs one.
+
 Still open, outside the build plan:
+
+- The redesign (2026-11-05): not seen on the iPhone, the
+  outline (`paint-order` on HTML text) and the light pages. `npm run build` now fetches
+  Barlow from Google, so it needs the network.
 
 - The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
   the raised phone at 13 to 22 fps, the case it is for, is not tested. At 13 fps 3 glitch frames
@@ -638,19 +688,19 @@ Still open, outside the build plan:
   needs ten straight-arm frames in the set before it acts; both as in the Python.
 
 - Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
-  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75; the size on a
-  real camera through the app is not measured yet. The keypoint file follows the device's
-  frame rate, 60 fps on Vern's Mac, about 1.7 MB per minute. Storage refuses a file over
-  500 MiB, about 25 minutes of video.
-- A workout left part way cannot be opened in History; Level 3 has no paging; a set
-  missing one file is not replayed.
-- Replay out of step (Vern, 2026-10-22): workout `44bd485d`, set 1's repair set (59 s, 1,639
-  frames at 28 fps) plays with the skeleton out of step with the video; set 1 (26 s) did not.
-  Not investigated (session log 2026-10-21, last section).
-- A failed first save, or a reload mid-workout, gives the next set a new workout row.
-- Signed upload URLs last two hours; an upload retried after that fails and is not re-signed.
-- `sets.attempts` keeps an update grant so the analyse step can merge similarity into it,
-  so a user can rewrite their own attempt records. Narrowing it needs a database function.
+  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75. Measured
+  2026-11-03 on every saved set since (84 sets, 47 minutes, 2026-10-10 to 10-27, phone and
+  laptop, all webm): 18.4 MB per minute, each set between 17.1 and 18.7. Keypoint files
+  0.9 to 1.9 MB per minute, following the device's frame rate. Storage refuses a file over
+  500 MiB, about 28 minutes of video.
+- A set missing one file is not replayed.
+- A loaded phone loses the end of a recording (2026-11-03): workout `44bd485d`'s repair set,
+  whose keypoint rate fell from 35 to 14 fps in its last 20 s, has 56.8 s of video against 59.0 s
+  of keypoints; the video is on time to its end (motion lag 50 to 100 ms throughout), the last
+  2.2 s were never written. Replay no longer reads this as a start delay (fixed, ADR-0005); the
+  lost seconds themselves are not.
+- The first save of a set runs in the user's session, so a user could send made-up attempt
+  records at that moment; since 2026-11-03 they cannot change them, or the analysis, after.
 - The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found
   the shrinking video, the T pose from too far, and no sound on silent. Run 2 found no
   speech, fixed by a silent utterance in the Start camera tap. After that Vern reported it
@@ -659,17 +709,20 @@ Still open, outside the build plan:
   picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
   the frame height on a portrait phone, in the session log), and History replay. Android
   Chrome is not tested.
-- Feedback on Vern's Mac (2026-11-01): a free Gemini key, tested with the example input only,
-  not a set from the camera, on RAG_SYSTEM `3fa3a09` (prompt v15a, which does not send the
-  medical history). Free-tier requests may be used by Google, so not for real testers' data.
-  Session log 2026-11-01.
-- Feedback (Sujira): prompt v16 on RAG_SYSTEM `main` (above) reads the medical history, body part
-  scores, `kind`, and `ended_by`. Squat and curl sets through the camera on Gemini (2026-11-02,
-  v15 then v16): usable, but v15 advised lightening the load on a bodyweight squat, and v16
-  keeps the cause (the prompt's setup-change list names load). Only curl has run through v16. Fault names are rule
-  keys in words, so `knee_valgus` and `knee_varus` read as jargon; plainer names would be a data
-  column like `landscape`, Vern's to agree. The workout e2e expects the medical history verbatim,
-  which holds only for the stub.
+- Feedback: runs on Vern's Mac through a free Gemini key (2026-11-01, session log). Squat and
+  curl sets through the camera on Gemini (Sujira, 2026-11-02, v15 then v16), and the 2026-11-03
+  phone run passed with camera sets of all four exercises (still before v16 there: that run's
+  answers are Markdown); the free quota ran out after about 20 requests and Gemini's 503 bursts
+  outlast the app's one retry (session log 2026-11-03). Free-tier requests may be used by
+  Google, so not for real testers' data. Prompt v16 on RAG_SYSTEM `main` (above) sends the
+  medical history, body part scores, `kind`, and `ended_by` to the model (v15 already sent the
+  medical history), while the profiles tested so far are mock data; the consent wording (D6)
+  must be settled before real testers. v15 advised lightening the load on a bodyweight squat,
+  and v16 keeps the cause (the prompt's setup-change list names load); only curl has run
+  through v16. Fault names are rule keys in words, so `knee_valgus` and `knee_varus` read as
+  jargon; plainer names would be a data column like `landscape`, Vern's to agree. The workout
+  e2e expects the medical history verbatim, which holds only for the stub. The prompt is
+  Sujira's to tune.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
   the T pose facing the camera first.
 - After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
@@ -693,10 +746,13 @@ Still open, outside the build plan:
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
   should cover the phone raised and on the floor.
-- The workout is slow to start on the phone (Vern, 2026-10-17). Not measured yet: which part
-  (loading the MediaPipe wasm and the full model from jsdelivr and Google storage, starting
-  the camera, the GPU delegate, or the page over the quick tunnel). `docs/HANDOVER.md`
-  section 1 describes the port.
+- The workout is slow to start on the phone (Vern, 2026-10-17). Since 2026-11-03 the live
+  screen loads the pose model once per visit, starting on the preflight screen, and every set
+  reuses it (it used to load again each set), and each set logs one `[live] start:` line
+  (camera, camera and model, first frame) plus `[live] pose model ... loaded in`. On the Mac
+  with Chrome's fake camera: the model in about 1.5 s during the preflight, then 162 ms from
+  the tap to camera and model, 386 ms to the first frame. Not measured on the phone yet: read
+  both lines in Safari's Web Inspector on the next phone run.
 - The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
   rehearsed, and a deleted tester's files stay until removed by hand.
 - Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be

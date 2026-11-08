@@ -26,9 +26,9 @@ test("a workout with a taken and a declined repair set, then history and the rep
   try {
     await test.step("start a squat workout of 1 rep, 2 sets, 3 s rest", async () => {
       await page.getByRole("link", { name: "Squat" }).click();
-      await page.getByLabel("Reps per set").fill("1");
-      await page.getByLabel("Number of sets").fill("2");
-      await page.getByLabel("Rest between sets (seconds)").fill("3");
+      await page.getByLabel("Reps per set", { exact: true }).fill("1");
+      await page.getByLabel("Sets", { exact: true }).fill("2");
+      await page.getByLabel("Rest (seconds)", { exact: true }).fill("3");
       await page.getByRole("button", { name: "Continue to the guide" }).click();
       await page.getByRole("link", { name: "Open camera" }).click();
       await page.waitForURL(/\/workout\/squat\/live/);
@@ -52,7 +52,7 @@ test("a workout with a taken and a declined repair set, then history and the rep
 
     await test.step("the repair set also hits the cap; the rest timer follows it, not another repair offer", async () => {
       await untilSetComplete(page, "Squat, repair set 1 of 2 complete");
-      await expect(page.getByText("Rest. Set 2 of 2 starts in")).toBeVisible();
+      await expect(page.getByText("Set 2 of 2 starts in")).toBeVisible();
       await page.getByRole("button", { name: "Start now" }).click();
     });
 

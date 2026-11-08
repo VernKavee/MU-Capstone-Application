@@ -1,8 +1,9 @@
 // Run with `npm run test:unit`. Fails if a v16 summary stops parsing, a strayed or older text
-// loses a line, or the counts start trusting anything but the attempt records.
+// loses a line, the counts start trusting anything but the attempt records, or the Markdown
+// of feedback saved before v16 (the 2026-11-03 phone run) stops rendering.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { faultName, isLayered, readFeedback, ruleCounts } from "./feedback-text.ts";
+import { faultName, isLayered, isMarkdown, parseFeedback, plainFeedback, readFeedback, ruleCounts, spans } from "./feedback-text.ts";
 
 const V16 = `Fault partial_squat: You stopped above parallel on most reps.
 Fix: Sit your hips back until your thighs are level.
@@ -133,4 +134,49 @@ test("counts are attempts carrying the rule, from the records", () => {
     ["knee_valgus", { attempts: 2, priority: 2 }],
     ["rounded_back", { attempts: 1, priority: 4 }],
   ]);
+});
+
+const sample = `### Error Breakdown
+
+#### Elbow Flare
+
+* **What it is:** Your upper arms drifted.
+* **How to fix it:**
+  * **Cue:** Keep your upper arms glued to your ribs.
+
+---
+
+1. **Pin your elbows:** from rep 1.
+2) Breathe.
+Plain line with a lone * star.`;
+
+test("feedback text: headings, nested bullets, numbers, rules, and paragraphs", () => {
+  assert.deepEqual(parseFeedback(sample), [
+    { kind: "heading", level: 3, spans: [{ text: "Error Breakdown", bold: false }] },
+    { kind: "heading", level: 4, spans: [{ text: "Elbow Flare", bold: false }] },
+    { kind: "item", depth: 0, marker: "•", spans: [{ text: "What it is:", bold: true }, { text: " Your upper arms drifted.", bold: false }] },
+    { kind: "item", depth: 0, marker: "•", spans: [{ text: "How to fix it:", bold: true }] },
+    { kind: "item", depth: 1, marker: "•", spans: [{ text: "Cue:", bold: true }, { text: " Keep your upper arms glued to your ribs.", bold: false }] },
+    { kind: "rule" },
+    { kind: "item", depth: 0, marker: "1.", spans: [{ text: "Pin your elbows:", bold: true }, { text: " from rep 1.", bold: false }] },
+    { kind: "item", depth: 0, marker: "2.", spans: [{ text: "Breathe.", bold: false }] },
+    { kind: "para", spans: [{ text: "Plain line with a lone * star.", bold: false }] },
+  ]);
+});
+
+test("feedback text: plain prose without Markdown passes through as one paragraph", () => {
+  assert.deepEqual(parseFeedback("Set 1 of 3. Slow down."), [{ kind: "para", spans: [{ text: "Set 1 of 3. Slow down.", bold: false }] }]);
+  assert.deepEqual(spans("no **close"), [{ text: "no **close", bold: false }]);
+});
+
+test("feedback text: the preview drops the markup", () => {
+  assert.equal(plainFeedback("### Progress\n\n* **Target:** hit.\n---\nDone."), "Target: hit. Done.");
+});
+
+test("only feedback with Markdown marks goes to the Markdown reader", () => {
+  assert.equal(isMarkdown(sample), true);
+  assert.equal(isMarkdown("Plain line with **bold** in it."), true);
+  assert.equal(isMarkdown(V16), false);
+  assert.equal(isMarkdown("You hit 8 of 8.\n\nNext Session Plan:\n1. Keep still."), false, "v15");
+  assert.equal(isMarkdown("One paragraph, as the stub writes. 3 - 2 = 1."), false);
 });

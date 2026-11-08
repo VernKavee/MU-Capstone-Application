@@ -75,3 +75,7 @@ The Python engine keeps its statistics under the measurement's name (`min_knee`,
 | `elbow_flare` | null: no statistic is recorded for it |
 
 The Python engine is unchanged and the parity test ignores these extra keys. The example record above uses the placeholder rule name `knee_depth`, now `partial_squat`.
+
+## Amended 2026-11-03
+
+- After the save, the attempt records change only by the analyse step merging each attempt's `similarity` into them, and that write is the server's (service role, ADR-0007). A user can no longer update `attempts` through the API.

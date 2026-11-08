@@ -4,6 +4,7 @@ import type { SetSimilarity } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
 import { WeeklySummary } from "./weekly-summary";
+import { ChevronRight, Figure } from "./icons";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -14,7 +15,7 @@ export default async function HomePage() {
   // profile it runs while the layout's gate redirects: no row is not a failure here.
   const [{ data: profile }, { data: exercises }, { data: sets }] = await Promise.all([
     supabase.from("profiles").select("display_name").maybeSingle().throwOnError(),
-    supabase.from("exercises").select("id, name, thumbnail_url").order("sort_order").throwOnError(),
+    supabase.from("exercises").select("id, name, camera_hint, thumbnail_url").order("sort_order").throwOnError(),
     supabase.from("sets").select("started_at, similarity").gte("started_at", new Date(now.getTime() - WEEK_FETCH_MS).toISOString()).throwOnError(),
   ]);
   const week = weeklySummary(
@@ -31,26 +32,24 @@ export default async function HomePage() {
         <WeeklySummary days={week} />
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Start a workout</h2>
-          <ul className="grid grid-cols-2 gap-3">
+          {/* Rows on one card, as in the mockup: the thumbnail in its square once it exists. */}
+          <ul className="card divide-y divide-line px-4">
             {exercises.map((exercise) => (
               <li key={exercise.id}>
-                {/* A black tile like the stage: the thumbnail fills it once it exists, and the
-                    name sits over it in a pill, as the live screen's labels sit over video. */}
-                <Link
-                  href={`/workout/${exercise.id}/setup`}
-                  className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-xl bg-black p-2.5 ring-1 ring-ink/10 hover:ring-ink/50"
-                >
-                  {exercise.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={exercise.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  ) : (
-                    <span aria-hidden className="absolute left-3 top-3 text-xs text-ink/50">
-                      Thumbnail not available yet
-                    </span>
-                  )}
-                  <span className="relative self-start rounded-md bg-black/55 px-1.5 py-1 font-display text-3xl leading-none backdrop-blur-sm">
-                    {exercise.name}
+                <Link href={`/workout/${exercise.id}/setup`} className="flex items-center gap-3 py-3 text-lg font-semibold hover:text-accent">
+                  <span aria-hidden className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-2 text-accent">
+                    {exercise.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={exercise.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Figure className="size-6" />
+                    )}
                   </span>
+                  <span className="min-w-0">
+                    {exercise.name}
+                    <span className="block text-sm font-normal text-muted">{exercise.camera_hint}</span>
+                  </span>
+                  <ChevronRight className="ml-auto size-5 text-muted" />
                 </Link>
               </li>
             ))}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ruleBasedLogic } from "@/lib/exercise";
-import { readFeedback } from "@/lib/feedback-text";
+import { isMarkdown, plainFeedback, readFeedback } from "@/lib/feedback-text";
 import { ENDED_BY, feedbackSummary, formatWhen, isUuid, meanSimilarity, setOrder } from "@/lib/history";
 import { jointIndices } from "@/lib/live/skeleton";
 import { BODY_PARTS, type Attempt, type SetSimilarity, type Totals } from "@/lib/set";
@@ -10,6 +10,7 @@ import { userTimeZone } from "@/lib/time-zone";
 import { WhatToFix } from "../../../set-feedback";
 import { Replay } from "./replay";
 import { RetryFeedback } from "./retry-feedback";
+import { BackLink } from "@/app/(app)/back-link";
 
 const setName = (s: { set_no: number; kind: string }) => `${s.kind === "repair" ? "Repair set" : "Set"} ${s.set_no}`;
 
@@ -26,7 +27,7 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   const tz = await userTimeZone();
   const { data: workout } = await supabase
     .from("workouts")
-    .select("id, started_at, target_reps, target_sets, exercises!inner(name, rule_based_logic), sets(id, set_no, kind, ended_by, repair_declined, totals, similarity)")
+    .select("id, started_at, ended_at, target_reps, target_sets, exercises!inner(name, rule_based_logic), sets(id, set_no, kind, ended_by, repair_declined, totals, similarity)")
     .eq("id", id)
     .eq("exercise_id", exerciseId)
     .maybeSingle()
@@ -37,10 +38,10 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   // The same policies just returned this set, so exactly one row comes back.
   const { data: detail } = await supabase.from("sets").select("attempts, llm_feedback, video_url, keypoints_url").eq("id", selected.id).single().throwOnError();
   // Prompt v16's list of what to fix (v17's with its folded details), else v15's opening
-  // paragraph, else the clamped text.
+  // paragraph, else the clamped text (Markdown saved before v16 with its marks dropped).
   const read = detail.llm_feedback ? readFeedback(detail.llm_feedback) : null;
   const fixes = read?.summary ? read : null;
-  const summary = detail.llm_feedback ? feedbackSummary(detail.llm_feedback) : null;
+  const summary = detail.llm_feedback && !isMarkdown(detail.llm_feedback) ? feedbackSummary(detail.llm_feedback) : null;
 
   const name = workout.exercises.name;
   const totals = sets.map((s) => s.totals as Totals);
@@ -54,14 +55,12 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
   return (
     <main className="space-y-6 p-6">
       <header className="space-y-2">
-        <Link href={`/history/${exerciseId}`} className="text-sm underline">
-          {name}
-        </Link>
+        <BackLink href={`/history/${exerciseId}`}>{name}</BackLink>
         <h1>{formatWhen(workout.started_at, tz)}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {workout.target_sets} {workout.target_sets === 1 ? "set" : "sets"} of {workout.target_reps}
           {repairs > 0 && `, ${repairs} repair ${repairs === 1 ? "set" : "sets"}`}. {correct} correct reps in {tries} attempts
-          {mean !== null && `, ${mean}% mean similarity`}.
+          {mean !== null && `, ${mean}% mean similarity`}.{!workout.ended_at && " Not finished."}
         </p>
       </header>
 
@@ -77,16 +76,16 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                   href={href(s.id)}
                   scroll={false}
                   aria-current={on ? "page" : undefined}
-                  className={`block h-full rounded-xl border p-3 ${on ? "border-foreground bg-foreground text-background" : "hover:border-foreground/50"}`}
+                  className={`block h-full rounded-xl border p-3 ${on ? "border-accent bg-accent text-accent-ink" : "bg-surface hover:border-accent"}`}
                 >
                   <span className="flex flex-wrap items-baseline justify-between gap-x-2">
                     <span className="whitespace-nowrap text-sm font-medium">{setName(s)}</span>
                     <span className="font-semibold tabular-nums">{score === undefined ? "–" : `${Math.round(score)}%`}</span>
                   </span>
-                  <span className="mt-1 block text-xs opacity-70">
+                  <span className={`mt-1 block text-xs ${on ? "text-accent-ink/85" : "text-muted"}`}>
                     {totals[i].correct_reps} correct, {totals[i].attempts} attempts
                   </span>
-                  {notes.length > 0 && <span className="block text-xs opacity-70">{notes.join(", ")}</span>}
+                  {notes.length > 0 && <span className={`block text-xs ${on ? "text-accent-ink/85" : "text-muted"}`}>{notes.join(", ")}</span>}
                 </Link>
               </li>
             );
@@ -115,15 +114,15 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
                 ) : summary ? (
                   <p className="whitespace-pre-line leading-relaxed">{summary}</p>
                 ) : (
-                  <p className="line-clamp-4 leading-relaxed">{detail.llm_feedback}</p>
+                  <p className="line-clamp-4 leading-relaxed">{plainFeedback(detail.llm_feedback)}</p>
                 )}
-                <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm underline">
+                <Link href={`/history/${exerciseId}/${id}/feedback?set=${selected.id}`} className="inline-block text-sm font-semibold text-accent">
                   Read the full feedback
                 </Link>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm opacity-70">No feedback was written for this set.</p>
+                <p className="text-sm text-muted">No feedback was written for this set.</p>
                 <RetryFeedback exercise={exerciseId} workout={id} set={selected.id} from="history" error={typeof error === "string" ? error : undefined} />
               </div>
             )}
@@ -137,19 +136,19 @@ export default async function WorkoutPage({ params, searchParams }: PageProps<"/
 // The set's similarity: the mean score as the page's one big figure, then the body parts the
 // exercise is scored on as meters on the same 0 to 100 scale.
 function BodyParts({ similarity }: { similarity: SetSimilarity | null }) {
-  if (!similarity) return <p className="text-sm opacity-70">Similarity was not scored for this set.</p>;
+  if (!similarity) return <p className="text-sm text-muted">Similarity was not scored for this set.</p>;
   return (
     <section aria-label="Similarity to the expert motion" className="space-y-4">
       <p className="flex items-end gap-3">
-        <span className="font-display text-7xl leading-[0.8]">{Math.round(similarity.mean_score)}</span>
-        <span className="text-sm leading-snug opacity-70">% similar to the expert motion, over the scored reps</span>
+        <span className="font-display text-7xl leading-[0.8] text-accent">{Math.round(similarity.mean_score)}</span>
+        <span className="text-sm leading-snug text-muted">% similar to the expert motion, over the scored reps</span>
       </p>
       <dl className="space-y-2">
         {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (
           <div key={part} className="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-3 text-sm">
             <dt className="first-letter:uppercase">{part.replace("_", " ")}</dt>
-            <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-foreground/10">
-              <span className="block h-full rounded-full bg-foreground" style={{ width: `${similarity.body_parts[part]}%` }} />
+            <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-surface-2">
+              <span className="block h-full rounded-full bg-accent" style={{ width: `${similarity.body_parts[part]}%` }} />
             </dd>
             <dd className="text-right tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
           </div>

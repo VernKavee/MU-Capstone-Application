@@ -1,6 +1,6 @@
-// The frame loop for one set, outside React. Owns the camera stream, the pose landmarker,
-// the engine, the skeleton overlay, the recording, and the keypoint capture. React only
-// receives Snapshots through onChange, and only when something it shows has changed.
+// The frame loop for one set, outside React. Owns the camera stream, the engine, the skeleton overlay, the recording, and the keypoint capture. React only
+// receives Snapshots through onChange, and only when something it shows has changed. The
+// pose landmarker is lent by the live screen, which loads it once for every set.
 //
 // Everything here runs on the user's device (NFR1). Nothing is sent per frame.
 // Node-testable (session.test.ts): MediaPipe is imported only when the camera starts, and
@@ -8,7 +8,6 @@
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { Rule } from "@/lib/exercise";
 import { emptyKeypoints, LANDMARK_NAMES, type Engine, type FrameResult, type FrameSize, type Keypoints, type SessionReport } from "../engine/types.ts";
-import type { PoseModel } from "./pose";
 import { drawSkeleton, jointIndices } from "./skeleton.ts";
 import { sound } from "./sound.ts";
 
@@ -30,6 +29,7 @@ export type SetCapture = {
   frameSize: FrameSize | null; // the picture MediaPipe saw, [width, height] in pixels; similarity needs it (ADR-0007)
   video: Blob | null; // null when MediaRecorder is unavailable
   videoMimeType: string | null;
+  videoStartMs: number | null; // the recorder's start on the t clock, so replay can line the two up
 };
 
 export type Snapshot = {
@@ -64,7 +64,7 @@ type SessionOptions = {
   rules: Rule[];
   target: number;
   attemptCap: number;
-  model: PoseModel;
+  landmarker: () => Promise<PoseLandmarker>; // the screen's, loaded once and shared by every set
   landscape: boolean; // the exercise row's camera orientation
   readyCue: string | null; // spoken while the gate waits for the ready pose, by the row's ready pose
   video: HTMLVideoElement;
@@ -85,6 +85,7 @@ export class LiveSession {
   private fpsWindow: number[] = [];
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
+  private videoStartMs: number | null = null;
   private frames: KeypointFrame[] = [];
   private frameSize: FrameSize | null = null;
   private startedAt: Date | null = null;
@@ -94,6 +95,7 @@ export class LiveSession {
   private turning = false;
   private readySaidAt = -Infinity;
   private highlight = new Map<string, number[]>();
+  private startTimes: { begun?: number; camera?: number; model?: number } = {};
 
   constructor(opts: SessionOptions) {
     this.opts = opts;
@@ -103,6 +105,11 @@ export class LiveSession {
   async start() {
     if (!navigator.mediaDevices?.getUserMedia) throw new CameraError("insecure");
     this.opts.onChange({ status: "starting", frame: null, fps: 0, capture: null });
+    // Where the start-up time goes, one console line per set (2026-11-03). On an iPhone it
+    // shows in Safari's Web Inspector on the Mac.
+    const begun = performance.now();
+    const landmarker = this.opts.landmarker();
+    landmarker.catch(() => {}); // awaited below; a failure before then is not unhandled
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -113,10 +120,11 @@ export class LiveSession {
       throw new CameraError(name === "NotAllowedError" || name === "SecurityError" ? "denied" : "no-camera");
     }
     if (this.stopped) return this.stop(); // unmounted while the permission prompt was open
+    this.startTimes.camera = performance.now() - begun;
     try {
       const pose = await import("./pose");
       this.toKeypoints = pose.toKeypoints;
-      this.landmarker = await pose.loadPoseLandmarker(this.opts.model);
+      this.landmarker = await landmarker;
     } catch {
       this.stop();
       throw new CameraError("model");
@@ -125,6 +133,8 @@ export class LiveSession {
     const { video } = this.opts;
     video.srcObject = this.stream;
     await video.play();
+    this.startTimes.model = performance.now() - begun;
+    this.startTimes.begun = begun;
     this.opts.engine.reset();
     this.running = true;
     this.raf = requestAnimationFrame(this.tick);
@@ -140,8 +150,7 @@ export class LiveSession {
     cancelAnimationFrame(this.raf);
     if (this.recorder && this.recorder.state !== "inactive") this.recorder.stop();
     this.stream?.getTracks().forEach((track) => track.stop());
-    this.landmarker?.close();
-    this.landmarker = null;
+    this.landmarker = null; // the screen's, closed by the screen
     this.stream = null;
   }
 
@@ -153,6 +162,11 @@ export class LiveSession {
     this.lastVideoTime = video.currentTime;
     const now = performance.now();
     this.feed(this.toKeypoints(this.landmarker.detectForVideo(video, now)), now);
+    if (this.startTimes.begun !== undefined) {
+      const { begun, camera = 0, model = 0 } = this.startTimes;
+      console.info(`[live] start: camera ${Math.round(camera)} ms, camera and pose model ${Math.round(model)} ms, first frame ${Math.round(performance.now() - begun)} ms`);
+      this.startTimes = {};
+    }
   };
 
   // One frame's landmarks through the engine, the overlay, the capture, the sound, and the
@@ -243,6 +257,12 @@ export class LiveSession {
     this.recorder.ondataavailable = (event) => {
       if (event.data.size) this.chunks.push(event.data);
     };
+    // The video's 0 on the keypoint clock. Not inferred from the video's length at replay:
+    // a loaded phone drops the recording's last seconds on stop, which once read as a 2 s
+    // start delay and put the skeleton 2 s ahead of the picture (2026-11-03).
+    this.recorder.onstart = () => {
+      this.videoStartMs = performance.now() - this.t0;
+    };
     this.recorder.start(1000);
   }
 
@@ -294,6 +314,7 @@ export class LiveSession {
         frameSize: this.frameSize,
         video,
         videoMimeType,
+        videoStartMs: video ? this.videoStartMs : null,
       };
       this.opts.onChange({ status: "ended", frame: this.lastFrame, fps: 0, capture });
     };

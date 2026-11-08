@@ -57,6 +57,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          camera_hint: string
           engine_key: string
           guide_text: string
           guide_video_url: string | null
@@ -68,6 +69,7 @@ export type Database = {
           thumbnail_url: string | null
         }
         Insert: {
+          camera_hint: string
           engine_key: string
           guide_text: string
           guide_video_url?: string | null
@@ -79,6 +81,7 @@ export type Database = {
           thumbnail_url?: string | null
         }
         Update: {
+          camera_hint?: string
           engine_key?: string
           guide_text?: string
           guide_video_url?: string | null

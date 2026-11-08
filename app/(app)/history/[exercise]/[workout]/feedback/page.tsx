@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatWhen, isUuid } from "@/lib/history";
 import type { Attempt } from "@/lib/set";
 import { createClient } from "@/lib/supabase/server";
 import { userTimeZone } from "@/lib/time-zone";
+import { BackLink } from "@/app/(app)/back-link";
 import { SetFeedback } from "../../../../set-feedback";
 
 // The feedback detail screen (REQUIREMENTS section 6): the full coaching text of one set
@@ -29,9 +29,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
   return (
     <main className="space-y-6 p-6">
       <header className="space-y-2">
-        <Link href={`/history/${exerciseId}/${workoutId}?set=${setId}`} className="text-sm underline">
+        <BackLink href={`/history/${exerciseId}/${workoutId}?set=${setId}`}>
           {workout.exercises.name}, {formatWhen(workout.started_at, tz)}
-        </Link>
+        </BackLink>
         <h1>
           Feedback on {set.kind === "repair" ? "repair set" : "set"} {set.set_no} of {workout.target_sets}
         </h1>
@@ -41,9 +41,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
           <SetFeedback text={set.llm_feedback} attempts={set.attempts as unknown as Attempt[]} open />
         </div>
       ) : (
-        <p className="opacity-70">No feedback was written for this set.</p>
+        <p className="text-muted">No feedback was written for this set.</p>
       )}
-      <p className="max-w-prose text-sm opacity-70">
+      <p className="max-w-prose text-sm text-muted">
         Written by the coaching component from this set&apos;s attempts and similarity, your earlier sets and past workouts of this
         exercise, and your profile, medical history included.
       </p>

@@ -33,7 +33,7 @@ The report's setup screen collects reps per set and a number of sets, but its da
 
 - `keypoints_url` and `video_url` hold object paths in the private `sets` bucket, `<user_id>/<set_id>/...`, not URLs. A reader signs a download URL when it needs one. Both stay null when an upload failed.
 - `sets` also has `created_at`, which orders a workout's sets for the feedback context.
-- `repair_declined` is recorded on the set whose repair set was skipped. A repair set is offered only after an initial set, never after a repair set, and the unique constraint allows one per set number.
+- `repair_declined` is recorded on the set whose repair set was skipped. Ending the workout from the repair offer (End workout on the rest screen, 2026-11-05, Vern) records it too. A repair set is offered only after an initial set, never after a repair set, and the unique constraint allows one per set number.
 - The repair set starts at once, without rest. After it, or after a skip, the rest timer runs before the next set.
 - The rest timer counts down on the set-complete screen and starts the next set on its own at zero, back through the placement guide and the ready gate. Start now skips the wait. A rest of zero starts the next set at once, so that set's feedback is first read on the finished summary.
 - `ended_at` on the workout is written when the user presses Finish workout after the last set. A workout left part way keeps a null `ended_at` and its saved sets.
@@ -51,3 +51,11 @@ The report's setup screen collects reps per set and a number of sets, but its da
 - What follows a set, one repair set after an initial set with any violation, abandoned attempts included, unless it was skipped, then the rest or the end, is `afterSet` in `lib/set.ts`, tested in `lib/set.test.ts`.
 - The job that saves a set, uploads its files, and analyses it is `lib/set-job.ts`. `lib/set-job.test.ts` proves the order, that a retry redoes only what is missing, that each save waits for the previous set's, and that a skip before the save lands is still recorded.
 - The workout end-to-end test takes one repair set and skips another, and checks that the rest timer follows a repair set rather than a second offer.
+
+## Amended 2026-11-03: the browser names the rows
+
+- The live screen makes the workout id once, and each set's id when the set ends (`crypto.randomUUID()`). `saveSet` inserts the workout and the set by those ids and skips either one already there (`on conflict (id) do nothing`). So the first set's save creates the workout, a later set's save finds it, and a retry saves nothing twice and only signs the uploads afresh.
+- Why: the database used to hand out the workout id only when the first save worked. A failed first save left the next set without one, so it made a second workout. A set insert that failed after the workout insert left an empty workout, and a signing failure after the set insert saved the set again on retry.
+- A save naming another user's workout id writes no workout, and its set is refused by `owns_workout`. Proven in `supabase/tests/sets.test.sql`.
+- After the first save the live screen puts `workout=<id>` in the address (`history.replaceState`). A reload opens the same workout when its last set ended under five minutes ago (`resumePoint` and `RESUME_WINDOW_MS` in `lib/set.ts`, Vern's choice), at the set after the highest saved one, with the setup read from the workout row. A repair set not yet taken is dropped, and no decline is written. When every set is saved, only Finish workout is left. Otherwise the page drops `workout` from the address and a new workout starts, and the old one keeps a null `ended_at`. The window runs from the last set's end, so a reload during a set longer than five minutes starts a new workout.
+- Level 3 lists every workout of the exercise with at least one saved set, newest first, twenty to a page with an "Older workouts" link (`?before=`, the start of the last row shown). A workout left part way is marked "Not finished" there and on its Level 4 page, at Vern's request, so it can be opened like any other. Active days still count finished workouts only, as in Phase 5.

@@ -17,7 +17,8 @@ import type { Database, Json } from "./supabase/database.types.ts";
 type Client = SupabaseClient<Database>;
 
 export type SaveSetInput = {
-  workoutId: string | null; // null saves the workout first (ADR-0004)
+  workoutId: string; // both made by the browser, so a retry saves the same rows (ADR-0004)
+  setId: string;
   exerciseId: string;
   setup: Setup;
   setNo: number;
@@ -34,47 +35,49 @@ export type SaveSetInput = {
 };
 
 export type Upload = { path: string; token: string };
-export type SaveSetResult = { workoutId: string; setId: string; uploads: { video: Upload | null; keypoints: Upload } };
+export type SaveSetResult = { setId: string; uploads: { video: Upload | null; keypoints: Upload } };
 export type SetFiles = { video: string | null; keypoints: string | null };
 export type AnalyseResult = { similarity: SetSimilarity | null; feedback: string | null; error: string | null };
 
 // The row exists before any file moves and before any analysis. Returns signed upload
-// URLs for the two files, which the browser uses directly against storage (NFR3).
+// URLs for the two files, which the browser uses directly against storage (NFR3). Both
+// rows are inserted unless already there, so calling it again for the same set saves
+// nothing twice and only signs the uploads afresh. The first set's call creates the
+// workout; a later set's call finds it.
 export async function saveSet(supabase: Client, input: SaveSetInput): Promise<SaveSetResult | { error: string }> {
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
   if (!userId) return { error: "Signed out." };
 
-  let workoutId = input.workoutId;
-  if (!workoutId) {
-    const { data, error } = await supabase
-      .from("workouts")
-      .insert({ user_id: userId, exercise_id: input.exerciseId, target_reps: input.setup.reps, target_sets: input.setup.sets, rest_seconds: input.setup.rest, side: input.setup.side, started_at: input.startedAt })
-      .select("id")
-      .single();
-    if (error) return { error: error.message };
-    workoutId = data.id;
-  }
+  const { error: workoutError } = await supabase
+    .from("workouts")
+    .upsert(
+      { id: input.workoutId, user_id: userId, exercise_id: input.exerciseId, target_reps: input.setup.reps, target_sets: input.setup.sets, rest_seconds: input.setup.rest, side: input.setup.side, started_at: input.startedAt },
+      { onConflict: "id", ignoreDuplicates: true },
+    );
+  if (workoutError) return { error: workoutError.message };
 
-  const { data: set, error } = await supabase
+  const { error } = await supabase
     .from("sets")
-    .insert({
-      workout_id: workoutId,
-      set_no: input.setNo,
-      kind: input.kind,
-      ended_by: input.endedBy,
-      started_at: input.startedAt,
-      ended_at: input.endedAt,
-      totals: input.totals,
-      attempts: input.attempts as unknown as Json,
-      engine_report: input.engineReport as unknown as Json,
-      engine_version: input.engineVersion,
-    })
-    .select("id")
-    .single();
+    .upsert(
+      {
+        id: input.setId,
+        workout_id: input.workoutId,
+        set_no: input.setNo,
+        kind: input.kind,
+        ended_by: input.endedBy,
+        started_at: input.startedAt,
+        ended_at: input.endedAt,
+        totals: input.totals,
+        attempts: input.attempts as unknown as Json,
+        engine_report: input.engineReport as unknown as Json,
+        engine_version: input.engineVersion,
+      },
+      { onConflict: "id", ignoreDuplicates: true },
+    );
   if (error) return { error: error.message };
 
-  const folder = `${userId}/${set.id}`;
+  const folder = `${userId}/${input.setId}`;
   const sign = async (name: string) => {
     const { data, error } = await supabase.storage.from(SETS_BUCKET).createSignedUploadUrl(`${folder}/${name}`, { upsert: true });
     if (error) throw error;
@@ -82,8 +85,7 @@ export async function saveSet(supabase: Client, input: SaveSetInput): Promise<Sa
   };
   try {
     return {
-      workoutId,
-      setId: set.id,
+      setId: input.setId,
       uploads: {
         video: input.videoExt ? await sign(`video.${input.videoExt}`) : null,
         keypoints: await sign(`keypoints.${input.keypointsExt}`),
@@ -97,8 +99,11 @@ export async function saveSet(supabase: Client, input: SaveSetInput): Promise<Sa
 // Record which files arrived, score similarity from the keypoint file in storage, then
 // write feedback with the workout's earlier sets and the user's past workouts of the
 // exercise as context. Whatever step fails, what came before it stays written. Similarity
-// may be empty (ADR-0007): when it fails, feedback is still written without it.
-export async function analyseSet(supabase: Client, setId: string, files: SetFiles): Promise<AnalyseResult> {
+// may be empty (ADR-0007): when it fails, feedback is still written without it. Reads and
+// the file paths go through the user's client, so row-level security proves the set is
+// theirs; the analysis itself is written by `admin`, the server's own client, because the
+// API does not let a user change it (2026-11-03).
+export async function analyseSet(supabase: Client, admin: Client, setId: string, files: SetFiles): Promise<AnalyseResult> {
   // Only paths that arrived are written, so a retry never erases one an earlier call stored.
   const paths = { ...(files.video && { video_url: files.video }), ...(files.keypoints && { keypoints_url: files.keypoints }) };
   if (Object.keys(paths).length) {
@@ -140,7 +145,7 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
       });
       const byNo = new Map(scored.attempts.map((a) => [a.attempt_no, a.similarity]));
       const scoredAttempts = attempts.map((a) => ({ ...a, similarity: byNo.get(a.attempt_no) ?? null }));
-      const { error } = await supabase.from("sets").update({ similarity: scored.set, attempts: scoredAttempts as unknown as Json }).eq("id", setId);
+      const { error } = await admin.from("sets").update({ similarity: scored.set, attempts: scoredAttempts as unknown as Json }).eq("id", set.id);
       if (error) throw error;
       attempts = scoredAttempts;
       similarity = scored.set;
@@ -157,7 +162,7 @@ export async function analyseSet(supabase: Client, setId: string, files: SetFile
     const input = await feedbackInput(supabase, set, similarity, attempts);
     if (!input) return { similarity, feedback: null, error: withSimilarityError("The profile could not be read.") };
     const { feedback } = await writeFeedback(input);
-    const { error } = await supabase.from("sets").update({ llm_feedback: feedback }).eq("id", setId);
+    const { error } = await admin.from("sets").update({ llm_feedback: feedback }).eq("id", set.id);
     if (error) throw error;
     return { similarity, feedback, error: similarityError };
   } catch (e) {

@@ -37,7 +37,7 @@ function loop(script: FrameResult[], limits = { target: 2, attemptCap: 4 }, land
     engine,
     rules: [],
     ...limits,
-    model: "full",
+    landmarker: () => Promise.reject(new Error("not used: frames are fed directly")),
     landscape,
     readyCue: "Plank down to start the exercise",
     video: video as unknown as HTMLVideoElement,

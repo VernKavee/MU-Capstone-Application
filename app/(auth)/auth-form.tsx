@@ -17,7 +17,7 @@ export function AuthForm({ title, submitLabel, pendingLabel, action, error, foot
         {/* The name in the counter's face: the first screen anyone sees. */}
         <div className="space-y-3">
           <p className="font-display text-7xl leading-[0.85]">Posture Coach</p>
-          <p className="opacity-70">Checks your form and counts your correct reps as you move, for Squat, Push-up, Lunge, and Bicep curl.</p>
+          <p className="text-muted">Checks your form and counts your correct reps as you move, for Squat, Push-up, Lunge, and Bicep curl.</p>
         </div>
         <form action={action} className="space-y-4">
           <h1 className="text-3xl">{title}</h1>

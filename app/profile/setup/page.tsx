@@ -13,7 +13,7 @@ export default async function ProfileSetupPage({ searchParams }: PageProps<"/pro
   return (
     <main className="mx-auto w-full max-w-lg space-y-6 p-6">
       <h1>Your profile</h1>
-      <p className="text-sm opacity-80">Needed before your first workout. Everything here can be changed later in Settings.</p>
+      <p className="text-sm text-muted">Needed before your first workout. Everything here can be changed later in Settings.</p>
       <ProfileForm mode="setup" error={typeof error === "string" ? error : undefined} />
     </main>
   );

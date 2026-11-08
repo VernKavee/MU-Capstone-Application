@@ -159,6 +159,18 @@ export function afterSet(set: { kind: "initial" | "repair"; setNo: number; attem
   return set.setNo < sets ? "rest" : "finish";
 }
 
+// A reload mid-workout (ADR-0004, 2026-11-03, Vern): the live page picks up the same workout
+// when its last set ended under five minutes ago, at the set after the highest saved one. A
+// repair set not yet taken is dropped. Null starts a new workout, and the old one stays in
+// History as not finished. Past the target sets means every set is saved.
+export const RESUME_WINDOW_MS = 5 * 60_000;
+export function resumePoint(workout: { ended_at: string | null; sets: { set_no: number; ended_at: string }[] }, now: Date): number | null {
+  if (workout.ended_at || !workout.sets.length) return null;
+  const last = Math.max(...workout.sets.map((s) => Date.parse(s.ended_at)));
+  if (now.getTime() - last >= RESUME_WINDOW_MS) return null;
+  return Math.max(...workout.sets.map((s) => s.set_no)) + 1;
+}
+
 // The keypoint file (ADR-0005): JSON, gzipped on upload. Every frame's 33 landmarks at
 // capture rate as one flat row of numbers, joints then fields, so the file is the
 // `landmarks` object the similarity contract takes (ADR-0007) and what replay draws.
@@ -172,12 +184,15 @@ export type KeypointFile = {
   // [width, height] in pixels of the picture MediaPipe saw; x and y are fractions of it. Added
   // 2026-10-27 within version 1 for similarity, which refuses a file without it; older files lack it.
   frame_size?: FrameSize | null;
+  // When the recorder started, in ms on the same clock as t: the video's 0 is this t. Added
+  // 2026-11-03 within version 1 for replay; older files lack it and replay takes 0.
+  video_start_ms?: number | null;
   frames: { t: number; state: string; event: KeypointFrame["event"]; points: number[] }[];
 };
 
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
 
-export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | null = null): KeypointFile {
+export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | null = null, videoStartMs: number | null = null): KeypointFile {
   const span = frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / 1000 : 0;
   return {
     schema_version: KEYPOINT_FILE_VERSION,
@@ -185,6 +200,7 @@ export function toKeypointFile(frames: KeypointFrame[], frameSize: FrameSize | n
     fields: KEYPOINT_FIELDS,
     fps: span > 0 ? Math.round((frames.length - 1) / span) : 0,
     frame_size: frameSize,
+    video_start_ms: videoStartMs === null ? null : Math.round(videoStartMs),
     frames: frames.map((f) => ({
       t: Math.round(f.t),
       state: f.state,

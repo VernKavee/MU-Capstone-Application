@@ -23,11 +23,10 @@ export type JobApi = {
 export function createJob(
   api: JobApi,
   opts: {
-    input: Omit<SaveSetInput, "workoutId" | "videoExt" | "keypointsExt">;
+    input: Omit<SaveSetInput, "videoExt" | "keypointsExt">;
     capture: SetCapture;
-    after: Promise<unknown>; // the previous set's save, so every set joins the same workout
-    workoutId: () => string | null;
-    onSaved: (workoutId: string) => void;
+    after: Promise<unknown>; // the previous set's save, so sets are saved in order
+    onSaved: () => void;
     onUpdate: (update: JobUpdate) => void;
   },
 ) {
@@ -48,13 +47,12 @@ export function createJob(
       const result = await api
         .saveSet({
           ...opts.input,
-          workoutId: opts.workoutId(),
           videoExt: capture.video && videoType ? videoType.split("/")[1] : null,
           keypointsExt: ext,
         })
         .catch((e: unknown) => ({ error: message(e) }));
       if ("error" in result) throw new Error(`The set was not saved: ${result.error}`);
-      opts.onSaved(result.workoutId);
+      opts.onSaved();
       return result;
     } finally {
       settleSave();
@@ -82,9 +80,13 @@ export function createJob(
     ]);
   }
 
+  // A file still to send needs a fresh upload URL: the last ones may have expired (they
+  // last two hours). Saving again is safe, as the save skips the rows already there.
+  const filesMissing = () => Boolean(capture.video && videoType && !uploaded.video) || !uploaded.keypoints;
+
   async function run() {
     try {
-      if (!saved) {
+      if (!saved || filesMissing()) {
         opts.onUpdate({ status: "saving", error: null });
         saved = await save();
       }
@@ -120,7 +122,7 @@ export function createJob(
 
 // The keypoint file (ADR-0005), gzipped where the browser has CompressionStream.
 async function encodeKeypoints(capture: SetCapture) {
-  const json = new Blob([JSON.stringify(toKeypointFile(capture.frames, capture.frameSize))], { type: "application/json" });
+  const json = new Blob([JSON.stringify(toKeypointFile(capture.frames, capture.frameSize, capture.videoStartMs))], { type: "application/json" });
   if (typeof CompressionStream === "undefined") return { body: json, ext: "json" as const, type: "application/json" };
   const body = await new Response(json.stream().pipeThrough(new CompressionStream("gzip"))).blob();
   return { body, ext: "json.gz" as const, type: "application/gzip" };

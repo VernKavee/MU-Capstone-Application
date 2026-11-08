@@ -2,12 +2,13 @@
 
 import { useEffect, useEffectEvent, useState } from "react";
 import type { Setup } from "@/lib/exercise";
-import { readFeedback } from "@/lib/feedback-text";
+import { plainFeedback, readFeedback } from "@/lib/feedback-text";
 import type { SetCapture } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { afterSet, BODY_PARTS, type Attempt, type SetSimilarity } from "@/lib/set";
-import { SetFeedback } from "../../../set-feedback";
+import { SetFeedback, WhatToFix } from "../../../set-feedback";
 import type { JobStatus } from "./pipeline";
+import { Close, Spark } from "../../../icons";
 
 export type Progress = { setNo: number; kind: "initial" | "repair" };
 
@@ -23,17 +24,18 @@ export type SetEntry = Progress & {
 
 export const setLabel = ({ setNo, kind }: Progress, sets: number) => `${kind === "repair" ? "repair set" : "set"} ${setNo} of ${sets}`;
 
-// Over video; the pages' own pills (.btn, .btn-quiet) sit on the solid ground.
-export const pill = "rounded-full bg-black/55 px-3 py-1.5 text-sm text-ink backdrop-blur-sm hover:bg-black/70";
+// Over video: a text pill and a round 44 px icon button, both on a dark wash.
+export const pill = "rounded-full bg-black/45 px-4 py-2.5 font-semibold text-ink backdrop-blur-sm hover:bg-black/65";
+export const round = "flex size-11 shrink-0 items-center justify-center rounded-full bg-black/45 text-ink backdrop-blur-sm hover:bg-black/65";
 
 const STATUS_TEXT: Partial<Record<JobStatus, string>> = {
   saving: "Saving the set",
   uploading: "Uploading the video and the keypoint file",
-  analysing: "Scoring similarity and writing feedback",
 };
 
-// Section 4.5 after one set: what happened, the analysis as it arrives with a retry, then
-// exactly one next step: the repair offer, the rest timer, or finishing the workout.
+// Section 4.5 after one set, as a light page over the stage (2026-11-05, Vern's mockup): the
+// rest timer, the set's numbers, similarity by body part, the rules broken, the coach's
+// feedback last, then exactly one next step: the repair offer, Start now, or Finish workout.
 export function SetComplete({
   entry,
   earlierFailures,
@@ -58,7 +60,7 @@ export function SetComplete({
   onFinish: () => Promise<string | null>;
 }) {
   const [declined, setDeclined] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null); // of Skip it or Finish workout
+  const [actionError, setActionError] = useState<string | null>(null); // of Skip it, End or Finish workout
   const [busy, setBusy] = useState(false);
   const { capture, attempts } = entry;
   const { report } = capture;
@@ -76,6 +78,7 @@ export function SetComplete({
   const next = afterSet(entry, setup.sets, declined);
   const offerRepair = next === "repair";
   const hasNext = next === "rest";
+  const analysing = entry.status !== "done" && entry.status !== "failed";
 
   async function decline() {
     setBusy(true);
@@ -86,7 +89,8 @@ export function SetComplete({
     else setDeclined(true);
   }
 
-  // On success the page moves on to the summary, so busy stays set until it does.
+  // Finish workout and End workout are one path: wait for the saves, write ended_at, open
+  // the summary. On success the page moves on, so busy stays set until it does.
   async function finish() {
     setBusy(true);
     setActionError(null);
@@ -96,38 +100,82 @@ export function SetComplete({
     setActionError(error);
   }
 
+  // Ending the workout while the repair set is on offer skips it (Vern, 2026-11-05), so
+  // repair_declined is written as by Skip it, then the workout ends the same way.
+  async function end() {
+    if (offerRepair) {
+      setBusy(true);
+      setActionError(null);
+      const error = await onDecline();
+      if (error) {
+        setBusy(false);
+        setActionError(error);
+        return;
+      }
+    }
+    await finish();
+  }
+
   return (
-    <section className="absolute inset-0 overflow-y-auto bg-black/75 backdrop-blur-sm">
-      <div className="mx-auto flex min-h-full w-full max-w-md flex-col justify-end gap-5 p-6 pb-8">
-        <p className="text-sm opacity-70">
-          {exerciseName}, {setLabel(entry, setup.sets)} complete
-        </p>
-        <p className="text-xl leading-snug">{reason}</p>
-        <dl className="grid grid-cols-4 gap-3">
-          <Stat label="correct" value={report.total_reps_correct} />
-          <Stat label="completed" value={report.total_reps_completed} />
-          <Stat label="attempts" value={report.total_attempts} />
-          <Stat label="abandoned" value={report.total_attempts_abandoned} />
-        </dl>
-        {counts.size > 0 && !fixList && (
-          <ul className="space-y-1 text-sm">
-            {[...counts].map(([message, n]) => (
-              <li key={message} className="flex justify-between gap-4">
-                <span>{message}</span>
-                <span className="opacity-70">
-                  {n} {n === 1 ? "attempt" : "attempts"}
-                </span>
-              </li>
-            ))}
-          </ul>
+    <section className="on-page absolute inset-0 overflow-y-auto bg-background text-foreground">
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 p-5 pb-6">
+        {(offerRepair || hasNext) && (
+          <button
+            type="button"
+            onClick={end}
+            disabled={busy}
+            className="-ml-1 inline-flex items-center gap-2 self-start rounded-full pr-3 font-medium text-muted hover:text-foreground disabled:opacity-60"
+          >
+            <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-surface-2 text-foreground">
+              <Close />
+            </span>
+            {busy ? "Ending the workout" : "End workout"}
+          </button>
         )}
 
-        <div aria-live="polite" className="space-y-3 border-t border-ink/20 pt-4">
-          {entry.similarity && <SimilarityRow similarity={entry.similarity} />}
-          {entry.feedback && <SetFeedback text={entry.feedback} attempts={attempts} />}
-          {STATUS_TEXT[entry.status] && <p className="text-sm opacity-70 motion-safe:animate-pulse">{STATUS_TEXT[entry.status]}</p>}
+        <header>
+          <p className="text-sm text-muted">
+            {exerciseName}, {setLabel(entry, setup.sets)} complete
+          </p>
+          <p className="text-xl leading-snug">{reason}</p>
+        </header>
+
+        {/* Gone while End workout runs, so the timer cannot start the next set meanwhile. */}
+        {hasNext && !busy && <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />}
+
+        <dl className="card grid grid-cols-3 divide-x divide-line py-3 text-center">
+          <Stat label="correct" value={report.total_reps_correct} className="text-ok" />
+          <Stat label="attempts" value={report.total_attempts} />
+          <Stat label="similarity" value={entry.similarity ? `${Math.round(entry.similarity.mean_score)}%` : "–"} />
+        </dl>
+        <p className="-mt-2 text-sm text-muted">
+          {report.total_reps_completed} completed, {report.total_attempts_abandoned} abandoned
+        </p>
+
+        <div aria-live="polite" className="space-y-4">
+          {STATUS_TEXT[entry.status] && <p className="text-sm text-muted motion-safe:animate-pulse">{STATUS_TEXT[entry.status]}</p>}
+          <BodyParts similarity={entry.similarity} pending={analysing} />
+          {counts.size > 0 && !fixList && (
+            <section className="space-y-1.5">
+              <h2 className="font-semibold">What broke a rule</h2>
+              <ul className="card divide-y divide-line px-4">
+                {[...counts].map(([message, n]) => (
+                  <li key={message} className="flex items-center justify-between gap-4 py-2.5">
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-tape" />
+                      {message}
+                    </span>
+                    <span className="shrink-0 text-sm text-muted">
+                      {n} {n === 1 ? "attempt" : "attempts"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <Feedback text={entry.feedback} attempts={attempts} pending={analysing} />
           {entry.status === "failed" && (
-            <p role="alert" className="text-sm">
+            <p role="alert" className="alert">
               {entry.error}{" "}
               <button type="button" onClick={() => onRetry(entry.key)} className="underline">
                 Retry
@@ -135,7 +183,7 @@ export function SetComplete({
             </p>
           )}
           {earlierFailures.map((e) => (
-            <p key={e.key} role="alert" className="text-sm">
+            <p key={e.key} role="alert" className="alert">
               {capitalise(setLabel(e, setup.sets))}: {e.error}{" "}
               <button type="button" onClick={() => onRetry(e.key)} className="underline">
                 Retry
@@ -145,39 +193,32 @@ export function SetComplete({
         </div>
 
         {/* The next step stays in reach while the feedback above it scrolls. */}
-        <div className="sticky bottom-0 -mx-6 -mb-8 bg-black px-6 pb-8">
+        <div className="sticky bottom-0 -mx-5 -mb-6 mt-auto space-y-3 border-t border-line bg-background px-5 pb-6 pt-3">
+          {actionError && (
+            <p role="alert" className="alert">
+              {actionError}
+            </p>
+          )}
           {offerRepair ? (
-            <div className="space-y-3 border-t border-ink/20 pt-4">
-              <p className="leading-snug">
-                At least one attempt broke a rule, so you get one repair set at the same target. It is offered once.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
+            <>
+              <p className="leading-snug">At least one attempt broke a rule, so you get one repair set at the same target. It is offered once.</p>
+              <div className="grid grid-cols-[auto_1fr] gap-3">
+                <button type="button" onClick={decline} disabled={busy} className="btn-quiet">
+                  Skip it
+                </button>
                 <button type="button" onClick={onRepair} disabled={busy} className="btn">
                   Start the repair set
                 </button>
-                <button type="button" onClick={decline} disabled={busy} className={pill}>
-                  Skip it
-                </button>
               </div>
-              {actionError && (
-                <p role="alert" className="text-sm">
-                  {actionError}
-                </p>
-              )}
-            </div>
+            </>
           ) : hasNext ? (
-            <RestTimer seconds={setup.rest} next={`Set ${entry.setNo + 1} of ${setup.sets}`} onDone={onNext} />
+            <button type="button" onClick={onNext} disabled={busy} className="btn w-full">
+              Start now
+            </button>
           ) : (
-            <div className="space-y-3 border-t border-ink/20 pt-4">
-              <button type="button" onClick={finish} disabled={busy} className="btn">
-                {busy ? "Finishing" : "Finish workout"}
-              </button>
-              {actionError && (
-                <p role="alert" className="text-sm">
-                  {actionError}
-                </p>
-              )}
-            </div>
+            <button type="button" onClick={finish} disabled={busy} className="btn w-full">
+              {busy ? "Finishing" : "Finish workout"}
+            </button>
           )}
         </div>
       </div>
@@ -186,6 +227,7 @@ export function SetComplete({
 }
 
 // Rest between sets (ADR-0004), then the next set starts on its own with the ready gate.
+// Start now sits with the other actions at the foot and calls the same onDone.
 function RestTimer({ seconds, next, onDone }: { seconds: number; next: string; onDone: () => void }) {
   const [left, setLeft] = useState(seconds);
   const done = useEffectEvent(() => {
@@ -204,44 +246,79 @@ function RestTimer({ seconds, next, onDone }: { seconds: number; next: string; o
   }, [seconds]);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 border-t border-ink/20 pt-4">
-      <p className="text-lg" role="timer">
-        Rest. {next} starts in{" "}
-        <span className="tabular-nums">
-          {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
-        </span>
-      </p>
-      <button type="button" onClick={onDone} className="btn">
-        Start now
-      </button>
-    </div>
+    <p role="timer" className="flex items-baseline justify-between gap-3">
+      <span className="text-lg text-muted">{next} starts in</span>
+      <span className="font-display text-5xl leading-none text-accent tabular-nums">
+        {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+      </span>
+    </p>
   );
 }
 
-function SimilarityRow({ similarity }: { similarity: SetSimilarity }) {
+// Each body part the exercise scores, as a bar and a percentage, the lowest marked.
+function BodyParts({ similarity, pending }: { similarity: SetSimilarity | null; pending: boolean }) {
+  if (!similarity) {
+    return pending ? (
+      <p className="text-sm text-muted motion-safe:animate-pulse">Scoring similarity to the expert motion</p>
+    ) : (
+      <p className="text-sm text-muted">Similarity was not scored for this set.</p>
+    );
+  }
+  const parts = BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined);
+  const lowest = similarity.weakest_body_part ?? parts.reduce((lo, p) => (similarity.body_parts[p]! < similarity.body_parts[lo]! ? p : lo), parts[0]);
   return (
-    <div className="space-y-2">
-      <p className="text-sm">
-        <span className="font-display text-4xl leading-none tabular-nums">{Math.round(similarity.mean_score)}%</span>{" "}
-        <span className="opacity-70">similar to the expert motion</span>
-      </p>
-      <dl className="grid grid-cols-3 gap-2 text-xs">
-        {BODY_PARTS.filter((part) => similarity.body_parts[part] !== undefined).map((part) => (
-          <div key={part}>
-            <dt className="opacity-70 first-letter:uppercase">{part.replace("_", " ")}</dt>
-            <dd className="text-sm tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
+    <section className="space-y-1.5">
+      <h2 className="font-semibold">Similarity by body part</h2>
+      <dl className="card divide-y divide-line px-4">
+        {parts.map((part) => (
+          <div key={part} className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-3 py-2">
+            <dt className="leading-tight first-letter:uppercase">
+              {part.replace("_", " ")}
+              {part === lowest && parts.length > 1 && <span className="block text-xs text-muted">lowest</span>}
+            </dt>
+            <dd aria-hidden className="h-2 overflow-hidden rounded-full bg-surface-2">
+              <span className="block h-full rounded-full bg-accent" style={{ width: `${similarity.body_parts[part]}%` }} />
+            </dd>
+            <dd className="text-right font-display text-2xl leading-none tabular-nums">{Math.round(similarity.body_parts[part]!)}%</dd>
           </div>
         ))}
       </dl>
-    </div>
+    </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+// The coach's feedback last: what to fix when the text has v16's list (lib/feedback-text.ts),
+// else four lines of it, and the whole text in place on Read all, so the workout visit is
+// never left mid-rest.
+function Feedback({ text, attempts, pending }: { text: string | null; attempts: Attempt[]; pending: boolean }) {
+  const [open, setOpen] = useState(false);
+  if (!text) return pending ? <p className="text-sm text-muted motion-safe:animate-pulse">Writing feedback</p> : null;
+  const feedback = readFeedback(text);
   return (
-    <div>
-      <dt className="text-xs opacity-70">{label}</dt>
-      <dd className="font-display text-4xl leading-none tabular-nums">{value}</dd>
+    <section className="card space-y-3 p-4">
+      <h2 className="flex items-center gap-1.5 text-sm font-semibold text-accent">
+        <Spark className="size-4" />
+        Coach feedback
+      </h2>
+      {open ? (
+        <SetFeedback text={text} attempts={attempts} />
+      ) : feedback.summary ? (
+        <WhatToFix feedback={feedback} attempts={attempts} />
+      ) : (
+        <p className="line-clamp-4 leading-relaxed">{plainFeedback(text)}</p>
+      )}
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-sm font-semibold text-accent">
+        {open ? "Show less" : "Read all feedback"}
+      </button>
+    </section>
+  );
+}
+
+function Stat({ label, value, className = "" }: { label: string; value: number | string; className?: string }) {
+  return (
+    <div className="flex flex-col-reverse">
+      <dt className="mt-1 text-sm text-muted">{label}</dt>
+      <dd className={`font-display text-4xl leading-none tabular-nums ${className}`}>{value}</dd>
     </div>
   );
 }

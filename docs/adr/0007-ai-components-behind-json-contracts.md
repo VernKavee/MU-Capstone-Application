@@ -81,3 +81,10 @@ The exact TypeScript types are fixed in Phase 4, below.
 ## Decided 2026-10-30
 
 - The embedding model is `gemini-embedding-2` (Sujira), the model the knowledge base's vectors in `langchain_pg_embedding` were made with; queries are embedded with it too. The open question of the column's dimension above no longer applies to `public.knowledge_base`, which stays empty and unused since the service reads langchain_postgres's own tables (migration `kb_langchain_tables`, 2026-10-25).
+
+## Amended 2026-11-03: the analysis is written by the server only
+
+- `analyseSet(supabase, admin, setId, files)`: the file paths, the set read, and the keypoint download go through the user's client, so row-level security proves the set is theirs and storage guards the file. Similarity, the scores merged into the attempt records, and the feedback are then written by `admin`, the service-role client of `lib/supabase/admin.ts`, by the id that read returned.
+- Migration `analysis_server_only` revokes the update grant on `sets.attempts`, `similarity`, and `llm_feedback` from `authenticated`, so a user can no longer rewrite their attempt records or their scores through the API (Vern's choice over a database function, which would have left similarity and feedback writable). Proven in `supabase/tests/sets.test.sql`.
+- The server needs `SUPABASE_SERVICE_ROLE_KEY` (`.env.example`, `docs/DEPLOY.md`). Without it a set still saves, and the analyse step returns that error, which the set-complete screen shows with its retry.
+- Limit: the first save of a set still runs in the user's session, so made-up attempt records could be sent at that moment. The rule engine stays on the device (NFR1).

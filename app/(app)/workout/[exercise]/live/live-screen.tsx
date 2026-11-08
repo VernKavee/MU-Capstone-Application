@@ -5,17 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createEngine, ENGINE_VERSION } from "@/lib/engine/engine";
 import { setupQuery, type RuleBasedLogic, type Setup } from "@/lib/exercise";
+import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 import type { PoseModel } from "@/lib/live/pose";
 import { CameraError, LiveSession, TURN_CUE, type SetCapture, type Snapshot } from "@/lib/live/session";
 import { sound } from "@/lib/live/sound";
 import { buildAttempts, totalsOf } from "@/lib/set";
 import { endWorkout } from "./actions";
 import { createJob, type Job } from "./pipeline";
-import { pill, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
+import { pill, round, SetComplete, setLabel, type Progress, type SetEntry } from "./set-complete";
+import { ChevronLeft, Speaker, SpeakerOff, Warning } from "../../../icons";
+import { BackLink } from "@/app/(app)/back-link";
 
 type Props = {
   exercise: { id: string; name: string; engineKey: string; landscape: boolean; logic: RuleBasedLogic };
   setup: Setup;
+  resume: { workoutId: string; setNo: number } | null; // a reload picked up this workout
 };
 
 type Stage = { kind: "preflight" } | { kind: "live" } | { kind: "error"; error: CameraError["kind"] };
@@ -31,23 +35,28 @@ const MODEL_KEY = "poseModel";
 const LAG_FPS = 15;
 
 // One workout per visit (ADR-0004): its sets, each repair set, and the rest between them.
-export function LiveScreen({ exercise, setup }: Props) {
+export function LiveScreen({ exercise, setup, resume }: Props) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>({ kind: "preflight" });
   const [model, setModel] = useState<PoseModel>("full");
   const [muted, setMuted] = useState(false);
   const [run, setRun] = useState(0); // bumps to start the next set
   const [snap, setSnap] = useState<Snapshot | null>(null);
-  const [progress, setProgress] = useState<Progress>({ setNo: 1, kind: "initial" });
+  const [progress, setProgress] = useState<Progress>({ setNo: resume?.setNo ?? 1, kind: "initial" });
   const [entries, setEntries] = useState<SetEntry[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<LiveSession | null>(null);
-  // Across sets: each set's saving job, the last save (the next save waits for it so every
-  // set lands in the same workout row), and the workout id once the first save returns it.
+  // Across sets: each set's saving job, the last save (the next save waits for it so sets
+  // are saved in order), and the workout id, made here so every set and every retry names
+  // the same workout row (ADR-0004).
   const jobs = useRef(new Map<number, Job>());
   const lastSave = useRef<Promise<unknown>>(Promise.resolve());
-  const workoutId = useRef<string | null>(null);
+  const workoutId = useRef(resume?.workoutId ?? crypto.randomUUID());
+  const savedAny = useRef(Boolean(resume));
+  // The pose model, loaded once per model for the whole visit rather than once per set. The
+  // download starts on the preflight screen, while the user reads it.
+  const landmarkers = useRef(new Map<PoseModel, Promise<PoseLandmarker>>());
   const attemptCap = 2 * setup.reps;
   const guideHref = `/workout/${exercise.id}/guide?${setupQuery(setup)}`;
 
@@ -58,6 +67,8 @@ export function LiveScreen({ exercise, setup }: Props) {
     setEntries((list) => [...list, { key, ...progress, capture, attempts, status: "saving", similarity: null, feedback: null, error: null }]);
     const job = createJob({
       input: {
+        workoutId: workoutId.current,
+        setId: crypto.randomUUID(),
         exerciseId: exercise.id,
         setup,
         setNo: progress.setNo,
@@ -72,9 +83,11 @@ export function LiveScreen({ exercise, setup }: Props) {
       },
       capture,
       after: lastSave.current,
-      workoutId: () => workoutId.current,
-      onSaved: (id) => {
-        workoutId.current = id;
+      onSaved: () => {
+        if (savedAny.current) return;
+        savedAny.current = true;
+        // So a reload within five minutes picks this workout up (page.tsx).
+        window.history.replaceState(null, "", `?${setupQuery(setup)}&workout=${workoutId.current}`);
       },
       onUpdate: (update) => setEntries((list) => list.map((e) => (e.key === key ? { ...e, ...update } : e))),
     });
@@ -83,6 +96,30 @@ export function LiveScreen({ exercise, setup }: Props) {
     void job.run();
   });
 
+  function landmarker(which: PoseModel) {
+    let loading = landmarkers.current.get(which);
+    if (!loading) {
+      const begun = performance.now();
+      loading = import("@/lib/live/pose").then((pose) => pose.loadPoseLandmarker(which));
+      loading.then(
+        () => console.info(`[live] pose model ${which} loaded in ${Math.round(performance.now() - begun)} ms`),
+        () => landmarkers.current.delete(which), // so Try again downloads it afresh
+      );
+      landmarkers.current.set(which, loading);
+    }
+    return loading;
+  }
+
+  // Start the download at once, and close what was loaded when the visit ends.
+  useEffect(() => {
+    const loaded = landmarkers.current;
+    void landmarker(localStorage.getItem(MODEL_KEY) === "lite" ? "lite" : "full").catch(() => {});
+    return () => {
+      for (const loading of loaded.values()) loading.then((l) => l.close(), () => {});
+      loaded.clear();
+    };
+  }, []);
+
   useEffect(() => {
     if (stage.kind !== "live" || !videoRef.current || !canvasRef.current) return;
     const session = new LiveSession({
@@ -90,7 +127,7 @@ export function LiveScreen({ exercise, setup }: Props) {
       rules: exercise.logic.rules,
       target: setup.reps,
       attemptCap,
-      model,
+      landmarker: () => landmarker(model),
       landscape: exercise.landscape,
       readyCue: READY_SPOKEN[exercise.logic.state_machine.ready_pose],
       video: videoRef.current,
@@ -141,7 +178,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   async function finish(): Promise<string | null> {
     await lastSave.current;
     const id = workoutId.current;
-    if (!id) {
+    if (!savedAny.current) {
       router.push("/"); // nothing was saved
       return null;
     }
@@ -151,11 +188,15 @@ export function LiveScreen({ exercise, setup }: Props) {
     return null;
   }
 
+  // A resumed workout whose every set was saved before the reload: only Finish is left.
+  if (progress.setNo > setup.sets) return <AllSaved name={exercise.name} onFinish={finish} />;
+
   if (stage.kind === "preflight" || stage.kind === "error") {
     return (
       <main className="fixed inset-0 z-20 flex flex-col justify-center gap-6 bg-background p-8 text-foreground">
         <div className="mx-auto w-full max-w-md space-y-5">
-          <p className="text-sm opacity-60">
+          <BackLink href={guideHref}>Guide</BackLink>
+          <p className="text-sm text-muted">
             {exercise.name}, {setLabel(progress, setup.sets)}, {setup.reps} correct reps
           </p>
           {stage.kind === "error" ? (
@@ -170,7 +211,6 @@ export function LiveScreen({ exercise, setup }: Props) {
             <button type="button" onClick={startCamera} className="btn">
               {stage.kind === "error" ? "Try again" : "Start camera"}
             </button>
-            <Link href={guideHref} className="text-sm underline">Back to the guide</Link>
           </div>
           <ModelChoice model={model} onChange={chooseModel} />
         </div>
@@ -191,7 +231,7 @@ export function LiveScreen({ exercise, setup }: Props) {
   const centre = snap?.turn ? TURN_CUE : centreText(phase, frame, exercise.logic.state_machine.ready_pose);
 
   return (
-    <main className="fixed inset-0 z-20 overflow-hidden bg-black text-ink">
+    <main className="stage fixed inset-0 z-20 overflow-hidden bg-black text-ink">
       {/* Mirrored, like a mirror in a gym. The recording itself is not mirrored. */}
       <div className="absolute inset-0 -scale-x-100">
         <video ref={videoRef} muted playsInline className="absolute inset-0 h-full w-full object-cover" />
@@ -216,21 +256,36 @@ export function LiveScreen({ exercise, setup }: Props) {
         )
       ) : (
         <>
-          <header className="absolute inset-x-0 top-0 flex items-center gap-2 p-3 text-sm">
-            <Link href={guideHref} className={pill}>Back</Link>
-            <span className={`${pill} truncate`}>
+          <header className="absolute inset-x-0 top-0 flex items-center gap-2 p-3">
+            <Link href={guideHref} aria-label="Back to the guide" className={round}>
+              <ChevronLeft />
+            </Link>
+            <span className="outlined truncate font-semibold [--stroke:4px]">
               {exercise.name}, {setLabel(progress, setup.sets)}
             </span>
             <span className="flex-1" />
-            <button type="button" onClick={toggleMute} className={pill} aria-pressed={muted}>
-              {muted ? "Unmute" : "Mute"}
+            <button type="button" onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"} aria-pressed={muted} className={round}>
+              {muted ? <SpeakerOff /> : <Speaker />}
             </button>
-            {phase === "active" && (
-              <button type="button" onClick={() => sessionRef.current?.endSet()} className={pill}>
-                End set
-              </button>
-            )}
           </header>
+
+          {/* The count and the target as one outlined number in the top corner (2026-11-05,
+              Vern): nothing solid in front of the body, and the outline reads on a light wall. */}
+          <div className={`pointer-events-none absolute right-4 top-16 text-right transition-opacity ${phase === "active" ? "" : "opacity-60"}`}>
+            <p className="outlined font-display leading-[0.85] tabular-nums">
+              <span key={frame?.correct_rep_count ?? 0} className="inline-block text-[clamp(72px,14vh,128px)] text-live motion-safe:animate-pop">
+                {frame?.correct_rep_count ?? 0}
+              </span>
+              <span className="text-[clamp(44px,8.5vh,76px)]">/{setup.reps}</span>
+            </p>
+            <p className="outlined mt-1 text-lg font-semibold [--stroke:4px]">
+              {frame?.attempt_count ?? 0} {frame?.attempt_count === 1 ? "attempt" : "attempts"}
+            </p>
+            <p className="outlined text-sm [--stroke:3px]">
+              {phase === "active" ? frame?.state : phaseLabel(phase)}
+              {snap?.status === "running" && `, ${snap.fps} fps ${model}`}
+            </p>
+          </div>
 
           {/* The centre text covers the whole stage and the HUD its bottom. Neither takes
               clicks, so the header and the Lagging button stay usable in every phase. */}
@@ -263,30 +318,22 @@ export function LiveScreen({ exercise, setup }: Props) {
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-3 p-4 pb-6">
-            <p role="status" aria-live="assertive" className={`min-h-12 max-w-md rounded-md px-4 py-2.5 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}>
+          {/* A slim warning band at the foot, End set beside it. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-3 p-3 pb-5">
+            <p
+              role="status"
+              aria-live="assertive"
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3.5 py-2 text-lg font-semibold leading-snug ${warning ? "bg-tape text-tape-ink" : "invisible"}`}
+            >
+              {warning && <Warning className="size-5 shrink-0" />}
               {warning ?? " "}
             </p>
-            <div className={`flex items-end gap-3 transition-opacity ${phase === "active" ? "" : "opacity-50"}`}>
-              <span
-                key={frame?.correct_rep_count ?? 0}
-                className="font-display text-[clamp(96px,22vh,180px)] leading-[0.85] tabular-nums motion-safe:animate-pop"
-              >
-                {frame?.correct_rep_count ?? 0}
-              </span>
-              <span className="pb-2 text-2xl leading-none">of {setup.reps}</span>
-            </div>
-            <p className="flex gap-4 text-sm">
-              <span>
-                {frame?.attempt_count ?? 0} {frame?.attempt_count === 1 ? "attempt" : "attempts"}
-              </span>
-              <span className="opacity-70">{phase === "active" ? frame?.state : phaseLabel(phase)}</span>
-              {snap?.status === "running" && (
-                <span className="opacity-40">
-                  {snap.fps} fps, {model}
-                </span>
-              )}
-            </p>
+            <span className="flex-1" />
+            {phase === "active" && (
+              <button type="button" onClick={() => sessionRef.current?.endSet()} className={`${pill} pointer-events-auto shrink-0`}>
+                End set
+              </button>
+            )}
           </div>
         </>
       )}
@@ -327,9 +374,35 @@ function phaseLabel(phase: string) {
   return { starting: "starting", waiting: "ready pose", countdown: "countdown", ended: "ended" }[phase] ?? phase;
 }
 
+function AllSaved({ name, onFinish }: { name: string; onFinish: () => Promise<string | null> }) {
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <main className="fixed inset-0 z-20 flex flex-col justify-center gap-6 bg-background p-8 text-foreground">
+      <div className="mx-auto w-full max-w-md space-y-5">
+        <p className="text-sm text-muted">{name}</p>
+        <p className="text-lg leading-snug">Every set of this workout is saved.</p>
+        {error && <p role="alert" className="alert">{error}</p>}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setError(await onFinish());
+            setBusy(false);
+          }}
+          className="btn"
+        >
+          {busy ? "Finishing" : "Finish workout"}
+        </button>
+      </div>
+    </main>
+  );
+}
+
 function ModelChoice({ model, onChange }: { model: PoseModel; onChange: (model: PoseModel) => void }) {
   return (
-    <p className="text-sm opacity-70">
+    <p className="text-sm text-muted">
       Pose model: {model === "full" ? "full" : "lite"}.{" "}
       <button type="button" onClick={() => onChange(model === "full" ? "lite" : "full")} className="underline">
         {model === "full" ? "Use the lighter model on a slow phone" : "Use the full model"}

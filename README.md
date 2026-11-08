@@ -50,8 +50,9 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
 - Profile setup before the first workout and editing in Settings.
 - App shell: Home, History, Settings tabs.
 - Home shows the last seven days as a chart of mean similarity per day, today on the
-  right, then the catalogue as cards. `/workout/[exercise]/setup` asks reps per set,
-  number of sets, and rest seconds (default 60), and for the bicep curl the arm (Left or
+  right, then the four exercises as rows, each with how to stand to the camera
+  (`exercises.camera_hint`). `/workout/[exercise]/setup` asks reps per set, number of
+  sets, and rest seconds (default 60), each with − and + beside a typeable field, and for the bicep curl the arm (Left or
   Right, no default; any exercise whose row has `state_machine.chooses_side`), stored on
   the workout; `/workout/[exercise]/guide` shows the
   guide text, the demonstration video or a placeholder, and the rules the coach checks.
@@ -85,13 +86,15 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   ADR-0007; the feedback stub quotes the medical history back. The server side is
   `lib/save-and-analyse.ts`.
 - The set-complete screen shows the counts and the violations, then similarity and
-  feedback as they arrive, with a retry. It then offers one repair set after any
+  feedback as they arrive, with a retry. A reload under five minutes after the last set
+  picks the same workout up at the next set. It then offers one repair set after any
   violation (a skip is recorded), runs the rest timer, or finishes the workout.
 - `/workout/[exercise]/done/[workout]` is the finished summary, read back from the
   database: each set with its counts, similarity, and feedback, and a link to its replay.
 - History drills down in four levels, each fetching only what it shows. `/history`: active
   days per exercise over the last seven days. `/history/[exercise]`: that exercise's
-  finished workouts, newest first, with date and mean similarity.
+  workouts, newest first, twenty to a page, with date and mean similarity, and a workout
+  left part way marked "Not finished".
   `/history/[exercise]/[workout]`: every set of one workout and the chosen set in full,
   its video replayed with the skeleton drawn from its keypoint file, an attempt strip to
   jump to any attempt, similarity per body part, every violation, and the start of the
@@ -99,10 +102,12 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   to the server in a `tz` cookie. The plain-data part is `lib/history.ts`.
 - Every screen has a loading state, an empty state wherever there can be nothing yet, and
   an error screen with a retry; an address that matches nothing gets a not-found page.
-- One dark design, carried from the live screen to every page: a charcoal ground,
-  off-white ink, tape yellow only for what needs attention, and Big Shoulders Display for
-  titles and big numbers. A bottom tab bar on a phone, a top bar on a laptop; every
-  screen is checked at 375 and 1280 px.
+- Daylight design: light pages on Radix Colors scales (sand, indigo for actions and
+  progress, green for correct reps, amber only for a warning) and a dark camera stage,
+  Barlow Condensed for titles and numbers and Barlow for text. The live screen keeps the
+  body full size, with the count outlined in the top corner. Every page under a tab has a
+  back button; a bottom tab bar with icons on a phone, a top bar on a laptop; every screen
+  is checked at 375 and 1280 px.
 - Tests at three levels: unit tests under `lib/` (the engine and its parity with the
   Python, similarity's answer and stub, the feedback stub,
   the frame loop, the set job, the attempt records, History's data), pgTAP in
@@ -121,7 +126,8 @@ npx supabase start
 ```
 
 Copy `.env.example` to `.env.local` and paste the publishable key printed by
-`npx supabase status -o env`. Then:
+`npx supabase status -o env`, and its `SERVICE_ROLE_KEY` as `SUPABASE_SERVICE_ROLE_KEY` (the
+server writes each set's analysis with it). Then:
 
 ```bash
 npm run dev

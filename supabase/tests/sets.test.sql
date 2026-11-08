@@ -3,7 +3,7 @@
 -- bucket is one folder per user. User A tries to read B's workout, its sets, and its
 -- files by id, and gets nothing.
 begin;
-select plan(24);
+select plan(32);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.local'),
@@ -51,13 +51,22 @@ select throws_ok(
   '23505', null, 'but only one repair set per set');
 
 select lives_ok(
-  $$ update public.sets set similarity = '{"mean_score":90}', llm_feedback = 'Good', repair_declined = true,
-       keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm', attempts = '[{"attempt_no":1}]'
+  $$ update public.sets set repair_declined = true, keypoints_url = 'x/keypoints.json.gz', video_url = 'x/video.webm'
      where id = '20000000-0000-0000-0000-000000000001' $$,
-  'the analyse step and the uploads write their columns');
+  'the uploads and a skipped repair set write their columns');
 select lives_ok(
-  $$ update public.sets set llm_feedback = 'overwritten' where id = '20000000-0000-0000-0000-000000000002' $$,
+  $$ update public.sets set video_url = 'overwritten' where id = '20000000-0000-0000-0000-000000000002' $$,
   'an update aimed at B''s set is filtered, not errored');
+-- The analysis is the server's to write (2026-11-03): the user cannot change it.
+select throws_ok(
+  $$ update public.sets set attempts = '[{"attempt_no":1}]' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'a user cannot rewrite their attempt records');
+select throws_ok(
+  $$ update public.sets set similarity = '{"mean_score":100}' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'nor their similarity');
+select throws_ok(
+  $$ update public.sets set llm_feedback = 'Perfect' where id = '20000000-0000-0000-0000-000000000001' $$,
+  '42501', null, 'nor their feedback');
 select throws_ok(
   $$ update public.sets set engine_report = '{}' where id = '20000000-0000-0000-0000-000000000001' $$,
   '42501', null, 'the engine report is never rewritten');
@@ -78,6 +87,29 @@ select throws_ok(
   $$ insert into public.workouts (user_id, exercise_id, target_reps, target_sets, rest_seconds, side)
      values ('00000000-0000-0000-0000-000000000001', 'bicep-curl', 10, 3, 60, 'both') $$,
   '23514', null, 'and only left or right');
+-- The save names its rows by ids the browser made and skips what is already there, so a
+-- retry saves nothing twice (ADR-0004).
+select lives_ok(
+  $$ insert into public.workouts (id, user_id, exercise_id, target_reps, target_sets, rest_seconds)
+     values ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'squat', 10, 3, 60)
+     on conflict (id) do nothing;
+     insert into public.sets (id, workout_id, set_no, kind, ended_by, started_at, ended_at, totals, attempts, engine_report, engine_version)
+     values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 1, 'initial', 'target_reached', now(), now(), '{}', '[]', '{}', 'stub')
+     on conflict (id) do nothing $$,
+  'saving the same workout and set again is accepted');
+select is((select count(*) from public.sets where workout_id = '10000000-0000-0000-0000-000000000001' and kind = 'initial'), 1::bigint,
+  'and leaves one set');
+select lives_ok(
+  $$ insert into public.workouts (id, user_id, exercise_id, target_reps, target_sets, rest_seconds)
+     values ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'squat', 10, 3, 60)
+     on conflict (id) do nothing $$,
+  'a save naming B''s workout id writes nothing');
+select throws_ok(
+  $$ insert into public.sets (id, workout_id, set_no, kind, ended_by, started_at, ended_at, totals, attempts, engine_report, engine_version)
+     values ('20000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000002', 3, 'initial', 'user_ended', now(), now(), '{}', '[]', '{}', 'stub')
+     on conflict (id) do nothing $$,
+  '42501', null, 'and its set is refused');
+
 select throws_ok($$ delete from public.sets $$, '42501', null, 'sets are never deleted through the API');
 select throws_ok($$ delete from public.workouts $$, '42501', null, 'nor workouts');
 
@@ -95,8 +127,10 @@ select is((select count(*) from storage.objects where name like '00000000-0000-0
   'and cannot read B''s video');
 
 reset role;
-select is((select llm_feedback from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
+select is((select video_url from public.sets where id = '20000000-0000-0000-0000-000000000002'), null::text,
   'B''s set is unchanged');
+select is((select user_id from public.workouts where id = '10000000-0000-0000-0000-000000000002'), '00000000-0000-0000-0000-000000000002'::uuid,
+  'and B''s workout is still B''s');
 
 select * from finish();
 rollback;

@@ -11,7 +11,7 @@ export default function ErrorPage({ error, retry }: { error: Error & { digest?: 
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-4 p-6">
       <h1>This page did not load</h1>
       <p>Something went wrong on the way to the server. Check the connection, then try again.</p>
-      {error.digest && <p className="text-sm opacity-70">If it keeps happening, tell the team reference {error.digest}.</p>}
+      {error.digest && <p className="text-sm text-muted">If it keeps happening, tell the team reference {error.digest}.</p>}
       <div className="flex flex-wrap items-center gap-4">
         <button type="button" onClick={() => retry()} className="btn">
           Try again

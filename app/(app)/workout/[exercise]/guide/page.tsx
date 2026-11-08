@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { parseSetup, ruleBasedLogic, setupError, setupQuery } from "@/lib/exercise";
 import { createClient } from "@/lib/supabase/server";
+import { BackLink } from "@/app/(app)/back-link";
 
 // Section 4.2: guide text and the demonstration video before the camera opens.
 export default async function GuidePage({ params, searchParams }: PageProps<"/workout/[exercise]/guide">) {
@@ -16,12 +17,12 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
 
   return (
     <main className="space-y-6 p-6">
+      <BackLink href={`/workout/${exercise.id}/setup`}>Setup</BackLink>
       <header className="space-y-2">
         <h1>{exercise.name}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {setup.sets} {setup.sets === 1 ? "set" : "sets"} of {setup.reps} reps, {setup.rest} s rest
-          {setup.side && `, ${setup.side} arm`}.{" "}
-          <Link href={`/workout/${exercise.id}/setup`} className="underline">Change</Link>
+          {setup.side && `, ${setup.side} arm`}.
         </p>
       </header>
 
@@ -30,23 +31,23 @@ export default async function GuidePage({ params, searchParams }: PageProps<"/wo
         {exercise.guide_video_url ? (
           <video src={exercise.guide_video_url} controls playsInline className="w-full rounded-xl bg-black" />
         ) : (
-          <div className="flex aspect-video items-center justify-center rounded-xl bg-black text-sm text-ink/50 ring-1 ring-ink/10">
+          <div className="flex aspect-video items-center justify-center rounded-xl bg-surface-2 text-sm text-muted">
             Demonstration video not available yet
           </div>
         )}
 
         <div className="max-w-prose space-y-6">
-          <p className="whitespace-pre-line leading-relaxed">{exercise.guide_text}</p>
+          <p className="whitespace-pre-line text-lg leading-relaxed">{exercise.guide_text}</p>
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">What the coach checks</h2>
-            <p className="text-sm opacity-70">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
+            <p className="text-muted">A rep only counts when none of these fire. When more than one fires, the one listed first is shown.</p>
             {/* Each rule as its warning band looks on the live screen, in priority order. */}
             <ol className="space-y-2">
               {rules.map((rule) => (
                 <li key={rule.name} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="rounded-md bg-tape px-3 py-1 font-semibold text-tape-ink">{rule.messages.en}</span>
-                  <span className="text-xs opacity-60">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
+                  <span className="rounded-lg bg-tape px-3.5 py-1.5 text-lg font-semibold text-tape-ink">{rule.messages.en}</span>
+                  <span className="text-sm text-muted">{rule.scope === "rep" ? "judged per rep" : "judged live"}</span>
                 </li>
               ))}
             </ol>
