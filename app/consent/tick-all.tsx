@@ -1,6 +1,6 @@
 "use client";
 
-// Fills the three consent checkboxes. type="button" so it never submits; the user presses Continue.
+// Fills the consent checkboxes. type="button" so it never submits; the user presses Continue.
 export function TickAll() {
   return (
     <button
@@ -8,7 +8,7 @@ export function TickAll() {
       onClick={(e) => e.currentTarget.form?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((c) => (c.checked = true))}
       className="btn-quiet"
     >
-      Tick all three
+      Tick both
     </button>
   );
 }

@@ -161,13 +161,13 @@ _Avoid_: daily tracking, dashboard
 A day on which the user finished at least one workout of a given exercise, dated by the workout's start. History level 2 counts them over the last seven days. A workout left part way makes no active day.
 
 **Consent**:
-The user's recorded agreement, with version and time, to camera use, to storing video and landmarks, and to storing the profile.
+The user's recorded agreement, with version and time, to camera use and to storing video and landmarks. Until 2026-11-11 it also covered storing the profile.
 _Avoid_: terms, agreement, PDPA acceptance
 
 **Profile**:
-The user's name, age, gender, weight in kilograms, height in centimetres, and medical history. Complete before the first workout.
+The user's name, age, gender, weight in kilograms, and height in centimetres. Complete before the first workout. No medical history since 2026-11-11.
 _Avoid_: account, settings
 
 **Medical history**:
-Free text about injuries, mobility, disability, and conditions the feedback must respect. May be "none". Editable at any time.
-_Avoid_: health notes, injury history (it is broader than injuries)
+Removed 2026-11-11: PDPA approval for health data could not be had in time, so the app does not collect one (docs/DECISIONS.md). Was free text about injuries, mobility, disability, and conditions.
+_Avoid_: health notes, injury history

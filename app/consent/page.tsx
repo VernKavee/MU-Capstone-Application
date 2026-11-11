@@ -17,8 +17,8 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
     <main className="mx-auto w-full max-w-lg space-y-6 p-6">
       <h1>Before you start</h1>
       <p className="text-sm text-muted">
-        This app records you while you exercise. Under Thailand&apos;s PDPA we need your explicit
-        agreement to each of the three things below. All three are needed to use the app.
+        This app records you while you exercise. We need your agreement to both things below.
+        Both are needed to use the app.
       </p>
       {typeof error === "string" && (
         <p role="alert" className="alert">
@@ -36,7 +36,7 @@ export default async function ConsentPage({ searchParams }: PageProps<"/consent"
           </label>
         ))}
         <p className="text-xs text-muted">Consent version {CONSENT_VERSION}. Your agreement is recorded with the time.</p>
-        <p className="text-sm">Tick all three boxes, then press Continue.</p>
+        <p className="text-sm">Tick both boxes, then press Continue.</p>
         <div className="flex flex-wrap gap-3">
           <TickAll />
           <SubmitButton formAction={grantConsents} className="btn">

@@ -5,8 +5,7 @@
     "age": "integer",
     "gender": "string",
     "weight_kg": "number",
-    "height_cm": "number",
-    "medical_history": "string, \"None\" allowed; the advice must be safe for it"
+    "height_cm": "number"
   },
   "exercise": {
     "id": "\"squat\" | \"push-up\" | \"lunge\" | \"bicep-curl\"",

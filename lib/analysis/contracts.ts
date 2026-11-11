@@ -44,7 +44,7 @@ export type SetSummary = {
 };
 
 export type FeedbackInput = {
-  profile: { display_name: string; age: number; gender: string; weight_kg: number; height_cm: number; medical_history: string };
+  profile: { display_name: string; age: number; gender: string; weight_kg: number; height_cm: number };
   exercise: { id: string; name: string; rules: Rule[] };
   workout: { target_reps: number; target_sets: number; rest_seconds: number; earlier_sets: SetSummary[] };
   set: SetSummary & { attempts: Attempt[] };

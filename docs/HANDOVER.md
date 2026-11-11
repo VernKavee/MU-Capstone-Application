@@ -331,10 +331,9 @@ by `feedbackInput` in `lib/save-and-analyse.ts`, the function `analyseSet` calls
 2026-10-28 so its similarity has every field. Its past workouts predate `frame_size`, so their
 similarity is null, as it is for any set saved before 2026-10-27.
 
-- `profile`: `display_name`, `age`, `gender`, `weight_kg`, `height_cm`, and
-  `medical_history`, free text, required, possibly "none". The medical history is the
-  safety input: the advice must respect it (REQUIREMENTS FR1, a previously broken leg is
-  the report's example).
+- `profile`: `display_name`, `age`, `gender`, `weight_kg`, `height_cm`. No
+  `medical_history` since 2026-11-11: PDPA approval for health data could not be had in
+  time (docs/DECISIONS.md). The RAG service sends none of the profile to the model.
 - `exercise`: `id` (the app id, the same as `knowledge_base.exercise_id`), `name`, and
   `rules`, the row's rules with `name`, `priority`, `scope`, `threshold`, and `messages.en`.
 - `workout`: `target_reps`, `target_sets`, `rest_seconds`, and `earlier_sets`, this
@@ -398,7 +397,7 @@ and `npm run test:db`.
 When `FEEDBACK_URL` is not set: after 1.5 seconds, one paragraph built from the input: the set's counts; the most
 frequent violation and how many attempts it hit, or that no rule fired; the mean
 similarity score and the weakest body part; how many earlier attempts in the workout did not
-count; how many past workouts are in the context; the medical history quoted back; and
+count; how many past workouts are in the context; and
 "(Stub feedback: no language model was called.)". No retrieval, no model.
 
 ### What else changes
@@ -406,9 +405,8 @@ count; how many past workouts are in the context; the medical history quoted bac
 - The feedback test in `lib/analysis/stubs.test.ts` still checks the stub's wording, now
   with `FEEDBACK_URL` unset; the client's tests are in `lib/analysis/feedback.test.ts`
   (a local server stands in for the service).
-- `e2e/workout.spec.ts` ends by expecting the medical history, word for word, on the
-  feedback detail page. That holds while the e2e runs without `FEEDBACK_URL` (the stub);
-  a model will not quote it verbatim, so a run against the service needs that step changed.
+- `e2e/workout.spec.ts` ends by opening the feedback detail page. Until 2026-11-11 it
+  expected the medical history there word for word, which held only for the stub.
 
 ## Trying a replacement
 

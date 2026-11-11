@@ -48,6 +48,9 @@ the client can pull thresholds and guidance without hardcoding them.
   and **medical history / injury history** as free text.
 - The user can view and edit their own profile.
 
+> **Dropped 2026-11-11:** medical history. PDPA approval for health data could not be had in
+> time, so the app does not collect it (docs/DECISIONS.md). The text below is the report's.
+
 Weight, height, and especially medical history are not decoration. The report states
 medical history is passed as **context to the LLM so its advice is safe** (its example
 is a previously broken leg). Treat these fields as inputs to a downstream system, not
@@ -92,7 +95,7 @@ back as a weekly overview and as browsable past sessions. Detailed in section 5 
 | **NFR1 Real-time** | Landmark extraction, angle math, and rule checking run on the user's own device. No per-frame server round trip. |
 | **NFR2 Access control** | Every request except register and sign-in is authenticated, and a user can only ever reach their own data. |
 | **NFR3 Signed uploads** | Video goes client to storage directly via a temporary signed URL. |
-| **NFR4 Consent (PDPA)** | The system records video of the user. Explicit consent is required for camera access and for storing personal data, per Thailand's PDPA. This is a stated design constraint, not optional. |
+| **NFR4 Consent (PDPA)** | The system records video of the user. Explicit consent is required for camera access and for storing personal data, per Thailand's PDPA. This is a stated design constraint, not optional. **2026-11-11:** the PDPA work is dropped (its approval could not be had in time); the app keeps a two-part consent screen for camera and recording. |
 | **NFR5 Cost** | Client-side processing is chosen partly to reduce bandwidth cost. Prefer open-source and free-tier-friendly infrastructure. |
 | **NFR6 Safety** | The real-time correction exists to prevent injury from bad form. Feedback must be prompt and unambiguous. |
 
@@ -176,7 +179,7 @@ keep the information architecture.
 |---|---|
 | **Login** | Email and password, with registration. |
 | **Home** | Exercise selection cards, plus the Daily Tracking bar chart (Mon to Sun accuracy). |
-| **Settings** | Edit name, weight, medical history. |
+| **Settings** | Edit name, weight, medical history (medical history dropped 2026-11-11). |
 | **Exercise setup** | Pick from the 4 exercises, set reps per set and number of sets. |
 | **Exercise ready** | Live camera, real-time skeleton, countdown. |
 | **Exercise active** | Live skeleton, rep counter, correction messages. Wrong reps do not count. |
@@ -199,7 +202,7 @@ Five tables in the report. Names and fields are given here as the intent; adapt 
 to whatever conventions the implementation adopts, but do not silently drop a field.
 
 **users** is `user_id` PK (derived from the auth provider's token), `name`, `age`,
-`gender`, `weight` float, `height` float, `medical_history` text, `created_at`.
+`gender`, `weight` float, `height` float, `medical_history` text (dropped 2026-11-11), `created_at`.
 
 **exercises** is `exercise_id` PK, `name`, `guide_text`, `thumbnail_url`,
 `guide_video_url`, `rule_based_logic` JSONB holding the angle thresholds and the warning

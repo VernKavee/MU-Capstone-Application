@@ -11,7 +11,7 @@ export async function grantConsents(formData: FormData) {
   if (!userId) redirect("/login");
 
   const missing = CONSENT_KINDS.filter(({ kind }) => formData.get(kind) !== "on");
-  if (missing.length > 0) redirect("/consent?error=All+three+consents+are+required");
+  if (missing.length > 0) redirect("/consent?error=Both+consents+are+required");
 
   const rows = CONSENT_KINDS.map(({ kind }) => ({ user_id: userId, kind, version: CONSENT_VERSION }));
   const { error } = await supabase.from("consents").upsert(rows, { ignoreDuplicates: true });

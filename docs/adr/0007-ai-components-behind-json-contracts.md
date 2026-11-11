@@ -15,6 +15,8 @@ Similarity is Punnapat's component and coaching feedback with retrieval is Sujir
 
 There is no chat. The feedback stub visibly echoes the medical history so the seam for safe advice is real while the text is fake.
 
+Amended 2026-11-11: the app no longer collects a medical history (PDPA approval for health data could not be had in time), so `FeedbackInput.profile` has none and the stub no longer echoes it (docs/DECISIONS.md).
+
 ## Data the components own
 
 `knowledge_base` (chunks per exercise with embeddings) and `expert_motions` (one per exercise) live in this app's Postgres as the report specifies, created empty in Phase 6 and Phase 2. A component that is JSON-in only receives a database connection string. The embedding column's dimension depends on Sujira's model, which is not chosen; the column is added at integration, with an untyped pgvector `vector` column as the fallback, and pgvector itself is enabled in the first migration. The LLM API key lives with whichever process calls the model.

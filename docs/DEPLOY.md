@@ -39,7 +39,7 @@ documentation. The CLI stack is built for local development; `supabase/config.to
 commented `signing_keys_path`, which was not checked and is not assumed to retire the
 published keys. Once the API is
 public, anyone who knows the address can use the published service role key to skip
-row-level security and read every user's rows, video, and medical history. That breaks
+row-level security and read every user's rows and video. That breaks
 NFR2 and the consent text.
 
 So:

@@ -55,12 +55,11 @@ async function requestOnce(url: string, input: FeedbackInput, timeoutMs: number)
   return { feedback };
 }
 
-// The stub: text assembled from the input so the seam is visibly real. The medical history
-// is quoted back, the set's violations are named, and the earlier sets of the workout and
-// the past workouts are counted.
+// The stub: text assembled from the input so the seam is visibly real. The set's violations
+// are named, and the earlier sets of the workout and the past workouts are counted.
 async function stubFeedback(input: FeedbackInput, delayMs: number): Promise<FeedbackOutput> {
   await new Promise((resolve) => setTimeout(resolve, delayMs));
-  const { set, workout, history, profile, exercise } = input;
+  const { set, workout, history, exercise } = input;
   const counts = new Map<string, number>();
   for (const attempt of set.attempts) for (const v of attempt.violations) counts.set(v.message, (counts.get(v.message) ?? 0) + 1);
   const worst = [...counts].sort((a, b) => b[1] - a[1])[0];
@@ -81,7 +80,6 @@ async function stubFeedback(input: FeedbackInput, delayMs: number): Promise<Feed
     history.length
       ? `Your last ${history.length} ${exercise.name.toLowerCase()} ${history.length === 1 ? "workout" : "workouts"} ${history.length === 1 ? "is" : "are"} in the context.`
       : `This is your first ${exercise.name.toLowerCase()} workout on record.`,
-    `Your profile notes "${profile.medical_history}", so this advice would be checked against it.`,
     "(Stub feedback: no language model was called.)",
   ];
   return { feedback: lines.join(" ") };

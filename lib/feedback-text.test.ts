@@ -85,10 +85,11 @@ Next Session Plan:
 1. Stop the set before your knees drift.
 2. Film one set from the side.`;
 
-test("a v17 answer: the list, the health note, progress, details per fault, then the plan", () => {
+test("a v17 answer: the list, progress, details per fault, then the plan; an old health note is not shown", () => {
   const read = readFeedback(V17);
   assert.equal(read.summary?.kind === "faults" && read.summary.faults.length, 2);
-  assert.equal(read.health, "With your right knee history, keep every squat pain-free.");
+  assert.equal("health" in read, false);
+  assert.equal(JSON.stringify(read).includes("knee history"), false, "the Health paragraph from before 2026-11-11 is skipped");
   assert.equal(read.progress, "Score dropped to 62.8 from 68.3 in set 1.");
   assert.deepEqual(read.details, {
     knee_varus: [
@@ -105,7 +106,6 @@ test("a v17 answer: the list, the health note, progress, details per fault, then
 test("v17 labels are read only after a summary, and a v16 text is not layered", () => {
   const stray = "Health: Fine.\n\nDetails knee_varus:\nDrill: Squats.";
   assert.equal(readFeedback(stray).summary, null);
-  assert.equal(readFeedback(stray).health, null);
   assert.equal(readFeedback(stray).blocks.length, 2, "every paragraph kept as written");
   assert.equal(isLayered(readFeedback(V16)), false);
   const clean = readFeedback("Keep: Smooth reps.\n\nProgress: First set on record.\n\nNext Session Plan:\n1. Same again.");

@@ -5,7 +5,7 @@ Application for the capstone project "Mobile Application for Exercise Posture Ch
 ## Status
 
 Every phase of the build plan is complete: project skeleton, database foundation,
-sign-in, PDPA consent, profile, the app shell, the exercise catalogue as data, the workout
+sign-in, consent, profile, the app shell, the exercise catalogue as data, the workout
 setup and guide screens, the live session screen with the camera, the pose model, and the
 rule engine ported from the research repo, the completion flow that saves every set with its video and keypoint file,
 then writes similarity and feedback, History with the replay of every set, and Phase 6's
@@ -47,7 +47,8 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   components fill them over a direct database connection.
 - Register, sign in, sign out. Email confirmation is off; there is no password reset
   (ADR-0001). A tester who forgets a password asks the team.
-- PDPA consent in three parts, each recorded with version and time (`lib/consent.ts`).
+- Consent in two parts, camera and recording, each recorded with version and time
+  (`lib/consent.ts`). No medical history and no PDPA work since 2026-11-11 (`docs/DECISIONS.md`).
 - Profile setup before the first workout and editing in Settings.
 - App shell: Home, History, Settings tabs.
 - Home shows the last seven days as a chart of mean similarity per day, today on the
@@ -84,7 +85,7 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
   verbatim. The video and the gzipped keypoint file (ADR-0005) go from the browser
   straight to the private `sets` bucket through signed upload URLs. Then similarity and
   feedback are written to the set by the stubs in `lib/analysis/`, behind the contracts of
-  ADR-0007; the feedback stub quotes the medical history back. The server side is
+  ADR-0007. The server side is
   `lib/save-and-analyse.ts`.
 - The set-complete screen shows the counts and the violations, then similarity and
   feedback as they arrive, with a retry. A reload under five minutes after the last set

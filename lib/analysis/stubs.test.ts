@@ -1,6 +1,6 @@
 // Run with `npm run test:unit`. The contracts of ADR-0007: similarity keeps the body parts a
 // rep is scored on and nothing for an abandoned attempt, from the real service's answer and from
-// the stub alike; feedback visibly carries the medical history. The feedback client's tests are
+// the stub alike; the stub feedback names the set's worst violation. The feedback client's tests are
 // in feedback.test.ts.
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -62,10 +62,10 @@ test("the stub: the exercise's parts per completed attempt, none for abandoned",
   assert.equal(out.set.model, "stub");
 });
 
-test("feedback without FEEDBACK_URL: the stub quotes the medical history and names the worst violation", async () => {
+test("feedback without FEEDBACK_URL: the stub names the worst violation", async () => {
   delete process.env.FEEDBACK_URL;
   const input: FeedbackInput = {
-    profile: { display_name: "A", age: 30, gender: "female", weight_kg: 60, height_cm: 165, medical_history: "broken left leg in 2024" },
+    profile: { display_name: "A", age: 30, gender: "female", weight_kg: 60, height_cm: 165 },
     exercise: { id: "squat", name: "Squat", rules: [] },
     workout: { target_reps: 10, target_sets: 3, rest_seconds: 60, earlier_sets: [] },
     set: { set_no: 1, kind: "initial", ended_by: "target_reached", totals: { attempts: 3, completed_reps: 2, correct_reps: 1, abandoned_attempts: 1 },
@@ -74,7 +74,7 @@ test("feedback without FEEDBACK_URL: the stub quotes the medical history and nam
     history: [],
   };
   const { feedback } = await writeFeedback(input, 0);
-  assert.match(feedback, /broken left leg in 2024/);
+  assert.doesNotMatch(feedback, /medical|profile notes/i);
   assert.match(feedback, /"Keep back straight", on 2 attempts/);
   assert.match(feedback, /lowest in the torso at 70%/);
 });

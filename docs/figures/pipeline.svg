@@ -112,7 +112,7 @@
 <circle cx="2024" cy="989" r="16" fill="#7048e8"/><text x="2024" y="995" font-size="16" fill="#fff" font-weight="800" text-anchor="middle">13</text>
 <rect x="1160" y="1280" width="750" height="68" rx="14" fill="#fff" stroke="#d5dbe5" stroke-width="2"/>
 <text x="1182" y="1308" font-size="15" fill="#7048e8" font-weight="800" text-anchor="start">Also sent to the LLM:</text>
-<text x="1182" y="1332" font-size="15" fill="#5b6475" font-weight="500" text-anchor="start">profile + medical history, last 5 workouts of this exercise, earlier sets of this workout</text>
+<text x="1182" y="1332" font-size="15" fill="#5b6475" font-weight="500" text-anchor="start">last 5 workouts of this exercise, earlier sets of this workout</text>
 <path d="M262,395 L320,395" fill="none" stroke="#2f3542" stroke-width="2.6" marker-end="url(#ah)" stroke-linejoin="round"/>
 <text x="290" y="360" font-size="15.5" fill="#39414f" font-weight="500" text-anchor="middle" paint-order="stroke" stroke="#eef4ff" stroke-width="7" stroke-linejoin="round">camera</text>
 <text x="290" y="380" font-size="15.5" fill="#39414f" font-weight="500" text-anchor="middle" paint-order="stroke" stroke="#eef4ff" stroke-width="7" stroke-linejoin="round">feed</text>

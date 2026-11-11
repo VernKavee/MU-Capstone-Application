@@ -49,7 +49,7 @@ test("a set without feedback can have it written from the finished summary", asy
 
     await signIn(page, user.user!.email!, password);
     await grantConsent(page);
-    await fillProfile(page, "none");
+    await fillProfile(page);
 
     await page.goto(`/workout/squat/done/${workout!.id}`);
     const button = page.getByRole("button", { name: "Write feedback now" });

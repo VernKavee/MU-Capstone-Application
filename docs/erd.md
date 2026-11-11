@@ -23,7 +23,6 @@ erDiagram
     text gender "female, male, other"
     numeric weight_kg
     numeric height_cm
-    text medical_history "required, none allowed"
     timestamptz created_at
     timestamptz updated_at
   }

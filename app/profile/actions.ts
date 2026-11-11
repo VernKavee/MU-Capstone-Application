@@ -20,7 +20,6 @@ export async function saveProfile(formData: FormData) {
     gender: text("gender"),
     weight_kg: Number(formData.get("weight_kg")),
     height_cm: Number(formData.get("height_cm")),
-    medical_history: text("medical_history"),
     updated_at: new Date().toISOString(),
   });
   if (error) redirect(`${returnTo}?error=${encodeURIComponent(error.message)}`);

@@ -45,7 +45,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
       )}
       <p className="max-w-prose text-sm text-muted">
         Written by the coaching component from this set&apos;s attempts and similarity, your earlier sets and past workouts of this
-        exercise, and your profile, medical history included.
+        exercise.
       </p>
     </main>
   );

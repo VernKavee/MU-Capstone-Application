@@ -209,7 +209,6 @@ export type Database = {
           display_name: string
           gender: string
           height_cm: number
-          medical_history: string
           updated_at: string
           user_id: string
           weight_kg: number
@@ -220,7 +219,6 @@ export type Database = {
           display_name: string
           gender: string
           height_cm: number
-          medical_history: string
           updated_at?: string
           user_id: string
           weight_kg: number
@@ -231,7 +229,6 @@ export type Database = {
           display_name?: string
           gender?: string
           height_cm?: number
-          medical_history?: string
           updated_at?: string
           user_id?: string
           weight_kg?: number

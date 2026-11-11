@@ -7,7 +7,6 @@ import { onboard } from "./support/onboarding";
 import { adminClient, deleteTestUser, testEmail } from "./support/users";
 
 const T_POSE = "e2e/fixtures/t-pose.y4m";
-const MEDICAL_HISTORY = `e2e marker: previous ACL surgery ${Date.now()}`;
 
 test.skip(!fs.existsSync(T_POSE), `${T_POSE} is missing; see e2e/fixtures/README.md`);
 // The real engine (lib/engine/engine.ts) replaced the stub this spec was written for. A
@@ -21,7 +20,7 @@ test("a workout with a taken and a declined repair set, then history and the rep
 
   const email = testEmail("workout");
   const password = "correct horse battery staple";
-  await onboard(page, { email, password, medicalHistory: MEDICAL_HISTORY });
+  await onboard(page, { email, password });
 
   try {
     await test.step("start a squat workout of 1 rep, 2 sets, 3 s rest", async () => {
@@ -100,9 +99,9 @@ test("a workout with a taken and a declined repair set, then history and the rep
       await expect(page.getByRole("button", { name: "Pause" })).toBeVisible({ timeout: 15_000 });
     });
 
-    await test.step("the feedback detail page quotes the medical history", async () => {
+    await test.step("the feedback detail page opens", async () => {
       await page.getByRole("link", { name: "Read the full feedback" }).click();
-      await expect(page.getByText(MEDICAL_HISTORY)).toBeVisible();
+      await expect(page.getByRole("heading", { name: /^Feedback on/ })).toBeVisible();
     });
   } finally {
     const { data } = await adminClient().auth.admin.listUsers({ perPage: 200 });

@@ -19,7 +19,7 @@ Only self-hosting (ADR-0001) or the Pro plan holds this. The keypoint file exist
 
 ## Consequences
 
-- Consent (NFR4) names three things separately: camera access with on-device processing, storing video and landmarks for history, and storing the profile including medical history. Version and time are recorded. The consent text states that data is kept until the project ends and deleted earlier on request to the team. A self-service delete is deferred.
+- Consent (NFR4) names three things separately: camera access with on-device processing, storing video and landmarks for history, and storing the profile including medical history. Version and time are recorded. Amended 2026-11-11: the profile consent is gone with the medical history, and the PDPA work was dropped (its approval could not be had in time); consent version 2 names the first two only (docs/DECISIONS.md). The consent text states that data is kept until the project ends and deleted earlier on request to the team. A self-service delete is deferred.
 - `video_url` and `keypoints_url` are per set and nullable, so a failed upload does not lose the set.
 - The keypoint file format was decided in Phase 4, below.
 

@@ -21,22 +21,19 @@ export async function grantConsent(page: Page) {
   await page.getByRole("button", { name: "Continue" }).click();
 }
 
-// medicalHistory is the seam the feedback stub is meant to prove it received (ADR-0007):
-// callers pass a marker string unique to that test run and look for it again in feedback.
-export async function fillProfile(page: Page, medicalHistory: string) {
+export async function fillProfile(page: Page) {
   await page.waitForURL("/profile/setup");
   await page.getByLabel("Display name").fill("E2E Tester");
   await page.getByLabel("Age").fill("30");
   await page.getByLabel("Gender").selectOption("other");
   await page.getByLabel("Weight (kg)").fill("70");
   await page.getByLabel("Height (cm)").fill("170");
-  await page.getByLabel("Medical history").fill(medicalHistory);
   await page.getByRole("button", { name: "Save and continue" }).click();
   await page.waitForURL("/");
 }
 
-export async function onboard(page: Page, opts: { email: string; password: string; medicalHistory: string }) {
+export async function onboard(page: Page, opts: { email: string; password: string }) {
   await register(page, opts.email, opts.password);
   await grantConsent(page);
-  await fillProfile(page, opts.medicalHistory);
+  await fillProfile(page);
 }

@@ -42,21 +42,6 @@ export function ProfileForm({ mode, profile, error }: Props) {
           <input name="height_cm" type="number" step="0.1" required min={100} max={250} defaultValue={profile?.height_cm} className="field" />
         </label>
       </div>
-      <label className="block text-sm">
-        Medical history
-        <textarea
-          name="medical_history"
-          required
-          maxLength={4000}
-          rows={4}
-          placeholder="Injuries, surgery, mobility limits, conditions. Write none if there is nothing."
-          defaultValue={profile?.medical_history}
-          className="field"
-        />
-        <span className="mt-1 block text-xs text-muted">
-          Coaching feedback reads this to keep its advice safe for you. Editable any time in Settings.
-        </span>
-      </label>
       <SubmitButton pendingText="Saving" className="btn">
         {mode === "setup" ? "Save and continue" : "Save changes"}
       </SubmitButton>

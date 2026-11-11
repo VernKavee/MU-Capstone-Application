@@ -191,9 +191,9 @@ The feedback is real but not finished (prompt v16 since 2026-11-02):
 - Groq's free model is smaller than the Gemini model planned for the evaluation, and answers vary
   from run to run.
 
-The medical history is sent to the model since v15, with rules for using it. The consent text
-does not yet say it goes to an outside model (RAG_SYSTEM `docs/plans/app_integration_plan.md`,
-D6), so use test profiles, not real testers.
+No medical history is collected or sent to the model since 2026-11-11: PDPA approval for
+health data could not be had in time (docs/DECISIONS.md). Prompt v18 kept its number and lost
+its health rules. Use test profiles, not real names.
 
 ## For Sujira: making the two files again
 

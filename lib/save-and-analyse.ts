@@ -179,7 +179,7 @@ export async function feedbackInput(supabase: Client, set: AnalysedSet, similari
   const workout = set.workouts;
   const exercise = workout.exercises;
   const [{ data: profile }, { data: earlier }, { data: history }] = await Promise.all([
-    supabase.from("profiles").select("display_name, age, gender, weight_kg, height_cm, medical_history").single(),
+    supabase.from("profiles").select("display_name, age, gender, weight_kg, height_cm").single(),
     supabase.from("sets").select("*").eq("workout_id", workout.id).lt("created_at", set.created_at).order("created_at"),
     supabase
       .from("workouts")

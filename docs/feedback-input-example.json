@@ -4,8 +4,7 @@
     "age": 21,
     "gender": "male",
     "weight_kg": 76,
-    "height_cm": 179,
-    "medical_history": "None"
+    "height_cm": 179
   },
   "exercise": {
     "id": "squat",

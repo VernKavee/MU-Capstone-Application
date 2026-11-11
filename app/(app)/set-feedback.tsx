@@ -34,7 +34,6 @@ export function WhatToFix({ feedback, attempts, open = false }: { feedback: Feed
           <h3 className="text-sm font-semibold text-muted">What went well</h3>
           <p className="leading-relaxed">{summary.text}</p>
         </div>
-        <HealthNote text={feedback.health} />
         <Progress text={feedback.progress} />
       </section>
     );
@@ -45,7 +44,6 @@ export function WhatToFix({ feedback, attempts, open = false }: { feedback: Feed
   return (
     <section className="space-y-3">
       <h3 className="text-sm font-semibold text-muted">What went wrong, and how to fix it</h3>
-      <HealthNote text={feedback.health} />
       <ol className="divide-y divide-line">
         {faults.map(({ rule, fault, fix }, i) => {
           const n = counts.get(rule)?.attempts;
@@ -92,18 +90,6 @@ function FaultDetails({ details, open }: { details: FeedbackDetail[]; open: bool
         ))}
       </dl>
     </details>
-  );
-}
-
-// The caution from the medical history: above the list, since every fix is meant within it, and
-// never folded away.
-function HealthNote({ text }: { text: string | null }) {
-  if (!text) return null;
-  return (
-    <div className="space-y-0.5 rounded-lg border border-tape px-3 py-2">
-      <h4 className="text-sm font-semibold text-muted">Health note</h4>
-      <p className="leading-snug">{text}</p>
-    </div>
   );
 }
 

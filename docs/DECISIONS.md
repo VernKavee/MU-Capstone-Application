@@ -18,6 +18,7 @@ Sections, in order:
 - Frame rules wait 0.15 s, the toe line and the sag disarm (2026-10-23)
 - Feedback (2026-10-25), rules beside similarity (2026-10-28)
 - How feedback is shown (2026-11-02), the UI redesign (2026-11-05)
+- No medical history, no PDPA work (2026-11-11)
 - Still open, outside the build plan
 
 ## Decided in Phase 0
@@ -34,7 +35,7 @@ a decision wrong, say so and update the ADR.
 - ADR-0004: workouts own sets; the repair set is a set of kind repair, offered once per
   set, can be declined; rest timer; feedback after every set.
 - ADR-0005: full raw video plus a keypoint file per set, skeleton drawn at playback;
-  consent in three parts; data kept until the project ends.
+  consent in three parts (two since 2026-11-11, below); data kept until the project ends.
 - ADR-0006: exercise configuration is data with a check registry.
 - ADR-0007: similarity and feedback behind JSON contracts and stubs, subject to change;
   the knowledge base and expert motions live in this Postgres.
@@ -46,6 +47,7 @@ Smaller decisions without an ADR, so no phase re-decides them:
 - Live screen: a beep per correct rep and the warning spoken through the browser speech
   API, with a mute toggle.
 - The profile must be complete before the first workout; medical history may be "none".
+  (Medical history removed 2026-11-11, below.)
 - Weekly chart: mean similarity per day over that day's sets; the last seven days ending
   today in the browser's time zone (Phase 5 replaced Monday to Sunday at Vern's request).
   History level 3 lists workouts, not sets.
@@ -67,7 +69,8 @@ Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
   signup, so every profile column is NOT NULL and "row exists" means "profile complete".
 - Consent is one screen, three checkboxes, all required; declining signs out. Each is a
   row in `consents` with kind, version, and time. `CONSENT_VERSION` in `lib/consent.ts`
-  is bumped when any text changes, which forces re-consent.
+  is bumped when any text changes, which forces re-consent. Two checkboxes since
+  2026-11-11 (below).
 - Gate order after sign-in: consent, then profile, then Home. Enforced in
   `app/(app)/layout.tsx`; every gated page lives under `app/(app)/`.
 
@@ -475,7 +478,8 @@ Decided 2026-11-02, how feedback is shown, recorded in the 2026-11-02 session lo
 - v16 shipped without a model run first (Sujira); its first two sets on Gemini (curl, one with
   two faults, one clean repair set) parsed.
 - RAG_SYSTEM's `FEEDBACK_CAPTURE` keeps every request (input, context, answer, version) in its
-  gitignored `capture/` as the eval's inputs. It holds medical histories.
+  gitignored `capture/` as the eval's inputs. Files from before 2026-11-11 may hold medical
+  histories; since then the service drops one before writing.
 
 Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session log:
 
@@ -500,6 +504,26 @@ Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session l
   that stays typeable (`setup/stepper.tsx`). Home lists each exercise with how to stand to
   the camera, from `exercises.camera_hint` (migration `exercise_camera_hint`), an app
   column outside the export like `landscape`; a new exercise needs one.
+
+Decided 2026-11-11, no medical history and no PDPA work (Sujira):
+
+- PDPA approval for health data could not be had in time, so the app no longer collects a
+  medical history, and the PDPA work is dropped. RAG_SYSTEM records the same decision
+  (`docs/plans/app_integration_plan.md`, "Medical history and PDPA removed").
+- Migration `drop_medical_history` drops `profiles.medical_history`, and with it every
+  medical history already typed in. The profile and Settings form has no medical history
+  field; `FeedbackInput.profile` has no `medical_history`; the feedback stub no longer quotes
+  one.
+- Consent keeps two checkboxes, camera access with on-device processing and storing video
+  and landmarks, and no longer names the PDPA. `CONSENT_VERSION` is 2, so everyone consents
+  again once. Version 1 rows of kind `profile` stay in `consents` (a consent is a fact with a
+  time) and no longer count.
+- Prompt v18 keeps its number and lost its health rules and its `health` slot (Sujira's
+  choice, no new version), so the feedback text has no `Health:` paragraph. The Health note
+  box is gone from `app/(app)/set-feedback.tsx`; `readFeedback` skips a `Health:` paragraph
+  in text stored before this date, and the stored text is left as it was.
+- REQUIREMENTS.md FR1 (medical history) and NFR4 (PDPA) are marked as dropped there rather
+  than deleted.
 
 Still open, outside the build plan:
 
@@ -575,14 +599,12 @@ Still open, outside the build plan:
   phone run passed with camera sets of all four exercises (still before v16 there: that run's
   answers are Markdown); the free quota ran out after about 20 requests and Gemini's 503 bursts
   outlast the app's one retry (session log 2026-11-03). Free-tier requests may be used by
-  Google, so not for real testers' data. Prompt v16 on RAG_SYSTEM `main` (above) sends the
-  medical history, body part scores, `kind`, and `ended_by` to the model (v15 already sent the
-  medical history), while the profiles tested so far are mock data; the consent wording (D6)
-  must be settled before real testers. v15 advised lightening the load on a bodyweight squat,
+  Google, so not for real testers' data. The prompt on RAG_SYSTEM `main` sends body part
+  scores, `kind`, and `ended_by` to the model, and since 2026-11-11 no medical history (above;
+  the consent wording question, D6, went with it). v15 advised lightening the load on a bodyweight squat,
   and v16 keeps the cause (the prompt's setup-change list names load); only curl has run
   through v16. Fault names are rule keys in words, so `knee_valgus` and `knee_varus` read as
-  jargon; plainer names would be a data column like `landscape`, Vern's to agree. The workout
-  e2e expects the medical history verbatim, which holds only for the stub. The prompt is
+  jargon; plainer names would be a data column like `landscape`, Vern's to agree. The prompt is
   Sujira's to tune.
 - The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
   the T pose facing the camera first.

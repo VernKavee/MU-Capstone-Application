@@ -9,7 +9,7 @@ import type { FeedbackInput } from "./contracts.ts";
 import { requestFeedback, writeFeedback } from "./feedback.ts";
 
 const input: FeedbackInput = {
-  profile: { display_name: "A", age: 30, gender: "female", weight_kg: 60, height_cm: 165, medical_history: "none" },
+  profile: { display_name: "A", age: 30, gender: "female", weight_kg: 60, height_cm: 165 },
   exercise: { id: "squat", name: "Squat", rules: [] },
   workout: { target_reps: 5, target_sets: 3, rest_seconds: 60, earlier_sets: [] },
   set: { set_no: 1, kind: "initial", ended_by: "target_reached", totals: { attempts: 1, completed_reps: 1, correct_reps: 1, abandoned_attempts: 0 },

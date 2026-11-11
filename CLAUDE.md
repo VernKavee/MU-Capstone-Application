@@ -144,10 +144,10 @@ Similarity math, LLM calls, RAG, and vector search belong to their owners' servi
 - **Signed uploads (NFR3).** Both files of a set, the video and the keypoint file, go
   client to storage directly via a short-lived signed URL, never proxied through the
   application server.
-- **PDPA consent (NFR4).** Three separate consents, recorded with version and time:
-  camera access with on-device processing, storing video and landmarks, storing the
-  profile including medical history. Bump `CONSENT_VERSION` in `lib/consent.ts` when any
-  consent text changes, which forces re-consent.
+- **Consent (NFR4).** Two separate consents, recorded with version and time: camera
+  access with on-device processing, and storing video and landmarks. Bump
+  `CONSENT_VERSION` in `lib/consent.ts` when any consent text changes, which forces
+  re-consent. The PDPA work and the profile consent were dropped on 2026-11-11.
 - **Strict counting.** The counter is correct reps. Attempts are shown beside it. An
   incorrect or abandoned attempt never increments it.
 - **Show one, record all.** Display the single highest priority violation to the user
@@ -171,9 +171,9 @@ Similarity math, LLM calls, RAG, and vector search belong to their owners' servi
   Similarity and feedback are written to it afterwards and may be empty.
 - **The engine's report is stored verbatim (ADR-0003)** next to the merged attempt
   records. Never reconstruct it.
-- **Medical history is a real field**, not profile trivia. Required before the first
-  workout, "none" allowed, editable in Settings. It feeds the LLM so advice is safe.
-  The feedback prompt must use it; the stub quotes it back.
+- **No medical history (2026-11-11).** PDPA approval for health data could not be had in
+  time, so the app does not collect one: no profile field, no column, nothing in
+  `FeedbackInput`. Do not add one back without that approval (docs/DECISIONS.md).
 
 ## Live tests
 

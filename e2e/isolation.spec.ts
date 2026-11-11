@@ -54,7 +54,7 @@ test("user B cannot reach user A's workout, its set, or its files", async ({ pag
     // sign in rather than onboard() registering the same email again.
     await signIn(page, emailB, password);
     await grantConsent(page);
-    await fillProfile(page, "none");
+    await fillProfile(page);
     // These pages have a loading state, so their response has already started streaming,
     // status 200, by the time the query finds no row: the not-found page arrives inside
     // it. What the test holds to is what B sees: that page, and none of A's data.
