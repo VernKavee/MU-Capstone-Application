@@ -78,7 +78,7 @@ export function WhatToFix({ feedback, attempts, open = false }: { feedback: Feed
 }
 
 // Prompt v17's labelled lines for one fault (what it is, likely cause, setup change, drill,
-// check, in this set), folded so the list stays one screen.
+// check, in this set; v18 adds why it matters), folded so the list stays one screen.
 function FaultDetails({ details, open }: { details: FeedbackDetail[]; open: boolean }) {
   return (
     <details open={open} className="pt-1">
