@@ -19,6 +19,7 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
 - `CONTEXT.md`: the vocabulary.
 - `docs/adr/`: the decisions made in Phase 0, amended as phases settle open items.
 - `CLAUDE.md`: working rules and invariants for coding sessions.
+- `docs/DECISIONS.md`: every dated decision since Phase 0, and the open items.
 - `docs/sessions/`: one log per session.
 - `docs/HANDOVER.md`: which stub each teammate replaces, and the tasks for the evaluation.
 - `docs/DEPLOY.md`: the deployment plan, not yet rehearsed.

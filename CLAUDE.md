@@ -2,49 +2,42 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository state
+## Project
 
-All seven phases, 0 to 6, are done. The repo holds the planning documents, the
-vocabulary, the decision records, and the code: scaffolding, the foundation migration,
-auth, consent, profile, the app shell, the exercise catalogue as data, the workout setup
-and guide screens, the live session screen with the camera, MediaPipe, and the engine
-(the stub until 2026-10-04, now Vern's port), the completion flow: every set saved with its attempt records, engine report,
-video, and keypoint file, similarity from Punnapat's service and feedback from Sujira's RAG service (a stub without `FEEDBACK_URL`), the repair set, the rest
-timer, and the finished summary, History: the weekly chart on Home, active days, each
-exercise's workouts, and the workout deep-dive with the replay, and Phase 6's hardening:
-unit, database, and end-to-end tests, loading, empty, and error states, the design pass,
-`knowledge_base`, and `docs/HANDOVER.md`. Work from here is outside the plan: the
-feedback prompt and how feedback is shown, the expert's similarity reference, the deploy,
-and running the evaluation. The rule engine port is in (2026-10-04, see "Decided at the
-engine port"), similarity is real (2026-10-27), and feedback calls Sujira's service
-(2026-10-25, see "Decided 2026-10-25, feedback").
+A web app that checks exercise posture with AI for exactly four bodyweight exercises: Squat,
+Push-up, Lunge, Bicep curl. Next.js App Router against the Supabase API (ADR-0001). The
+requirements were written for React Native plus FastAPI; the team switched to web, and
+behaviour, screens, data, and rules still hold. All seven build phases, 0 to 6, are done. Work
+now is outside the plan: the feedback prompt and display, the expert's similarity reference,
+the deploy, and running the evaluation.
 
-- `REQUIREMENTS.md` is the contract. It says WHAT the system must do, not HOW. Read it at the start of every session.
-- `BUILD_PLAN.md` is the phase sequence: seven phases, one session each. Do not run more than one phase per session.
-- `CONTEXT.md` is the vocabulary. Use its terms in code, UI, and docs, and challenge any term that conflicts with it.
-- `docs/adr/` holds the seven decision records from Phase 0. Read the ones a phase depends on before starting it, and update them rather than deciding silently.
-- `docs/sessions/` holds one log per session.
-- `docs/HANDOVER.md` is the handover: which stub each owner replaces, the interface it
-  must satisfy, what it returns today, and the evaluation tasks.
-- `docs/DEPLOY.md` is the deployment plan: a Google Cloud VM, decided on 2026-10-01
-  after the professor required a published site, and not rehearsed.
+## Docs
 
-The project is a web app for checking exercise posture with AI, covering exactly four
-bodyweight exercises: Squat, Push-up, Lunge, Bicep curl. The requirements were written
-for React Native plus FastAPI; the team switched to web. Behaviour, screens, data, and
-rules still hold. The stack is decided in ADR-0001: Next.js App Router against the
-Supabase API, run from Supabase's Docker stack on a team machine for the evaluation.
+- `REQUIREMENTS.md` is the contract: WHAT the system must do, not HOW.
+- `CONTEXT.md` is the vocabulary. Use its terms in code, UI, and docs (attempt, completed rep,
+  correct rep, abandoned attempt, workout, set, repair set, and the engine states Idle,
+  Concentric, Inflection, Eccentric), and challenge any term that conflicts with it.
+- `docs/adr/` holds the seven decision records. A decision found wrong is said out loud and
+  its ADR updated.
+- `docs/DECISIONS.md` holds every dated decision and the "Still open" list. Read the matching
+  section before changing the engine, rule rows, live screen, completion flow, History,
+  feedback display, or design, and read "Still open" before a live test, phone run, or deploy.
+- `docs/HANDOVER.md`: what each owner replaces, the interfaces, and the evaluation tasks.
+- `docs/DEPLOY.md`: the Google Cloud VM plan, not rehearsed. `docs/FEEDBACK_SETUP.md`: running
+  Sujira's feedback service. `docs/sessions/`: one log per session.
 
 ## Build, lint, and test commands
 
 Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
 
-- `npm run dev`, `npm run build`, `npm run lint`, `npx tsc --noEmit`
+- `npm run dev`, `npm run build` (fetches Barlow from Google, so needs the network),
+  `npm run lint`, `npx tsc --noEmit`
 - `npx supabase start` / `npx supabase stop`: the local stack (Postgres 17, Auth, Storage,
   Studio on 54323, API on 54321). `.env.local` comes from `.env.example` plus the
   publishable key from `npx supabase status -o env`.
 - `npx supabase migration new <name>`, then `npm run db:reset` to replay every migration,
-  then `npm run db:types` to regenerate `lib/supabase/database.types.ts`.
+  then `npm run db:types` to regenerate `lib/supabase/database.types.ts`. `db:reset` empties
+  the two knowledge base tables; reload them with RAG_SYSTEM's `tools/copy_kb.py`.
 - `npm run test:db`: pgTAP tests in `supabase/tests/`. Every table with row-level
   security gets its isolation proven there.
 - `npm run test:unit`: every `lib/**/*.test.ts`, Node's own runner with type stripping.
@@ -52,13 +45,14 @@ Needs Node 22 and Docker Desktop. The Supabase CLI is pinned as a devDependency.
 - `npx next typegen` before `npx tsc --noEmit` after adding a route.
 - `npx supabase db advisors` after any schema change.
 - `npm run test:e2e`: Playwright on the installed Chrome, one worker, with the stack up; it
-  reuses a running dev server or starts one. `e2e/workout.spec.ts` runs a whole workout
-  through Chrome's fake camera and skips itself without `e2e/fixtures/t-pose.y4m`, which is
-  not in git (`e2e/fixtures/README.md`). `e2e/isolation.spec.ts` has user B fail to reach
-  user A's workout, set, and files. `e2e/retry-feedback.spec.ts` writes a missing feedback
-  from the finished summary; it passes whether `FEEDBACK_URL` answers or not.
+  reuses a running dev server or starts one. `e2e/workout.spec.ts` skips itself without
+  `e2e/fixtures/t-pose.y4m`, which is not in git (`e2e/fixtures/README.md`).
+  `e2e/isolation.spec.ts` has user B fail to reach user A's data.
+  `e2e/retry-feedback.spec.ts` passes whether `FEEDBACK_URL` answers or not.
 
-Conventions the code follows, because the docs changed since the plan was written:
+## Conventions
+
+The docs changed since the plan was written, so the code follows these:
 
 - Next.js 16: the request hook is `proxy.ts`, not `middleware.ts`. Route types come from
   `next typegen` (`PageProps<"/path">`, `LayoutProps<"/">`). Search params are a Promise.
@@ -68,7 +62,8 @@ Conventions the code follows, because the docs changed since the plan was writte
   the live screen, not from forms, and return errors as values.
 - A "use server" file may export only async functions; constants live in `lib/`.
 - `lib/supabase/server.ts` for server components and actions, `lib/supabase/client.ts`
-  for the browser. Both are typed with the generated `Database`.
+  for the browser, both typed with the generated `Database`. `lib/supabase/admin.ts` is the
+  service-role client that writes similarity, feedback, and attempts.
 - Supabase's default grants give `anon` and `authenticated` everything on a new public
   table. Every migration revokes those and grants only what the app uses, so a missing
   policy fails with a privilege error rather than silently touching zero rows.
@@ -78,18 +73,20 @@ Conventions the code follows, because the docs changed since the plan was writte
   `app/(app)/workout/[exercise]/live/live-screen.tsx` the client component that only
   renders snapshots. The loop, not React, owns the camera, the engine, the overlay, the
   recorder, and the keypoint capture; the landmarker is the screen's, loaded once per visit
-  and lent to each set's loop (2026-11-03). The overlay canvas draws the camera
-  frame under the skeleton, because iOS Safari drops `object-fit` on the video once
-  MediaRecorder starts; the `<video>` stays under it as the source.
+  and lent to each set's loop. The overlay canvas draws the camera frame under the
+  skeleton, because iOS Safari drops `object-fit` on the video once MediaRecorder starts;
+  the `<video>` stays under it as the source.
 - The completion flow: `lib/save-and-analyse.ts` is the server logic with the Supabase
   client passed in, `live/actions.ts` wraps it as server actions, `lib/set-job.ts` runs
   save, uploads, and analyse for one set with that API passed in (`live/pipeline.ts`
   passes the real one), and `live/set-complete.tsx` renders it. `lib/set.ts` builds the
   attempt records and the keypoint file, and its `afterSet` decides repair, rest, or
-  finish. The
-  similarity and feedback clients are `lib/analysis/similarity.ts` and
+  finish. The similarity and feedback clients are `lib/analysis/similarity.ts` and
   `lib/analysis/feedback.ts` behind `lib/analysis/contracts.ts`; each posts to its service
   when `SIMILARITY_URL` or `FEEDBACK_URL` is set and falls back to its stub otherwise.
+- Feedback text: `lib/feedback-text.ts` parses prompt v16's labelled lines (`readFeedback`)
+  and `app/(app)/set-feedback.tsx` shows them. RAG_SYSTEM's `test_app_input.py` checks the
+  same labels, so change both together.
 - History: `lib/history.ts` is the plain-data part (local days, the seven days, means,
   frame lookup), Node-tested. The browser's time zone arrives in the `tz` cookie from
   `app/(app)/time-zone.tsx` and `lib/time-zone.ts` reads it; every date rendered on the
@@ -102,22 +99,24 @@ Conventions the code follows, because the docs changed since the plan was writte
   retry instead of rendering as no data. An id from the address goes through `isUuid`
   (`lib/history.ts`) first, so a malformed one is not found rather than a database error.
 - A page renders beside the (app) layout's gate, not after it, so no page may assume the
-  gate ran: Home and Settings read the profile with `maybeSingle()`.
+  gate ran: Home and Settings read the profile with `maybeSingle()`. Gate order: consent,
+  then profile, then Home (`app/(app)/layout.tsx`).
 - Next shows only the loading file of the folder whose child segment a navigation
   changes, so every folder whose pages link to each other has a `loading.tsx` that
   re-exports `app/(app)/loading.tsx`.
-- Design (Daylight, 2026-11-05, replacing Phase 6's one dark theme): light pages and a dark
-  stage, from Radix Colors scales, with no `dark:` variants. Page tokens in
-  `app/globals.css`: `background`, `surface`, `surface-2`, `line`, `foreground`, `muted`,
-  `accent` (indigo, the main action and progress), `ok` (correct reps). Over video: `ink`,
-  `tape`, `tape-ink`, `live` (the count). Tape amber marks only a warning, on the page too.
-  Shared classes: `.btn`, `.btn-quiet`, `.field`, `.card`, `.alert` (the tape band), and
-  `.outlined` for text over video; over video, `pill` and `round` from `set-complete.tsx`.
-  Every `h1` and `font-display` number is Barlow Condensed 700, text is Barlow (both via
-  `next/font`). The focus ring is the accent, off-white inside `.stage` (the live screen and
-  the replay player) and the accent again inside its `.on-page` (the set-complete page).
-  Muted text uses `text-muted`, never opacity. Icons are inline SVG in `app/(app)/icons.tsx`;
-  every page under a tab opens with `BackLink` (`app/(app)/back-link.tsx`).
+- Design (Daylight): light pages and a dark stage, from Radix Colors scales, with no
+  `dark:` variants. Page tokens in `app/globals.css`: `background`, `surface`, `surface-2`,
+  `line`, `foreground`, `muted`, `accent` (indigo, the main action and progress), `ok`
+  (correct reps). Over video: `ink`, `tape`, `tape-ink`, `live` (the count). Tape amber
+  marks only a warning, on the page too. Shared classes: `.btn`, `.btn-quiet`, `.field`,
+  `.card`, `.alert` (the tape band), and `.outlined` for text over video; over video, `pill`
+  and `round` from `set-complete.tsx`. Every `h1` and `font-display` number is Barlow
+  Condensed 700, text is Barlow (both via `next/font`). The focus ring is the accent,
+  off-white inside `.stage` (the live screen and the replay player) and the accent again
+  inside its `.on-page` (the set-complete page). Muted text uses `text-muted`, never
+  opacity. Icons are inline SVG in `app/(app)/icons.tsx`; every page under a tab opens with
+  `BackLink` (`app/(app)/back-link.tsx`). On the live screen the user's body stays as large
+  as possible, with nothing solid in front of it.
 - Layout: the (app) column is `max-w-5xl` on every page and each page sets its own
   measure inside it, left aligned. The tab bar is one `nav` named Primary, at the bottom
   on a phone and at the top from `md` up.
@@ -125,19 +124,16 @@ Conventions the code follows, because the docs changed since the plan was writte
 ## The three-part AI structure
 
 Three AI components are owned by specific people. Each stays behind an explicit interface,
-so one person can replace one file. The rule engine is ported (2026-10-04); similarity is
-real since 2026-10-27 (`services/similarity/`, ADR-0007); feedback is real since 2026-10-25
-(Sujira's RAG_SYSTEM service, `docs/FEEDBACK_SETUP.md`). Both stubs remain for when their URL is unset.
+so one person can replace one file. Contracts are in ADR-0007; both stubs remain for when
+their URL is unset.
 
 | Component | Owner | Lives where |
 |---|---|---|
 | Rule-based form checking plus FSM rep counting | Kavee (Vern) | ported from the research repo into `lib/engine/` (angles, fsm, rules, evaluator, gates, engine) |
-| Motion similarity, a 0 to 100 score per rep and per body part | Punnapat | copied from SeniorProject into `services/similarity/`, called over HTTP by `lib/analysis/similarity.ts` |
-| LLM coaching plus RAG retrieval | Sujira | the RAG_SYSTEM repo (Capstone_RAG), cloned as `../RAG_SYSTEM` and run as `python -m service`, called over HTTP by `lib/analysis/feedback.ts`; its knowledge base is in this Postgres |
+| Motion similarity, a 0 to 100 score per rep and per body part | Punnapat | `services/similarity/`, called over HTTP by `lib/analysis/similarity.ts` |
+| LLM coaching plus RAG retrieval | Sujira | the RAG_SYSTEM repo, cloned as `../RAG_SYSTEM` and run as `python -m service`, called over HTTP by `lib/analysis/feedback.ts`; its knowledge base is in this Postgres |
 
-Do not write similarity math, an LLM call, RAG, or vector search here. The rule engine
-port is Vern's separate work behind the seam in ADR-0002, not a phase of this build. The
-similarity and feedback contracts are in ADR-0007.
+Similarity math, LLM calls, RAG, and vector search belong to their owners' services, not here.
 
 ## Invariants that are easy to violate
 
@@ -150,7 +146,8 @@ similarity and feedback contracts are in ADR-0007.
   application server.
 - **PDPA consent (NFR4).** Three separate consents, recorded with version and time:
   camera access with on-device processing, storing video and landmarks, storing the
-  profile including medical history. Built in Phase 1, not bolted on.
+  profile including medical history. Bump `CONSENT_VERSION` in `lib/consent.ts` when any
+  consent text changes, which forces re-consent.
 - **Strict counting.** The counter is correct reps. Attempts are shown beside it. An
   incorrect or abandoned attempt never increments it.
 - **Show one, record all.** Display the single highest priority violation to the user
@@ -159,11 +156,17 @@ similarity and feedback contracts are in ADR-0007.
   timestampMs, frameSize?)` returns the FrameResult fields and `getSessionReport()` returns the
   schema version 4 report. The UI never re-derives counters, states, or warnings. The
   port satisfies it, and `lib/engine/parity.test.ts` holds it equal to the Python.
+- **Engine and rule changes go Python first.** Change SeniorProject, then re-run its
+  `scratch/export_web_logic.py` into a new `rule_logic_<commit>` migration, then port.
+  The rule rows are only ever that export, never hand-edited; `ENGINE_VERSION` equals the
+  rows' `source`. Parity stays green.
 - **Adding an exercise built from existing checks is a data change (ADR-0006).**
   Exercise rows carry thresholds, messages per locale, priorities, scope, debounce,
   state names, highlight joints, an engine key, and the name of each check. A new check
-  is one registered function. If you write `if (exercise === 'squat')`, the design is
-  wrong.
+  is one registered function. Code reads row data (`ready_pose`, `chooses_side`,
+  `landscape`, `camera_hint`), so `if (exercise === 'squat')` means the design is wrong. A
+  new exercise also needs its app columns `landscape` and `camera_hint`. The catalogue is
+  changed through the database (psql or Studio); the API is read-only for it.
 - **Save first, then analyse (ADR-0007).** A set is persisted the moment it ends.
   Similarity and feedback are written to it afterwards and may be empty.
 - **The engine's report is stored verbatim (ADR-0003)** next to the merged attempt
@@ -172,627 +175,13 @@ similarity and feedback contracts are in ADR-0007.
   workout, "none" allowed, editable in Settings. It feeds the LLM so advice is safe.
   The feedback prompt must use it; the stub quotes it back.
 
-## Decided in Phase 0
+## Live tests
 
-Every decision has a record in `docs/adr/`. Do not re-open one silently; if a phase finds
-a decision wrong, say so and update the ADR.
-
-- ADR-0001: web app, Next.js against the Supabase API, self-hosted Docker stack on a team
-  machine for the evaluation, no SMTP, evaluation through direct database and file access.
-  Amended 2026-10-01: the published site runs on a Google Cloud VM (`docs/DEPLOY.md`).
-- ADR-0002: rule engine client-side in TypeScript, ported by Vern later, behind the
-  research repo's contract; MediaPipe full model everywhere.
-- ADR-0003: one merged record per attempt plus the engine's report verbatim.
-- ADR-0004: workouts own sets; the repair set is a set of kind repair, offered once per
-  set, can be declined; rest timer; feedback after every set.
-- ADR-0005: full raw video plus a keypoint file per set, skeleton drawn at playback;
-  consent in three parts; data kept until the project ends.
-- ADR-0006: exercise configuration is data with a check registry.
-- ADR-0007: similarity and feedback behind JSON contracts and stubs, subject to change;
-  the knowledge base and expert motions live in this Postgres.
-
-Smaller decisions without an ADR, so no phase re-decides them:
-
-- The setup screen asks reps per set, number of sets, and rest seconds (default 60).
-- The attempt cap defaults to twice the target; an end-set button exists.
-- Live screen: a beep per correct rep and the warning spoken through the browser speech
-  API, with a mute toggle.
-- The profile must be complete before the first workout; medical history may be "none".
-- Weekly chart: mean similarity per day over that day's sets; the last seven days ending
-  today in the browser's time zone (Phase 5 replaced Monday to Sunday at Vern's request).
-  History level 3 lists workouts, not sets.
-- English UI; every user-facing message in exercise data is keyed by locale.
-- Laptops and phones are both first-class.
-- Skills: adopt `supabase/agent-skills@supabase` and
-  `supabase/agent-skills@supabase-postgres-best-practices` at the start of Phase 1 and a
-  Playwright skill at Phase 6. On 2026-11-05 `frontend-design` (anthropics) and
-  `ui-ux-pro-max` (nextlevelbuilder) were added in `.claude/skills/` for the UI redesign,
-  installed in the repo, never globally (Vern).
-
-Decided in Phase 1, recorded in ADR-0001 and the Phase 1 session log:
-
-- Tunnel: Tailscale Funnel. App on 443, Supabase API on 8443, no domain needed.
-- Local and evaluation stack are both `npx supabase start`; the separate self-hosted
-  compose file is not used. Since 2026-10-01 both this and the tunnel above hold for
-  development only: the published site is a Google Cloud VM, see "Still open".
-- The profile row is created when the user submits the profile form, not by a trigger at
-  signup, so every profile column is NOT NULL and "row exists" means "profile complete".
-- Consent is one screen, three checkboxes, all required; declining signs out. Each is a
-  row in `consents` with kind, version, and time. `CONSENT_VERSION` in `lib/consent.ts`
-  is bumped when any text changes, which forces re-consent.
-- Gate order after sign-in: consent, then profile, then Home. Enforced in
-  `app/(app)/layout.tsx`; every gated page lives under `app/(app)/`.
-
-Decided in Phase 2, recorded in the Phase 2 session log:
-
-- `exercises.id` is the URL slug (`squat`, `push-up`, `lunge`, `bicep-curl`), a text
-  primary key. `engine_key` is the research repo's registry name.
-- `rule_based_logic` shape, enforced by the `exercise_logic_valid()` check constraint:
-  `source`, `state_machine` (`states`, `thresholds` keyed by the Python FSM attribute
-  names, `arming` or null), and `rules[]` each with `name`, `check`, `priority`, `scope`
-  (`frame` or `rep`), `debounce_frames` (`debounce_s` since 2026-10-23), `threshold` (keys named per check), `messages`
-  keyed by locale, `highlight_joints`. `lib/exercise.ts` holds the TypeScript type.
-- Rule name and check name are separate fields, so a new exercise can reuse a check under
-  its own rule name. Reads of the catalogue never branch on the exercise name.
-- The seed is typed by hand from the research repo at c5fc57c and marked as such in the
-  migration; the export script of ADR-0002 replaces it. Messages are verbatim from the
-  Python. Guide text is a draft, not yet reviewed by the physiotherapy experts.
-- `name` and `guide_text` are plain text; only rule messages are keyed by locale.
-- Setup defaults 10 reps, 3 sets, 60 s rest; limits 1 to 100, 1 to 10, 0 to 600. The
-  three numbers travel in the query string; a workout row exists only once its first set
-  is saved (ADR-0004).
-- `thumbnail_url` and `guide_video_url` are null until the media exists; the UI shows a
-  labelled placeholder for null.
-- `expert_motions`: no app role has any privilege; Punnapat's component writes it directly.
-- Data changes to the catalogue are made through the database (psql or Studio), never
-  through the API, which is read-only for it.
-
-Decided in Phase 3, recorded in the Phase 3 session log:
-
-- The live URL carries reps, sets, and rest. Since Phase 4 one visit runs the whole
-  workout.
-- Enum names from the Python are lower case strings; `state` is one of the row's
-  `state_machine.states`.
-- The stub judges placement and the ready pose (T pose, arms out) from the real landmarks
-  and scripts attempts on a clock with random outcomes drawn from the row's rules. Holds
-  are eight frames as in the research repo.
-- Recording is a MediaRecorder Blob (webm where supported, else mp4); the keypoint capture
-  is one object per frame with `t` since the recording started, the engine state, the
-  event, and the keypoints. Both start on the first active frame. Phase 4 added the rules
-  violated on each frame and decided the file format below.
-- MediaPipe wasm from jsdelivr pinned to the installed version, the model from Google's
-  storage, GPU with CPU fallback; the two URLs are constants in `lib/live/pose.ts`.
-- Lite model: a manual choice on the preflight screen or a "Lagging?" button under fifteen
-  frames per second, remembered in localStorage.
-- The stage is mirrored, the recording is not. Sound is unlocked in the Start camera click.
-- The skeleton highlight follows the held warning list, so lit joints last as long as the
-  text.
-- End of set: target reached, End set, or attempts at twice the target, checked only while
-  active.
-- Design: over video, off-white ink, tape yellow as the only accent, Big Shoulders Display
-  800 (self-hosted, OFL) for the counter and the countdown, text buttons in pills. Phase 6
-  carried it to every page.
-
-Decided in Phase 4, recorded in ADR-0003, 0004, 0005, 0007 and the Phase 4 session log:
-
-- Keypoint file: JSON, gzipped in the browser, `<user_id>/<set_id>/keypoints.json.gz` in
-  the private `sets` bucket beside `video.webm` or `video.mp4`: `joints`, `fields`, `fps`,
-  and per frame `t`, `state`, `event`, and one flat row of 231 numbers.
-- `keypoints_url` and `video_url` hold object paths, not URLs; null when an upload failed.
-- Feedback context: the workout's earlier sets plus the last five other workouts of the
-  exercise (`HISTORY_WORKOUTS`), as set summaries without attempt records.
-- After a set: save the row, upload both files, then analyse. A retry redoes only what is
-  missing. Each set's save waits for the previous one so sets save in order. Since
-  2026-11-03 the browser makes the workout and set ids and the save skips rows already
-  there, so every set and retry lands in one workout row (ADR-0004). A retry with a file
-  still to send saves again for fresh upload URLs, which last two hours. A reload under
-  five minutes after the last set resumes the workout from `workout=` in the address.
-- The repair set follows an initial set with any violation, abandoned attempts included,
-  starts without rest, and keeps the set number. Skipping writes `repair_declined` on the
-  initial set, even when the skip comes before the save lands.
-- The rest timer starts the next set on its own at zero; Start now skips it.
-- Finish workout writes `ended_at` and opens the finished summary, which reads from the
-  database. The retry lives on the set-complete screen; since 2026-11-01 a set without
-  feedback also gets "Write feedback now" on the finished summary and History level 4
-  (`retryFeedback` in `history/[exercise]/[workout]/actions.ts`, `analyseSet` with no new
-  files).
-- Column grants limit API updates to `workouts.ended_at` and, on `sets`, the decline, the
-  file paths, similarity, feedback, and attempts. Nothing is deleted. Since 2026-11-03
-  similarity, feedback, and attempts are written by the server's service-role client
-  (`lib/supabase/admin.ts`, `SUPABASE_SERVICE_ROLE_KEY`) after the user's client has read the
-  set, and the API refuses them to a user (migration `analysis_server_only`).
-- Every attempt record carries `schema_version` 1; `threshold` is the rule's threshold
-  object; `value` is `rep_stats[rule name]` or null.
-
-Decided in Phase 5, recorded in ADR-0004, 0005 and the Phase 5 session log:
-
-- The Home chart covers the last seven days ending today in the browser's time zone, today
-  on the right, at Vern's request; each day is the mean over all its sets, workouts left
-  part way included.
-- An active day needs a finished workout, dated by its start, over the same seven days.
-  Level 3 lists finished workouts only, so a workout left part way shows on the chart and
-  nowhere else in History. Since 2026-11-03 (Vern) Level 3 lists every workout with a saved
-  set, a workout left part way marked "Not finished", twenty to a page with `?before=`;
-  active days stay finished-only.
-- Level 4 lists every set of the workout and shows the one in `?set=` in full; only that
-  set's attempts, feedback, and file paths are fetched. The feedback detail screen is per
-  set.
-- Replay: the browser fetches the two files on Play; the video is not mirrored; timing
-  comes from the keypoint file's `t`, never the video's duration; an attempt's violations
-  light their joints for the whole attempt; a set missing a file, or whose keypoint file
-  holds fewer than two frames, is not replayed.
-- The chart sat on a dark ground because tape yellow on white fails contrast; since
-  2026-11-05 its bars are the indigo accent on a white card. The display face also sets
-  the deep-dive's similarity number.
-- No migration: the Phase 4 policies cover every read.
-
-Decided in Phase 6, recorded in ADR-0001, 0002, 0004, 0005, 0007, `docs/HANDOVER.md`, and
-the Phase 6 session log:
-
-- `knowledge_base` exists, empty, with an untyped `extensions.vector` embedding and no API
-  privilege, like `expert_motions`. pgTAP proves both, and that user A cannot read user B's
-  workout, sets, or files even by id.
-- End-to-end tests run on the installed Chrome with a fake camera fed a still T pose, with
-  `--disable-ipv6` and `--disable-quic` for this network. The workout spec narrows
-  `Math.random` after load so every attempt is incorrect; pinning it before load silently
-  stops hydration. A not-found page streams inside a 200, so tests check the page.
-- Every screen has loading, empty, and error states, checked at 375 and 1280 px.
-- One dark theme on every page, and Big Shoulders for every page title and big number,
-  both Vern's choices (both replaced 2026-11-05, below); the system light/dark switch and
-  `data-wide` are gone. The guide
-  shows each rule as its warning band, in priority order.
-- Password resets are one SQL statement in Studio's SQL editor; backups are a data-only
-  `db dump` plus `docker cp` of the storage volume. All three were run on the local stack.
-- The evaluation tasks in the handover have their owners left blank, as Vern chose.
-
-Decided at the engine port (2026-10-04), recorded in ADR-0002, 0003, 0006 and the
-2026-10-04 session log:
-
-- `lib/engine/` is a TypeScript port of SeniorProject `2695984` following its
-  `docs/rule_based/WEB_APP_PORT.md`, brought to `32168a5` for the chosen arm;
-  `ENGINE_VERSION` is the latest commit and equals the rows' `source`. The rows are the
-  export of `scratch/export_web_logic.py` in the latest `rule_logic_<commit>` migration;
-  never hand-edit them, re-run the export into a new migration.
-- Gate order: the T pose (or A pose) facing the camera starts the 3 s countdown, placement
-  checks the exercise's angle during it, and the countdown holds at 0 until placed (since
-  2026-10-10 the pose counts only once the stand check passes, below). The
-  live screen drives its centre text from `ready_phase` and shows the turn cue during the
-  countdown, hiding the number at 0. A T pose held 30 frames ends the set.
-- The row carries `state_machine.confidence_joints` and `placement` beyond the Phase 2
-  shape; `exercise_logic_valid()` does not require them yet. Records carry `active_side`.
-- Each rule's measured number is also written into `rep_stats` under the rule's name.
-- Parity: `scratch/eval/eval_web_parity.py` in SeniorProject writes golden output for
-  the 25 exam recordings; recordings made without the ready gate replay unarmed (Vern).
-  `lib/engine/fixtures/` holds one trimmed recording per exercise; `PARITY_DIR` runs all.
-- The stub and its test are deleted; the workout e2e is skipped until the real clip exists.
-
-Decided 2026-10-04 (later), the chosen curl arm, recorded in ADR-0002, 0006 and the
-2026-10-04 session log:
-
-- The user chooses the arm once per workout on the setup screen (Left or Right, no
-  default), shown only when the row's `state_machine.chooses_side` is true (the curl).
-  `parseSetup(params, logic)` requires `side` there and refuses it elsewhere;
-  `setupQuery` carries it with reps, sets, and rest; `workouts.side` stores it, fixed
-  once saved. Every set and repair set of the workout uses it.
-- `createEngine(..., { side })`: only that arm can open an attempt, and placement wants
-  that arm toward the camera (left -45, right +45, one band only). Python first:
-  SeniorProject `32168a5` (`forced_side`, `near_side`, `CHOOSES_SIDE`), then the export,
-  then the port. `lib/engine/fixtures/dumbbell_biceps_curls_left.json.gz` is the forced
-  golden.
-- An exercise's active side is never guessed from the more-bent elbow when reading saved
-  sets: it is in `engine_report` per rep.
-
-Decided 2026-10-05, the curl elbow rebuild, recorded in ADR-0002 and the 2026-10-05
-session log:
-
-- SeniorProject `858b203`: migration `rule_logic_858b203` (curl `thr_inflection` and
-  `partial_curl.flex_target` 40, `hysteresis_buffer` 30) and `CurlArmRebuild` in
-  `lib/engine/angles.ts`, after the angles and before the session, curl only. The push-up
-  `FloorBar` moved beside it (Vern).
-- The frame size is the optional third argument of `process`, `[videoWidth, videoHeight]`
-  from `lib/live/session.ts` every frame (Vern). Without it the raw angle is judged; a new
-  size restarts the rebuild's calibration. Raw values stay in `angles` as `*_raw` keys.
-- The curl parity fixtures carry image x, y and `frame_size`; `parity.test.ts` passes it.
-- Five iPhone curl clips replayed offline through both engines with the gates on matched
-  on every frame (`docs/sessions/2026-10-05.md`).
-- Vern's Mac is also used for a corporate internship that forbids VPNs and tunnels, so it
-  never runs Funnel or any other tunnel (ADR-0001). Superseded 2026-10-10: his manager
-  allowed it.
-
-Decided 2026-10-05, the similarity request, recorded in ADR-0007 and the 2026-10-05
-session log:
-
-- `SimilarityInput` is the layout Punnapat agreed, SeniorProject's
-  `scratch/export_similarity.py`: `source` (the set id), `side` (the workout's arm or
-  null), `totals`, attempts with `rep_number`, rule-name `violations`, and the engine's
-  `side`, and each keypoint frame labelled with `attempt` and `rep` by `labelFrames`.
-  `rep_count` per frame is not sent (Vern). `frame_size` joined the keypoint file and the
-  request on 2026-10-27, within schema version 1 (ADR-0005, ADR-0007).
-
-Decided 2026-10-10, the first phone run, recorded in ADR-0001, 0002 and the 2026-10-10
-session log:
-
-- Vern's manager allowed tunnels on the Mac. Phone tests use two Cloudflare quick tunnels
-  (`cloudflared tunnel --url`, no account, no domain): the API on 54321 first, then
-  `npm run build` and `npm start` with `NEXT_PUBLIC_SUPABASE_URL` set to its address on
-  the command line, then the app on 3000. New addresses every run; all closed afterwards.
-- SeniorProject `9a377cd`, migration `rule_logic_9a377cd`, `ENGINE_VERSION` `9a377cd`:
-  while the ready gate waits, placement's `standCheck` (framing, distance, centring, never
-  facing) must pass for the T pose to count, and its cue replaces the T-pose text. Guide
-  step 1 says so. Gates-off parity unchanged.
-- The live picture is drawn into the overlay canvas (iOS Safari drops `object-fit` on the
-  video when MediaRecorder starts).
-- Sound respects the phone's silent switch (Vern): no `navigator.audioSession` change.
-  `sound.unlock()` speaks one silent utterance in the Start camera tap, because iOS Safari
-  speaks nothing until a `speak()` runs inside a tap.
-
-Decided 2026-10-17, the push-up body alignment, recorded in ADR-0002 and the 2026-10-17
-session log:
-
-- SeniorProject `5eccc55`: `hip_sag_or_pike` and `min_body_alignment` read the
-  shoulder-hip-ankle angle of the trusted side (the higher of each side's lowest shoulder,
-  hip, and ankle score; a tie goes to left), not the mean of both. The bar stays 160.
-  Migration `rule_logic_5eccc55`, `ENGINE_VERSION` `5eccc55`, parity 96 of 96.
-- SeniorProject `d6053af`: the ready pose also needs an upright trunk (mid-hip below the
-  mid-shoulder by 0.7 of the trunk length), because a push-up plank passed as a T pose and
-  ended sets. `ENGINE_VERSION` `d6053af`, migration `rule_logic_d6053af`.
-- Speech: one phrase at a time (a new one waits, only the latest), rate 0.95, no repeat
-  within 3 s, a warning wins over a placement cue on the same frame.
-- MediaPipe's world z is fitted from synthetic data per the BlazePose GHUM model card, not
-  measured, so rules that lean on depth are the least trustworthy.
-- The push-up camera moves to a 90 degree side view (Vern, after two live sets at 90):
-  SeniorProject `5a7e835`, placement 82 +/- 12 (was 45 +/- 25), guide text "side-on ...
-  about 90 degrees", migration `rule_logic_5a7e835`, `ENGINE_VERSION` `5a7e835`. Every rule
-  is unchanged: the body line agrees in every measure at 90, and the floor bar stays (one
-  false shallow in 22 good reps there, from the bent arm's length under-reading). The
-  near elbow in the picture separated better at 90 and is the fallback if false shallow
-  warnings recur; changing to it needs the expert again. The no-z body line is stashed in
-  SeniorProject, not shipped.
-
-Decided 2026-10-21, the squat knee direction, recorded in ADR-0002 and the 2026-10-21
-session log:
-
-- SeniorProject `eddf6f1`, migration `rule_logic_eddf6f1`, `ENGINE_VERSION` `eddf6f1`:
-  `knee_valgus` and `knee_varus` keep the 3D shin angle (bars 11, 8) and now also need the
-  direction past `converge_min` 0.028 m, read with each knee given its ankle's z (x only).
-  The angle keeps z because on the mirrored 45 degree side the error moves into x. Vern's 11
-  false "Push knees out" in 31 good reps go to 0; exam unchanged; turned-in feet 5/5 to 2/5.
-- Lowered to 0.020 the same evening (Vern): SeniorProject `50e4692`, migration
-  `rule_logic_50e4692`, `ENGINE_VERSION` `50e4692`. On his labelled live workout (88 attempts)
-  0.020 warned 0 of 31 good reps and caught 21 of 29 knees in and 8 of 11 knees out with no wrong
-  cue; 0.028 caught 17 and 6; the old rule warned 2 good reps and gave 2 wrong cues.
-- Camera angles stay (90 lunge and push-up, 45 curl and squat): changing them complicates
-  explaining the stand (Vern), but they may change if the evidence is strong enough.
-- Revert steps are in the session log.
-
-Decided 2026-10-21, push-up landscape, recorded in ADR-0006 and the 2026-10-21 session log:
-
-- The push-up is filmed with the phone sideways (Vern): a side-on plank does not fit a portrait
-  frame. `exercises.landscape` (migration `push_up_landscape`), true only for the push-up, an app
-  column outside the export. Guide text says to turn the phone sideways; the preflight says so too.
-- `LiveSession` takes `landscape`; before the set is active, a portrait picture (`videoHeight >
-  videoWidth`) is not fed to the engine, the engine is reset once, the picture is drawn without
-  the skeleton, and `TURN_CUE` is shown and spoken. Never held once active, so `t` still indexes
-  the video. A laptop camera is landscape and passes straight through.
-- The standing T pose could not work sideways (Vern's phone run): a landscape frame cannot hold a
-  standing body at plank distance. Replaced by the plank start below.
-
-Decided 2026-10-21 (later), the push-up plank start, recorded in ADR-0002, 0006 and the
-2026-10-21 session log:
-
-- SeniorProject `7420788` and `0cb8485`, migrations `rule_logic_7420788` and `rule_logic_0cb8485`,
-  `ENGINE_VERSION` `0cb8485`. `state_machine.ready_pose` (`t_pose` or `plank`, from the FSM's
-  `READY_POSE`) chooses the start; only the push-up is `plank`. The live screen's waiting text
-  is keyed by it, never by exercise.
-- The plank start: on the trusted side (the higher lowest score of shoulder, elbow, wrist, hip,
-  knee, ankle) all six at 0.5, elbow and knee 150 or more, trunk at the row's arming tilt (60)
-  or more from vertical, held 8 frames. Evidence: SeniorProject
-  `scratch/eval/eval_plank_gate.py`, 10 recordings at 90 degrees, the hold 0.7 to 6.4 s before
-  the first rep, never standing.
-- While waiting for a plank, placement runs in full (facing included) with the lying framing:
-  plank width 0.40 to 0.95 of the frame, nothing within 0.03 of an edge. Since 2026-10-22 its
-  cues move the phone: "Bring the phone closer so your body fills the frame" (too far) and "Fit
-  your whole body in the frame" (too close or cut). Until the trunk lies it gives no cue, so a standing user
-  sees "Get into a plank at the top...". The countdown is a plain 3 s hold.
-- The set ends on getting up: the trunk under `thresholds.left_tilt_max` (30) held 30 frames,
-  after 3 s. A rest on hands and knees does not end it; a T pose does, being standing.
-- Parity: `lib/engine/fixtures/pushup_plank_gate.json.gz`, the cam90 good set with the ready gate
-  on (placement off), matches the Python's `ready_phase` frame by frame.
-
-Decided 2026-10-22, the push-up sag bar, recorded in ADR-0002 and the 2026-10-22 session log:
-
-- Vern's live set warned 0 of 5 sags and 4 of 4 pikes (confirmed in the replay): good form reads
-  up to 20 degrees on the pike side, so one bar at 160 needed about 30 degrees of sag.
-- SeniorProject `ded29a2`, migration `rule_logic_ded29a2`, `ENGINE_VERSION` `ded29a2`:
-  `hip_sag_or_pike` warns under `sag_align_min` 170 when the trusted side's hip is below its
-  shoulder-ankle line (world y), under `align_min` 160 otherwise. One message, "Body not
-  straight" (Vern). That set now: sags 4 of 5, pikes 4 of 4, no good rep. Exam good 2 of 10.
-
-Decided 2026-10-22 (evening phone run), recorded in ADR-0002 and the 2026-10-22 session log:
-
-- The turn cue pointed the wrong way: positive yaw is turning to your own left. SeniorProject
-  `504a5fc`, migration `rule_logic_504a5fc`, `ENGINE_VERSION` `504a5fc`. Evidence: Vern chose the
-  right arm and heard "Turn to your right"; set `0c5340d6` was placed at yaw +45.8 with the right
-  shoulder nearer. The squat and lunge accept either side, so they were placed anyway.
-- While a plank start waits, the voice says "Plank down to start the exercise" (Vern's words),
-  when the wait begins and every 10 s while nothing else is cued; `readyCue` in `LiveSession`,
-  keyed by `ready_pose`. The T pose stays screen text.
-- The push-up plank start is confirmed working on the phone (Vern).
-- Then (Vern): SeniorProject `ae66255` to `c4ee786`, migration `rule_logic_c4ee786`,
-  `ENGINE_VERSION` `c4ee786`.
-  - The squat `rounded_back` bar 35 to 45: just above good form's worst (43.5), below lean's
-    mildest (51.1). The 22:24 set (`f232de47`, another person on Vern's account) warned 9 of 12
-    at 35 and 2 at 45; over all 594 saved squat attempts 29 to 3. Whether that lean is a fault is
-    still for the physiotherapists.
-  - Every frame rule waits 5 frames, not 10 (`FRAME_RULE_MIN_FRAMES`): squat `rounded_back`,
-    lunge `forward_trunk_lean`, curl `elbow_flare`, push-up `hip_sag_or_pike`. The other eight
-    rules are judged once per rep. Why: with the phone raised the rate fell to 13 to 22 fps (24 to
-    35 on the floor), and real sags held 4 to 8 frames went unwarned (repair set `6a302107`: 1 of
-    7, now 7 of 7). A wait in seconds since 2026-10-23, below.
-  - The plank start's framing cues move the phone (above).
-
-Decided 2026-10-23, frame rules wait 0.15 s, recorded in ADR-0002 and the 2026-10-23 session log:
-
-- SeniorProject `450da34` to `e4594df`, migrations `rule_logic_d7aa1ef` and `rule_logic_e4594df`,
-  `ENGINE_VERSION` `e4594df` (Vern). A frame rule fires once violated for its row's
-  `debounce_s` (0.15) from the first violated frame of an unbroken run, timed by each frame's
-  timestamp: 3 frames at 13 fps, 7 at 35, 10 at 58. Five frames lasted 0.38 s at 13 fps and 0.09 s
-  at 58. Rows carry `debounce_s` in place of `debounce_frames` (0 for rep rules), and
-  `exercise_logic_valid()` changed with them.
-- A gap over 0.3 s between two frames the evaluator sees (low-confidence frames, which never
-  reach it, or a stalled tab) starts every run over (Vern): a warning never rests on two bad
-  frames either side of a blind stretch. `FRAME_RULE_MAX_GAP_S` in the Python and
-  `FRAME_RULE_MAX_GAP_MS` in `evaluator.ts`, a constant, not a row field. First built equal to
-  the 0.15 s wait (`d7aa1ef`), where one dropped frame at 13 fps (154 ms) restarted a run and
-  under about 6.7 fps no frame rule could fire; at 0.3 s a 13 fps run survives one drop and the
-  floor is about 3.3 fps (phone run 1 of 2026-10-10 fell to 8 fps).
-- Evidence: SeniorProject `scratch/eval/eval_frame_wait.py` on all 903 saved attempts (exported to
-  `scratch_output/app_all_2026-10-23`): squat 6 / 6, lunge 0 / 0, curl 18 / 17, push-up 91 / 88 at
-  5 frames / 0.15 s; the same 10 changed attempts Vern labelled, 6 better, 1 worse, no labelled
-  real fault lost (session log 2026-10-22, last section). The gap rule changes none of them.
-- Python: a violated frame rule with no timestamp raises; the frame processor without timestamps
-  times the rules at its ctor fps, as its warning hold already did. Evals pass each frame's time.
-- Other waits stay counted in frames, deliberately: the counter's state change 3
-  (`consecutive_frames_req`), arming 10 and disarming 40 (`fsm.ts`), the ready and placement holds
-  8, the set's end 30, the curl rebuild's 10 straight-arm frames. The warning's 1 s hold was
-  already a time.
-
-Decided 2026-10-23 (later), the toe line and the sag disarm, recorded in ADR-0002 and the
-2026-10-23 session log:
-
-- The floor sitting (push-up 90 degrees, left side, 35 fps; squat 45 degrees, usual side): push-up
-  good 0 of 10 warned, pike 5 of 5, sag 0 of 5. The sags were never counted: at the top of a deep
-  sag the trunk reads 47 to 58 degrees, under the arming tilt 60, so the counter disarmed.
-- SeniorProject `aa6dc15`: the push-up counter disarms only on standing up (trunk under
-  `left_tilt_max` 30) or losing the arm (`disarmEvidence()` in `fsm.ts`, not a row field). Over all
-  33 saved push-up sets only the five sags and two older attempts change.
-- SeniorProject `4fdba6b`: `knee_valgus` and `knee_varus` read `knee_toe_line` (each knee's
-  offset from its own toe line in the picture, hip widths, both legs added, + = outside, at the
-  rep's deepest frame); rows carry `toe_line_in` -0.30 and `toe_line_out` +0.35. Knees out with
-  both cues (Vern), though no knees out was filmed (Vern cannot do one). The old knee measures stay
-  in `rep_stats` as evidence. Sitting: good 0 of 16 warned (live rule 2), knees in 7 of 7.
-- SeniorProject `eebd58f`, migration `rule_logic_eebd58f` (applied locally), `ENGINE_VERSION`
-  `eebd58f`. The research recordings carry no picture, so `eval_live_rules` gives no knee verdict
-  on them; the fixtures `pushup_sag` and `squat_toe_line` come from this sitting's web keypoint
-  files. The sitting's export: SeniorProject `scratch_output/app_2026-10-23_sitting`.
-
-Decided 2026-10-28, rules beside similarity, recorded in ADR-0007, `docs/HANDOVER.md` and the
-2026-10-28 session log:
-
-- A similarity failure no longer blocks feedback: `analyseSet` keeps the error and writes
-  feedback without similarity; a retry that scores nothing new keeps the feedback written.
-- `sets.similarity` keeps the service's `mean_score_correct` and `mean_score_incorrect` (the
-  mean split by the rule verdict: correct = no warning fired), `service_version`,
-  `tracking_confidence` (the set's mean, the camera-setup stand-in for comparing days), and
-  `reference` (`kind`, `source`), what SCORE_INTERPRETATION section 5 asks the app to keep. `weakest_body_part` stays and is sent to Sujira as a hint (Vern); the rule
-  violations say what to fix.
-- Whether the scores separate correct from incorrect reps is Punnapat's to judge; the app's
-  check is only that a set is scored, stored, and shown.
-
-Decided 2026-10-25, feedback, recorded in ADR-0007, `docs/HANDOVER.md` section 3,
-`docs/FEEDBACK_SETUP.md` and the 2026-10-25 and 2026-10-27 session logs (Sujira):
-
-- Feedback is Sujira's service in the RAG_SYSTEM repo (`python -m service`, POST
-  `/feedback` on 127.0.0.1:8100). `writeFeedback()` posts the `FeedbackInput` to
-  `FEEDBACK_URL` with a 60 s timeout (the service keeps its own 45 s budget) and uses the
-  stub only while that is unset. A failure is thrown and shown after "Feedback failed:".
-- The knowledge base is langchain_postgres's own two tables, `langchain_pg_collection` and
-  `langchain_pg_embedding` (migration `kb_langchain_tables`), RLS on with no policy and no
-  API privilege. Rows are loaded by RAG_SYSTEM's `tools/copy_kb.py` from its `app_setup/`.
-  `public.knowledge_base` (Phase 6) stays, empty and unused.
-- The embedding model is `gemini-embedding-2` (Sujira, 2026-10-30), the model the KB's
-  vectors were made with, so queries use it too. Query vectors come from a cache filled once
-  by `tools/fill_query_cache.py`; a query missing from it is embedded and added.
-- The writing model: `FEEDBACK_LLM_PROVIDER=groq` uses `qwen/qwen3.8-27b` on Groq's free tier;
-  unset, Gemini.
-- `npm run db:reset` empties the two KB tables; `npx supabase stop` and `start` keep them.
-  After a reset, load them again with `tools/copy_kb.py`.
-
-Decided 2026-11-02, how feedback is shown, recorded in the 2026-11-02 session log (Sujira):
-
-- Prompt v16 (RAG_SYSTEM `rag_core/prompt.py`, on `main`) opens with labelled lines before the
-  first blank line: `Fault <rule>: ...` and `Fix: ...` per fault, or `Keep: ...` on a clean set,
-  then a three-line overview, the fault paragraphs, and a `Next Session Plan:` over numbered
-  lines. `lib/feedback-text.ts` parses it (`readFeedback`); RAG_SYSTEM's `test_app_input.py`
-  checks the labels, so change both together.
-- `app/(app)/set-feedback.tsx` shows it on set-complete, the finished summary, and the feedback
-  detail page: "What went wrong, and how to fix it" with each fault's name (`faultName`, the rule
-  key in words), its count of attempts from the attempt records (never the model's), and the fix
-  in a tape band; then "Full feedback" as headed paragraphs and lists. Level 4 shows the list
-  only. Text that does not parse (the stub, v15, a model that strayed) shows whole, with level 4
-  falling back to its first paragraph (`feedbackSummary`, `lib/history.ts`). Feedback saved
-  before v16 as Markdown (the 2026-11-03 phone run) is rendered by the Markdown reader
-  (`isMarkdown`, `parseFeedback`, `app/(app)/feedback-text.tsx`), kept at the merge of
-  2026-11-05 (Vern), and level 4 clamps it with its marks dropped (`plainFeedback`).
-- v16 shipped without a model run first (Sujira); its first two sets on Gemini (curl, one with
-  two faults, one clean repair set) parsed.
-- RAG_SYSTEM's `FEEDBACK_CAPTURE` keeps every request (input, context, answer, version) in its
-  gitignored `capture/` as the eval's inputs. It holds medical histories.
-
-Decided 2026-11-05, the UI redesign (Vern), recorded in the 2026-11-05 session log:
-
-- Daylight: light pages from Radix sand, indigo, grass, and amber, chosen over two rounds of
-  mockups (https://claude.ai/artifact/1SYEcngZMnnE2BPPvDiq7W); the stage stays dark. Barlow
-  Condensed and Barlow replace Big Shoulders (the ui-ux-pro-max sports pairing).
-- Live: the user's body stays as large as possible, with nothing solid in front of it
-  (Vern). The count and target are one outlined number ("7/10") in the top right, attempts
-  under it; back and mute are round 44 px buttons; the warning is a band across the foot,
-  End set above it. Enlarged 2026-11-08 (Vern, too small from where the user stands): the
-  count `clamp(110px,22vh,220px)`, the warning in Barlow Condensed `clamp(26px,4.2vh,40px)`. The outline uses `paint-order`, checked in Chrome only.
-- Set complete and rest is a light page: the timer small at the top, correct, attempts and
-  similarity, similarity by body part (the lowest marked), the rules broken (hidden once
-  feedback with v16's fault list arrives, as Sujira built it), then the coach's feedback
-  last: the fault list (or four lines of older text), and all of it opens in place (leaving
-  `/live` mid-rest drops the visit). Fix lines are an indigo band, amber is only the fault's
-  dot (Vern, at the merge). End workout at the top is the Finish workout path, and the rest timer stops
-  while it runs. Ending from a repair offer records the skip first (`repair_declined`, as
-  Skip it does), Vern's choice.
-- Every page under a tab opens with one back button; the underlined back links are gone.
-- Setup's three numbers have − and + (one rep, one set, 5 s of rest a tap) beside a field
-  that stays typeable (`setup/stepper.tsx`). Home lists each exercise with how to stand to
-  the camera, from `exercises.camera_hint` (migration `exercise_camera_hint`), an app
-  column outside the export like `landscape`; a new exercise needs one.
-
-Still open, outside the build plan:
-
-- The redesign (2026-11-05): not seen on the iPhone, the
-  outline (`paint-order` on HTML text) and the light pages. `npm run build` now fetches
-  Barlow from Google, so it needs the network.
-
-- The 0.15 s wait (2026-10-23): on the floor at 35 fps it warned the same attempts as 5 frames;
-  the raised phone at 13 to 22 fps, the case it is for, is not tested. At 13 fps 3 glitch frames
-  are enough to warn. SeniorProject's demo figures (`scratch/demo/demo_rule_*`) still
-  import `FRAME_RULE_MIN_FRAMES` and say "N frames in a row"; they need new wording before use.
-- The curl `elbow_flare` ("Keep Elbows at Your Sides") misses (Vern, 2026-10-22 evening, for
-  another session): set 1 good and silent, but sets 2 and 3 (`4b606b3b`, `1fde8e97`), with the
-  elbow moved a lot, warned on 5 of 17 and 5 of 16 attempts. Bar 45, margin 1 degree, one subject
-  (RULES_AND_FSM). The rule records no number in `rep_stats` (null, as in the Python), so judging it
-  needs the keypoint files. `partial_curl` is fine for now (Vern).
-
-- The squat toe line (2026-10-23, above): shipped and not tested live. Its only unseen data is the
-  floor sitting's usual side (good 0 of 16, knees in 7 of 7); the mirrored side (older reps: 2 of
-  86 good warned) and knees out (11 of 13) rest on the reps its bars were picked on. Not filmed:
-  the mirrored side, knees out (Vern cannot do one; the agreed bar's knees-out part is dropped
-  with it). LabMoCap (2026-10-23, SeniorProject `769b1a1`): 0 of 75 good reps warned at the
-  mirrored 45 degrees, boom and kavee, inside the 1 in 20 bar; MediaPipe minus Vicon is a
-  per-person offset (+0.11 boom, -0.19 kavee), and 6 kavee reps Vicon puts past the knees-out bar
-  read under it. No pass bar is agreed for a live check yet. Why the older rules failed, in the
-  2026-10-21 and 2026-10-22 session logs and RULES_AND_FSM 5.16 to 5.18: at 45 degrees MediaPipe's
-  depth error was as large as the signal. Ask the physiotherapists whether a moderate knees-out is
-  a fault. Other people are not tested.
-
-- The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
-  (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
-  full bend. `docs/bicep-curl-depth-error.md` is a copy of SeniorProject's
-  `docs/rule_based/BICEP_CURL_DEPTH_ERROR.md`, which is the one to work from. A set that
-  never straightens the arm (the iPhone clip 8693) is one long attempt, and the rebuild
-  needs ten straight-arm frames in the set before it acts; both as in the Python.
-
-- Video is recorded at 2.5 Mbit/s (`VIDEO_BITS_PER_SECOND` in `lib/live/session.ts`,
-  2026-10-01, Vern's choice by eye), about 19 MB per minute instead of 75. Measured
-  2026-11-03 on every saved set since (84 sets, 47 minutes, 2026-10-10 to 10-27, phone and
-  laptop, all webm): 18.4 MB per minute, each set between 17.1 and 18.7. Keypoint files
-  0.9 to 1.9 MB per minute, following the device's frame rate. Storage refuses a file over
-  500 MiB, about 28 minutes of video.
-- A set missing one file is not replayed.
-- A loaded phone loses the end of a recording (2026-11-03): workout `44bd485d`'s repair set,
-  whose keypoint rate fell from 35 to 14 fps in its last 20 s, has 56.8 s of video against 59.0 s
-  of keypoints; the video is on time to its end (motion lag 50 to 100 ms throughout), the last
-  2.2 s were never written. Replay no longer reads this as a start delay (fixed, ADR-0005); the
-  lost seconds themselves are not. Worse on 2026-11-08 with the iPhone's screen recording on:
-  squat set `eb5e6d9a` at 12.5 fps kept 7.3 s of video against 19.0 s of keypoints, and replay
-  freezes there. The other seven sets of that run match within 60 ms. Re-test with the screen
-  recording off (film the phone from a second device).
-- Replay sync (2026-11-08): on the iPhone the skeleton trailed the picture by about 0.2 s. The
-  files trail by 20 to 70 ms (8 sets); replay now draws on `requestVideoFrameCallback` at the
-  frame's `mediaTime`, looks `CAMERA_LAG_MS` (50) ahead, and `frameAt` takes the nearest frame.
-  Not seen on the iPhone yet.
-- Lunge out of frame (2026-11-08, set `090d8ce0`): "Raise your front knee" fired on attempts 1,
-  6 and 11 while the front knee and toe sat at or past the picture's left edge (x -0.05 to 0.02).
-  MediaPipe scored those guessed joints 0.95 to 1.00, so the confidence check passed, and the
-  knee read 60 to 69 against the bar of 70. Proposed, not built: a rep rule is not judged when a
-  joint it reads lies outside the picture at its measured frame (Python first, pass bar first).
-- The first save of a set runs in the user's session, so a user could send made-up attempt
-  records at that moment; since 2026-11-03 they cannot change them, or the analysis, after.
-- The phone run (2026-10-10, iPhone, iOS Safari, quick tunnels on the Mac). Run 1 found
-  the shrinking video, the T pose from too far, and no sound on silent. Run 2 found no
-  speech, fixed by a silent utterance in the Start camera tap. After that Vern reported it
-  working, with all sound. iOS records webm VP9; run 2 held 35 fps in every set (run 1 fell
-  to 8-27 fps from set 2, cause unknown). Not confirmed item by item: the full-screen
-  picture, the T pose from too far and too close (the narrow band of 0.45 to about 0.57 of
-  the frame height on a portrait phone, in the session log), and History replay. Android
-  Chrome is not tested.
-- Feedback: runs on Vern's Mac through a free Gemini key (2026-11-01, session log). Squat and
-  curl sets through the camera on Gemini (Sujira, 2026-11-02, v15 then v16), and the 2026-11-03
-  phone run passed with camera sets of all four exercises (still before v16 there: that run's
-  answers are Markdown); the free quota ran out after about 20 requests and Gemini's 503 bursts
-  outlast the app's one retry (session log 2026-11-03). Free-tier requests may be used by
-  Google, so not for real testers' data. Prompt v16 on RAG_SYSTEM `main` (above) sends the
-  medical history, body part scores, `kind`, and `ended_by` to the model (v15 already sent the
-  medical history), while the profiles tested so far are mock data; the consent wording (D6)
-  must be settled before real testers. v15 advised lightening the load on a bodyweight squat,
-  and v16 keeps the cause (the prompt's setup-change list names load); only curl has run
-  through v16. Fault names are rule keys in words, so `knee_valgus` and `knee_varus` read as
-  jargon; plainer names would be a data column like `landscape`, Vern's to agree. The workout
-  e2e expects the medical history verbatim, which holds only for the stub. The prompt is
-  Sujira's to tune.
-- The workout e2e is skipped until a clip of real reps at the exercise's angle is its camera, with
-  the T pose facing the camera first.
-- After the port (WEB_APP_PORT.md section 15, item 7): film the e2e clip. `MODEL_URL` is
-  pinned to `float16/1`, byte for byte the research repo's model, and real keypoint files
-  carry real visibility scores (both 2026-10-04).
-- Push-up at 90 degrees: checked on two live sets of one sitting only. Not measured yet: a
-  calibration sitting (both sides, good, shallow, sag, pike), and whether the placement band
-  holds while getting into the plank. The floor bar's ruler shrinks when the arm bends
-  (up to 27% on the left arm), the likely cause of any false "Lower your chest".
-- Push-up landscape and plank start (2026-10-21): the plank start is confirmed on the phone (Vern,
-  2026-10-22 evening) and the waiting instruction is now spoken (above). Not confirmed item by
-  item: the lying framing band (scaled from portrait sets); getting up ends the set and a rest on
-  the knees does not; with the rotation lock on, whether the stream stays portrait; set-complete
-  and rest sideways.
-- Push-up sag bar (2026-10-22, above): pass bar agreed: one sitting at 90
-  degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
-  5 of 5, at most 1 of 10 good warned. The floor sitting (2026-10-23, left side) failed on sag,
-  0 of 5, because the counter disarmed; fixed above, not re-filmed. Still to film: the fixed
-  engine, the raised phone, and the right side. A small sag where good form reads near straight is still
-  missed. Ask the physiotherapists whether 10 degrees of sag is the right line. Since the
-  5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
-  10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
-  should cover the phone raised and on the floor.
-- The workout is slow to start on the phone (Vern, 2026-10-17). Since 2026-11-03 the live
-  screen loads the pose model once per visit, starting on the preflight screen, and every set
-  reuses it (it used to load again each set), and each set logs one `[live] start:` line
-  (camera, camera and model, first frame) plus `[live] pose model ... loaded in`. On the Mac
-  with Chrome's fake camera: the model in about 1.5 s during the preflight, then 162 ms from
-  the tap to camera and model, 386 ms to the first frame. Not measured on the phone yet: read
-  both lines in Safari's Web Inspector on the next phone run.
-- The evaluation tasks in `docs/HANDOVER.md`. A restore and a deletion on request are not
-  rehearsed, and a deleted tester's files stay until removed by hand.
-- Similarity is a Python service over JSON (ADR-0007, 2026-09-29), and Python must be
-  installed on the evaluation machine. Real since 2026-10-27; sets saved before have no
-  `frame_size` and stay unscored.
-- The similarity reference (2026-10-28): the service's built-in reps (LMC, kavee and Boom) are a
-  placeholder until the expert records sets through the app. How the expert's set becomes the
-  reference (rebuilt built-in or a `reference` package per request) is to agree with Punnapat;
-  a new reference moves scores 20 to 30 points, so SCORE_INTERPRETATION's ranges need
-  re-measuring and `sets.similarity.reference` tells the two apart. `scoreSimilarity`'s fetch
-  has no timeout and `server.py` serves one request at a time, both to settle before the VM.
-- Whether the evaluation is supervised sessions or unsupervised use; it no longer decides
-  the hosting.
-- The deploy (`docs/DEPLOY.md`, ADR-0001, 2026-10-01): the professor requires a published
-  site on AWS or a cloud, paid from the project budget. Decided: a Google Cloud VM running
-  Supabase's self-hosted Docker Compose with generated secrets, Caddy, and the two Python
-  services. `npx supabase start` uses published demo secrets, so it never faces the
-  internet with real testers' data; Funnel on a team machine is for supervised sessions.
-  Feedback is a Python service like similarity (ADR-0007). Bitrate cut done; the phone
-  test is under way (above), then a rehearsal deploy, then the real one. Not rehearsed.
-- Guide videos and thumbnails for the four exercises do not exist yet, and the guide text
-  is a draft awaiting review.
-- Whether `exercises.name` and `guide_text` should be locale-keyed like rule messages.
-
-Vocabulary is in `CONTEXT.md`. In particular: attempt, completed rep, correct rep,
-abandoned attempt, workout, set, repair set, and the engine state names Idle, Concentric,
-Inflection, Eccentric.
+- Agree the pass bar before a live test, and judge the result against it rather than
+  re-tuning after each run.
+- Phone tests use two Cloudflare quick tunnels (`cloudflared tunnel --url`): the API on
+  54321 first, then `npm run build` and `npm start` with `NEXT_PUBLIC_SUPABASE_URL` set to
+  its address, then the app on 3000. Close all of them afterwards.
 
 ## Research repo, reference only
 
@@ -808,13 +197,14 @@ Relevant for cross-checking behaviour:
 
 ## Working rules
 
-- Work in steps within a phase, and pause between them to report what was done.
+- Work in steps, and pause between them to report what was done.
 - Ask immediately when uncertain. Do not assume silently. If a requirement is wrong or
   impossible, say so and propose the alternative rather than quietly working around it.
 - No em dashes in any output, including files written here.
 - Small team of three working directly on `main`. Never create branches. Never suggest
   opening a PR.
-- Write a session log to `docs/sessions/YYYY-MM-DD.md` at the end of each phase.
+- Write a session log to `docs/sessions/YYYY-MM-DD.md` at the end of each session's work.
+- Record a new decision as a dated section in `docs/DECISIONS.md` (and its ADR), not here.
 - Keep `README.md` current with what actually exists.
 - Vern starts `npm run dev` and `npx supabase start` himself. Only start them when he says
   so, or when a change needs browser verification, and stop both (`npx supabase stop`)
