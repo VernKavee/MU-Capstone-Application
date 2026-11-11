@@ -25,6 +25,25 @@ sets the service up on your own machine, and [docs/HANDOVER.md](docs/HANDOVER.md
 - `docs/DEPLOY.md`: the deployment plan, not yet rehearsed.
 - `docs/FEEDBACK_SETUP.md`: running real feedback (the RAG service) on your own machine.
 
+## After you pull
+
+**2026-11-11, no medical history** (`4cadd6e`, `docs/DECISIONS.md`). After pulling this commit:
+
+1. With the stack up, apply the new migration in the app folder:
+
+   ```bash
+   npx supabase migration up --local
+   ```
+
+   It drops `profiles.medical_history` and keeps everything else: accounts, workouts, sets, and
+   the knowledge base. Do not use `npm run db:reset` for this; it empties the knowledge base too,
+   and you would have to reload it with RAG_SYSTEM's `tools/copy_kb.py`.
+2. Restart `npm run dev`. The first time you open the app it shows the consent screen again,
+   once: the consent version is now 2, with two checkboxes (camera, recording) instead of three.
+   Tick both and press Continue.
+
+The profile form no longer asks for a medical history, and the feedback has no Health note.
+
 ## What exists
 
 - Next.js 16 App Router with TypeScript and Tailwind, talking to Supabase through

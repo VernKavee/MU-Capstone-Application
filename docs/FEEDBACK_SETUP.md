@@ -43,6 +43,9 @@ npx supabase migration up --local --include-all
 this migration is dated before later ones your database already has. `npm run db:reset` would also
 work but deletes all your local data.
 
+The same command applies `drop_medical_history` (2026-11-11). Afterwards the app asks for consent
+once more (version 2, two checkboxes); see "After you pull" in `README.md`.
+
 ## 2. Clone RAG_SYSTEM
 
 Next to the app, on the branch the app uses:
