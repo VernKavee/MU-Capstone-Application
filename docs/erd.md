@@ -10,7 +10,7 @@ erDiagram
   EXERCISES ||--o{ WORKOUTS : "is done in"
   WORKOUTS ||--o{ SETS : "owns"
   EXERCISES ||--o| EXPERT_MOTIONS : "has"
-  EXERCISES ||--o{ KNOWLEDGE_BASE : "has"
+  LANGCHAIN_PG_COLLECTION ||--o{ LANGCHAIN_PG_EMBEDDING : "holds"
 
   AUTH_USERS {
     uuid id PK "Supabase Auth, not ours"
@@ -29,7 +29,7 @@ erDiagram
 
   CONSENTS {
     uuid user_id PK, FK
-    text kind PK "camera, recording, profile"
+    text kind PK "camera, recording (profile: version 1 only)"
     int version PK
     timestamptz granted_at
   }
@@ -43,6 +43,8 @@ erDiagram
     text guide_video_url "null until the media exists"
     text engine_key
     jsonb rule_based_logic "thresholds, rules, messages per locale"
+    boolean landscape "phone sideways (push-up)"
+    text camera_hint "where to put the phone"
   }
 
   WORKOUTS {
@@ -83,23 +85,35 @@ erDiagram
     timestamptz updated_at
   }
 
-  KNOWLEDGE_BASE {
-    uuid id PK
-    text exercise_id FK
-    text content
-    vector embedding "untyped dimension for now"
-    timestamptz created_at
+  LANGCHAIN_PG_COLLECTION {
+    uuid uuid PK
+    varchar name UK "one knowledge base collection"
+    json cmetadata
+  }
+
+  LANGCHAIN_PG_EMBEDDING {
+    varchar id PK
+    uuid collection_id FK
+    vector embedding
+    varchar document "the chunk's text"
+    jsonb cmetadata "the chunk's metadata"
   }
 ```
 
 ## What the diagram does not show
 
 - Deleting a user cascades to their profile, consents, and workouts, and a workout cascades
-  to its sets. `workouts.exercise_id` and `knowledge_base.exercise_id` do not cascade.
+  to its sets. `workouts.exercise_id` does not cascade.
 - `sets.video_url` and `sets.keypoints_url` are not foreign keys. They are object paths,
   `<user_id>/<set_id>/video.webm` (or `.mp4`) and `<user_id>/<set_id>/keypoints.json.gz`, in
   the private `sets` storage bucket, whose policies allow a user only their own folder.
 - Access is enforced by row-level security. `profiles`, `consents`, `workouts`, and `sets`
   are readable only by their owner (`sets` through its workout). `exercises` is read-only
-  for signed-in users. `expert_motions` and `knowledge_base` have no app privilege at all;
-  Punnapat's and Sujira's components write them directly.
+  for signed-in users. `expert_motions` and the two `langchain_pg_*` tables have no app
+  privilege at all; Punnapat's and Sujira's components write them directly.
+- The knowledge base Sujira's feedback service retrieves from is langchain_postgres's own two
+  tables, kept in its layout so the library uses them unchanged (2026-10-25). They are not
+  linked to `exercises`; a chunk's exercise is in its metadata. Deleting a collection deletes
+  its chunks.
+- `public.knowledge_base`, made in September for this, was never used and is left out of the
+  diagram. It is empty.
