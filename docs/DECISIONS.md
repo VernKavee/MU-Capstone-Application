@@ -531,17 +531,18 @@ Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58
   Files: SeniorProject `scratch_output/app_2026-11-13_pushup`. Labels from Vern: set 1 good
   right, 2 good left, 3 sag right, its repair set pike right, 4 shallow right, 5 sag left.
   Each fault was done 10 times. The sag-right set recorded 12 full dips; Vern says the first
-  2 were settling in, so its attempts 3 to 12 are the sags scored.
-- On what was filmed, the app meets the 2026-10-22 bar: good form warned 0 of 10 on each
-  side; sag warned on every rep, 10 of 10 on each side; pike warned 10 of 10 on
-  the right (4 counted as incorrect, 6 abandoned short with the body line shown first). The
-  bar also asks for the pike from the left, which was not filmed. Shallow was flagged 10 of
+  2 were settling in, so its attempts 3 to 12 are the sags scored. The pike from the left was
+  filmed later that evening as its own workout (`1d6ad3f2`): 11 dips and a blip, all warned by
+  both engines, so it is 10 of 10 whichever 10 are counted (attempts 2-10 and 12 are plotted).
+- The app meets the 2026-10-22 bar: good form warned 0 of 10 on each
+  side; sag warned on every rep, 10 of 10 on each side; pike warned 10 of 10 on each side
+  (most stop short and end as abandoned attempts, with the body line shown first). Shallow was flagged 10 of
   10; no shallow bar was agreed, so that is a number, not part of the pass. No correct rep
   was counted in any fault set.
 - The exam 1 engine (SeniorProject `858b203`), replayed on the same files and read from its
   session report and matched to the app's attempts by frame: the same on every set except
   sag right, where of the 10 sags it warned 4, counted 1 as a correct rep, and saw 5 as no
-  rep at all. Body line 24 of 30 then, 30 of 30 now.
+  rep at all. Body line 34 of 40 then, 40 of 40 now.
 - The Python engine at SeniorProject HEAD, replayed the same way, gives the app's stored
   verdict on every attempt of all six sets.
 - Limits: these sags read 138 to 152 deg, clearly visible. A slight sag near 165 deg is still
@@ -646,8 +647,7 @@ Still open, outside the build plan:
   degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
   5 of 5, at most 1 of 10 good warned. The floor sitting (2026-10-23, left side) failed on sag,
   0 of 5, because the counter disarmed; fixed above, not re-filmed. The 2026-11-13 sitting
-  passed it (above); still to film: the pike from the left side, and the phone raised and on
-  the floor in one sitting. A small sag where good form reads near straight is still
+  passed it (above); still to film: the phone raised and on the floor in one sitting. A small sag where good form reads near straight is still
   missed. Ask the physiotherapists whether 10 degrees of sag is the right line. Since the
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
