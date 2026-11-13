@@ -530,18 +530,21 @@ Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58
 - One workout, `f5cb6fef`, phone sideways at 90 deg, scored with no threshold change.
   Files: SeniorProject `scratch_output/app_2026-11-13_pushup`. Labels from Vern: set 1 good
   right, 2 good left, 3 sag right, its repair set pike right, 4 shallow right, 5 sag left.
+  Each fault was done 10 times. The sag-right set recorded 12 full dips; Vern says the first
+  2 were settling in, so its attempts 3 to 12 are the sags scored.
 - On what was filmed, the app meets the 2026-10-22 bar: good form warned 0 of 10 on each
-  side; sag warned on every rep, 12 of 12 right and 10 of 10 left; pike warned 10 of 10 on
+  side; sag warned on every rep, 10 of 10 on each side; pike warned 10 of 10 on
   the right (4 counted as incorrect, 6 abandoned short with the body line shown first). The
   bar also asks for the pike from the left, which was not filmed. Shallow was flagged 10 of
   10; no shallow bar was agreed, so that is a number, not part of the pass. No correct rep
   was counted in any fault set.
 - The exam 1 engine (SeniorProject `858b203`), replayed on the same files and read from its
-  session report: the same on every set except sag right, where it read the 12 reps as 10
-  attempts, warned 6, and counted 2 sags as correct reps.
+  session report and matched to the app's attempts by frame: the same on every set except
+  sag right, where of the 10 sags it warned 4, counted 1 as a correct rep, and saw 5 as no
+  rep at all. Body line 24 of 30 then, 30 of 30 now.
 - The Python engine at SeniorProject HEAD, replayed the same way, gives the app's stored
   verdict on every attempt of all six sets.
-- Limits: these sags read 139 to 152 deg, clearly visible. A slight sag near 165 deg is still
+- Limits: these sags read 138 to 152 deg, clearly visible. A slight sag near 165 deg is still
   the known miss.
 
 Still open, outside the build plan:
