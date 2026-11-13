@@ -530,16 +530,19 @@ Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58
 - One workout, `f5cb6fef`, phone sideways at 90 deg, scored with no threshold change.
   Files: SeniorProject `scratch_output/app_2026-11-13_pushup`. Labels from Vern: set 1 good
   right, 2 good left, 3 sag right, its repair set pike right, 4 shallow right, 5 sag left.
-- Against the 2026-10-22 bar, the app passes: good form warned 0 of 10 on each side; sag
-  warned on every rep, 12 of 12 right and 10 of 10 left; pike warned 10 of 10 (4 counted as
-  incorrect, 6 abandoned short with the body line shown first); shallow flagged 10 of 10.
-  No correct rep was counted in any fault set.
-- The exam 1 engine (SeniorProject `858b203`) on the same files: good 0 of 10 each side,
-  sag left 10 of 10, shallow 10 of 10, but sag right only 6 warned (it read the 12 reps as
-  10 attempts) and pike 2 of 10.
+- On what was filmed, the app meets the 2026-10-22 bar: good form warned 0 of 10 on each
+  side; sag warned on every rep, 12 of 12 right and 10 of 10 left; pike warned 10 of 10 on
+  the right (4 counted as incorrect, 6 abandoned short with the body line shown first). The
+  bar also asks for the pike from the left, which was not filmed. Shallow was flagged 10 of
+  10; no shallow bar was agreed, so that is a number, not part of the pass. No correct rep
+  was counted in any fault set.
+- The exam 1 engine (SeniorProject `858b203`), replayed on the same files and read from its
+  session report: the same on every set except sag right, where it read the 12 reps as 10
+  attempts, warned 6, and counted 2 sags as correct reps.
+- The Python engine at SeniorProject HEAD, replayed the same way, gives the app's stored
+  verdict on every attempt of all six sets.
 - Limits: these sags read 139 to 152 deg, clearly visible. A slight sag near 165 deg is still
-  the known miss. The pike was filmed on the right side only. A Python replay of the
-  current engine differs from the app on one pike attempt (the app warned it).
+  the known miss.
 
 Still open, outside the build plan:
 
