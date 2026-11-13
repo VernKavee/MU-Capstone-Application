@@ -525,6 +525,22 @@ Decided 2026-11-11, no medical history and no PDPA work (Sujira):
 - REQUIREMENTS.md FR1 (medical history) and NFR4 (PDPA) are marked as dropped there rather
   than deleted.
 
+Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58f`):
+
+- One workout, `f5cb6fef`, phone sideways at 90 deg, scored with no threshold change.
+  Files: SeniorProject `scratch_output/app_2026-11-13_pushup`. Labels from Vern: set 1 good
+  right, 2 good left, 3 sag right, its repair set pike right, 4 shallow right, 5 sag left.
+- Against the 2026-10-22 bar, the app passes: good form warned 0 of 10 on each side; sag
+  warned on every rep, 12 of 12 right and 10 of 10 left; pike warned 10 of 10 (4 counted as
+  incorrect, 6 abandoned short with the body line shown first); shallow flagged 10 of 10.
+  No correct rep was counted in any fault set.
+- The exam 1 engine (SeniorProject `858b203`) on the same files: good 0 of 10 each side,
+  sag left 10 of 10, shallow 10 of 10, but sag right only 6 warned (it read the 12 reps as
+  10 attempts) and pike 2 of 10.
+- Limits: these sags read 139 to 152 deg, clearly visible. A slight sag near 165 deg is still
+  the known miss. The pike was filmed on the right side only. A Python replay of the
+  current engine differs from the app on one pike attempt (the app warned it).
+
 Still open, outside the build plan:
 
 - The redesign (2026-11-05): not seen on the iPhone, the
@@ -623,8 +639,9 @@ Still open, outside the build plan:
 - Push-up sag bar (2026-10-22, above): pass bar agreed: one sitting at 90
   degrees, phone sideways, both sides, 10 good, 5 sag, 5 pike per side; pass = sag 4 of 5, pike
   5 of 5, at most 1 of 10 good warned. The floor sitting (2026-10-23, left side) failed on sag,
-  0 of 5, because the counter disarmed; fixed above, not re-filmed. Still to film: the fixed
-  engine, the raised phone, and the right side. A small sag where good form reads near straight is still
+  0 of 5, because the counter disarmed; fixed above, not re-filmed. The 2026-11-13 sitting
+  passed it (above); still to film: the pike from the left side, and the phone raised and on
+  the floor in one sitting. A small sag where good form reads near straight is still
   missed. Ask the physiotherapists whether 10 degrees of sag is the right line. Since the
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
