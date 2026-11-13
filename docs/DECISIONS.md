@@ -540,9 +540,9 @@ Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58
   pause (2, 4-12) are plotted, attempt 3 holding two dips.
 - The app meets the 2026-10-22 bar: good form warned 0 of 10 on each
   side; sag warned on every rep, 10 of 10 on each side; pike warned 10 of 10 on each side
-  (most stop short and end as abandoned attempts, with the body line shown first). Shallow was flagged 10 of
-  10; no shallow bar was agreed, so that is a number, not part of the pass. No correct rep
-  was counted in any fault set. Shallow is 20 of 20 under both engines.
+  (most stop short and end as abandoned attempts, with the body line shown first). Shallow
+  was flagged 20 of 20, 10 on each side; no shallow bar was agreed, so that is a number, not
+  part of the pass. No correct rep was counted in any scored fault set.
 - The exam 1 engine (SeniorProject `858b203`), replayed on the same files and read from its
   session report and matched to the app's attempts by frame: the same on every set except
   sag right, where of the 10 sags it warned 4, counted 1 as a correct rep, and saw 5 as no
