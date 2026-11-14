@@ -158,6 +158,12 @@ sitting of the same day.
   five sags. A machine-level choice in `fsm.ts`, not a row field. Over all 33 saved push-up sets
   only those five sags and two older attempts change; the `pushup_sag` fixture holds it.
 
+## Amended 2026-11-03: the pose model is loaded once per visit
+
+- The live screen loads the landmarker for the chosen model when its preflight screen opens and lends it to every set's `LiveSession` (`landmarker` option), which no longer loads or closes it. Before, each set loaded the wasm and the model again and closed them at its end. The screen closes them when the visit ends. Each loaded model stays until then, so switching between full and lite keeps both in memory.
+- The landmarker keeps its VIDEO-mode tracking across sets, as one long recording would in the Python, with timestamps from `performance.now()` that only grow.
+- Each set logs `[live] start:` with the camera, camera and model, and first-frame times, to find where the phone's slow start goes.
+
 ## Amended 2026-11-14: squat knees in also reads the toe shift from standing
 
 SeniorProject `f9730c1` (Vern), migration `rule_logic_f9730c1`, after the 2026-11-14 workout.
@@ -171,9 +177,3 @@ SeniorProject `f9730c1` (Vern), migration `rule_logic_f9730c1`, after the 2026-1
   merged into the next rep's stats at `rep_started`. Only the squat uses it. The seam is unchanged;
   `rep_stats` gains `knee_toe_line_stand` and `knee_toe_shift`.
 - Fitted on the 2026-11-14 workout; the agreed live check is in `docs/DECISIONS.md`.
-
-## Amended 2026-11-03: the pose model is loaded once per visit
-
-- The live screen loads the landmarker for the chosen model when its preflight screen opens and lends it to every set's `LiveSession` (`landmarker` option), which no longer loads or closes it. Before, each set loaded the wasm and the model again and closed them at its end. The screen closes them when the visit ends. Each loaded model stays until then, so switching between full and lite keeps both in memory.
-- The landmarker keeps its VIDEO-mode tracking across sets, as one long recording would in the Python, with timestamps from `performance.now()` that only grow.
-- Each set logs `[live] start:` with the camera, camera and model, and first-frame times, to find where the phone's slow start goes.
