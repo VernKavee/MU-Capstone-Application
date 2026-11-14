@@ -600,8 +600,8 @@ Still open, outside the build plan:
   2026-10-21 and 2026-10-22 session logs and RULES_AND_FSM 5.16 to 5.18: at 45 degrees MediaPipe's
   depth error was as large as the signal. Ask the physiotherapists whether a moderate knees-out is
   a fault. Other people are not tested. Since 2026-11-14 knees in also needs the toe shift from
-  standing (above); its pass bar is agreed, the sitting not filmed yet. Ask the physiotherapists
-  how far turned out the feet may be.
+  standing (above); its pass bar is agreed, the sitting not filmed yet. How far the feet may
+  turn out: no number (the expert, via Vern, 2026-11-14), so the bars stay as fitted.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a
@@ -685,7 +685,8 @@ Still open, outside the build plan:
   sags (`6d560b9d`, 156 to 162) drop from 5 of 5 to 2 of 5 at 165 and 0 of 5 at 160, and the
   22 Oct repair set (`6a302107`) from 6 of 6 to 3 of 6 at 160. No bar between 160 and 170 meets
   the agreed bar on both. Kept at 170 (Vern): good form at 165 to 167 and shallow sags at 156 to
-  162 overlap, which is the physiotherapist question above.
+  162 overlap. The expert gives no number for how much sag is a fault (via Vern, 2026-11-14), so
+  170 stays as the line.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Since 2026-11-03 the live
   screen loads the pose model once per visit, starting on the preflight screen, and every set
   reuses it (it used to load again each set), and each set logs one `[live] start:` line
