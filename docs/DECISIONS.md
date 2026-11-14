@@ -656,6 +656,13 @@ Still open, outside the build plan:
   5-frame wait (2026-10-22) the 170 sag bar warns a good rep reading 168 (set `9331a313` attempt
   10): the bar sits inside good form. The raised-phone sets ran at 13 to 22 fps; the sitting
   should cover the phone raised and on the floor.
+  2026-11-14 (Vern's workout, `8b68afd1` and `b13efc1a`): 3 of 23 good reps warned, at 165.8 to
+  166.8, and Vern asked for the sag bar at 160. Replayed with engine `eebd58f`: at 165 and 160
+  today's warnings go and the 13 Nov sags (138 to 152) all still warn, but the 23 Oct floor
+  sags (`6d560b9d`, 156 to 162) drop from 5 of 5 to 2 of 5 at 165 and 0 of 5 at 160, and the
+  22 Oct repair set (`6a302107`) from 6 of 6 to 3 of 6 at 160. No bar between 160 and 170 meets
+  the agreed bar on both. Kept at 170 (Vern): good form at 165 to 167 and shallow sags at 156 to
+  162 overlap, which is the physiotherapist question above.
 - The workout is slow to start on the phone (Vern, 2026-10-17). Since 2026-11-03 the live
   screen loads the pose model once per visit, starting on the preflight screen, and every set
   reuses it (it used to load again each set), and each set logs one `[live] start:` line
