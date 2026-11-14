@@ -124,22 +124,48 @@ function toeLineFrame(leftDev: number, rightDev: number): Keypoints {
 test("squat: the knee rules read the toe line at the rep's deepest frame", () => {
   const rules = [
     rule({ name: "partial_squat", priority: 1, scope: "rep", threshold: { depth_target: 100 } }),
-    rule({ name: "knee_valgus", priority: 2, scope: "rep", threshold: { toe_line_in: -0.3 } }),
+    rule({ name: "knee_valgus", priority: 2, scope: "rep", threshold: { toe_line_in: -0.3, toe_shift_max: 0.35 } }),
     rule({ name: "knee_varus", priority: 3, scope: "rep", threshold: { toe_line_out: 0.35 } }),
   ];
-  const squat = (frames: [number, Keypoints][]) => {
+  // One standing (idle) frame first, then the rep from rep_started.
+  const squat = (frames: [number, Keypoints][], stand: Keypoints | null = toeLineFrame(0, 0)) => {
     const ev = new FormEvaluator(rules, accumulatorFor("squat", rules));
-    frames.forEach(([knee, kp], i) => ev.process({ left_knee: knee, right_knee: knee }, kp, i ? "none" : "rep_started", null, i * 33));
-    ev.process({ left_knee: 170, right_knee: 170 }, toeLineFrame(0, 0), "rep_completed", null, frames.length * 33);
+    if (stand) ev.process({ left_knee: 170, right_knee: 170 }, stand, "none", null, 0);
+    frames.forEach(([knee, kp], i) => ev.process({ left_knee: knee, right_knee: knee }, kp, i ? "none" : "rep_started", null, 33 + i * 33));
+    ev.process({ left_knee: 170, right_knee: 170 }, toeLineFrame(0, 0), "rep_completed", null, 33 + frames.length * 33);
     return ev.reps[0];
   };
   // Knees in at the top and on the way up, inside the line at the bottom: no knee cue.
   const quiet = squat([[150, toeLineFrame(-0.3, -0.3)], [95, toeLineFrame(0.05, 0)], [110, toeLineFrame(-0.3, -0.3)]]);
   assert.deepEqual(quiet.violations, []);
   assert.ok(Math.abs((quiet.rep_stats.knee_valgus as number) - 0.05) < 1e-9);
-  assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(-0.2, -0.15)]]).violations, ["knee_valgus"]);
+  const kneesIn: [number, Keypoints][] = [[150, toeLineFrame(0, 0)], [95, toeLineFrame(-0.2, -0.15)]];
+  assert.deepEqual(squat(kneesIn).violations, ["knee_valgus"]);
   assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(0.2, 0.14)]]).violations, []); // under the +0.35 bar
   assert.deepEqual(squat([[150, toeLineFrame(0, 0)], [95, toeLineFrame(0.2, 0.16)]]).violations, ["knee_varus"]);
+  // Feet turned out (2026-11-14): standing reads -0.9, so the same bottom moved out 0.55.
+  const turnedOut = squat(kneesIn, toeLineFrame(-0.45, -0.45));
+  assert.deepEqual(turnedOut.violations, []);
+  assert.ok(Math.abs((turnedOut.rep_stats.knee_toe_shift as number) - 0.55) < 1e-9);
+  // No standing frame before the rep: no knees-in verdict.
+  assert.deepEqual(squat(kneesIn, null).violations, []);
+});
+
+test("squat: the stand reading is the median of the idle frames of the last 0.5 s", () => {
+  const rules = [
+    rule({ name: "partial_squat", priority: 1, scope: "rep", threshold: { depth_target: 100 } }),
+    rule({ name: "knee_valgus", priority: 2, scope: "rep", threshold: { toe_line_in: -0.3, toe_shift_max: 0.35 } }),
+  ];
+  const ev = new FormEvaluator(rules, accumulatorFor("squat", rules));
+  const up = { left_knee: 170, right_knee: 170 };
+  ev.process(up, toeLineFrame(-0.5, -0.5), "none", null, 0); // older than 0.5 s by the rep
+  for (const [ms, dev] of [[600, -0.3], [800, -0.4], [1000, -0.35]]) ev.process(up, toeLineFrame(dev, dev), "none", null, ms);
+  ev.process(up, toeLineFrame(0, 0), "rep_started", null, 1050);
+  assert.ok(Math.abs((ev.stats.knee_toe_line_stand as number) + 0.7) < 1e-9);
+  // Frames inside the rep are not standing; the window starts again after it.
+  ev.process(up, toeLineFrame(0, 0), "rep_completed", null, 1100);
+  ev.process(up, toeLineFrame(0, 0), "rep_started", null, 1150);
+  assert.equal(ev.stats.knee_toe_line_stand, null);
 });
 
 // The frame on which elbow_flare fires, with frames 1000 / fps ms apart.

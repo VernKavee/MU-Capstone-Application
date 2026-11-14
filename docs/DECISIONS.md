@@ -19,6 +19,7 @@ Sections, in order:
 - Feedback (2026-10-25), rules beside similarity (2026-10-28)
 - How feedback is shown (2026-11-02), the UI redesign (2026-11-05)
 - No medical history, no PDPA work (2026-11-11)
+- Squat knees in needs the knees to have stayed in since standing (2026-11-14)
 - Still open, outside the build plan
 
 ## Decided in Phase 0
@@ -552,6 +553,26 @@ Measured 2026-11-13, the 90 deg push-up sitting (Vern, phone app, engine `eebd58
 - Limits: these sags read 138 to 152 deg, clearly visible. A slight sag near 165 deg is still
   the known miss.
 
+Decided 2026-11-14, squat knees in also reads the toe shift from standing (Vern), recorded in
+ADR-0002, SeniorProject RULES_AND_FSM 5.19 and the 2026-11-14 session log:
+
+- Vern's set 1 (`e5ca3f39`, feet wider and turned out more) warned knees in on 9 of 29 reps; only
+  attempt 11 was on purpose. The toe line starts at the toe tip, so turned-out feet read the
+  knees "in" before the squat starts: standing read -0.72 to -1.04 there.
+- SeniorProject `f9730c1`, migration `rule_logic_f9730c1`, `ENGINE_VERSION` `f9730c1`:
+  `knee_valgus` fires when the toe line at the deepest frame is under `toe_line_in` -0.30 AND
+  the toe shift (that minus the toe line's median over the idle frames of the last 0.5 s before
+  the rep) is under `toe_shift_max` 0.35. No standing reading gives no verdict. `knee_varus` is
+  unchanged. New in the engine: an accumulator's `standReading` (Python
+  `ExerciseRuleSet.stand_reading`), collected on frames outside a rep, its medians merged into
+  the rep's stats at `rep_started`, the window `STAND_WINDOW_MS` 500 in `evaluator.ts`.
+- Labelled web reps, engine replay: good warned 4/178 -> 3/178 (2026-10-21/22) and 8/105 ->
+  0/105 (2026-10-23 sitting and 2026-11-14), knees in caught 39/51 and 9/9 unchanged. All 832
+  saved squat reps: 100 knees-in warnings -> 88, none added (8 of them today's set 1). The shift
+  alone was tried first and failed (good 60/178, knees out 0/15). Fitted on 2026-11-14.
+- Pass bar for the next live squat sitting (Vern): 10 knees in, at least 9 warned; 20 good, at
+  most 1 warned, across a narrow and a wide stance.
+
 Still open, outside the build plan:
 
 - The redesign (2026-11-05): not seen on the iPhone, the
@@ -578,7 +599,9 @@ Still open, outside the build plan:
   read under it. No pass bar is agreed for a live check yet. Why the older rules failed, in the
   2026-10-21 and 2026-10-22 session logs and RULES_AND_FSM 5.16 to 5.18: at 45 degrees MediaPipe's
   depth error was as large as the signal. Ask the physiotherapists whether a moderate knees-out is
-  a fault. Other people are not tested.
+  a fault. Other people are not tested. Since 2026-11-14 knees in also needs the toe shift from
+  standing (above); its pass bar is agreed, the sitting not filmed yet. Ask the physiotherapists
+  how far turned out the feet may be.
 
 - The curl's depth error at the top: fixed by hysteresis 30 and the elbow rebuild
   (`858b203`). Remaining caution: a forearm pointing straight at the camera can read as a

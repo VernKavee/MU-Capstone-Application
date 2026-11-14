@@ -189,11 +189,14 @@ export const CHECKS: Record<string, Check> = {
     value: (stats) => stats.min_knee ?? null,
   },
   // Both from the toe line at the rep's deepest frame, one signed number, so at most one fires.
+  // Knees in also needs the toe shift from standing under toe_shift_max: feet turned out read
+  // the knees "in" before the squat starts (SeniorProject f9730c1, 2026-11-14).
   knee_valgus: {
     requiresKeypoints: true,
     check(angles, kp, side, stats, t) {
       const toeLine = stats.knee_toe_line ?? null;
-      return toeLine === null ? null : toeLine < t.toe_line_in;
+      const shift = stats.knee_toe_shift ?? null;
+      return toeLine === null || shift === null ? null : toeLine < t.toe_line_in && shift < t.toe_shift_max;
     },
     value: (stats) => stats.knee_toe_line ?? null,
   },
@@ -298,6 +301,9 @@ export type Accumulator = {
   init(): Stats;
   accumulate(stats: Stats, angles: Angles, kp: Keypoints | null, side: Side | null): void;
   pickActiveSide: ((angles: Angles) => Side) | null;
+  // Readings taken on standing (idle) frames; their medians over the last STAND_WINDOW_MS
+  // before a rep starts are merged into that rep's stats (ExerciseRuleSet.stand_reading).
+  standReading?: (kp: Keypoints) => Stats;
 };
 
 const num = (stats: Stats, key: string) => stats[key] as number;
@@ -318,10 +324,17 @@ function squat(rules: Rule[]): Accumulator {
       _knee_frontal_sum: 0,
       knee_frontal_deg: null,
       knee_toe_line: null,
+      knee_toe_line_stand: null,
+      knee_toe_shift: null,
     }),
     accumulate(stats, angles, kp) {
       const avgKnee = (angleOr180(angles, "left_knee") + angleOr180(angles, "right_knee")) / 2;
-      if (avgKnee < stat(stats, "min_knee", Infinity)) stats.knee_toe_line = kneeToeLine(kp); // the deepest frame so far
+      if (avgKnee < stat(stats, "min_knee", Infinity)) {
+        const toeLine = kneeToeLine(kp); // the deepest frame so far
+        const stand = stats.knee_toe_line_stand ?? null;
+        stats.knee_toe_line = toeLine;
+        stats.knee_toe_shift = stand === null || toeLine === null ? null : toeLine - stand;
+      }
       stats.min_knee = Math.min(stat(stats, "min_knee", Infinity), avgKnee);
       const tilt = meanTrunkTilt(kp);
       if (tilt !== null) stats.max_back_tilt = Math.max(stat(stats, "max_back_tilt", -Infinity), tilt);
@@ -345,6 +358,7 @@ function squat(rules: Rule[]): Accumulator {
       }
     },
     pickActiveSide: null,
+    standReading: (kp) => ({ knee_toe_line_stand: kneeToeLine(kp) }),
   };
 }
 

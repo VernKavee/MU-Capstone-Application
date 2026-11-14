@@ -158,6 +158,20 @@ sitting of the same day.
   five sags. A machine-level choice in `fsm.ts`, not a row field. Over all 33 saved push-up sets
   only those five sags and two older attempts change; the `pushup_sag` fixture holds it.
 
+## Amended 2026-11-14: squat knees in also reads the toe shift from standing
+
+SeniorProject `f9730c1` (Vern), migration `rule_logic_f9730c1`, after the 2026-11-14 workout.
+
+- Feet turned out put the toe line further out than the knees before the squat starts, so normal
+  reps warned knees in (8 of 28 on that set). `knee_valgus` now also needs the toe shift, the toe
+  line at the deepest frame minus its median over the idle frames of the last 0.5 s before the
+  rep, under the row's `toe_shift_max` 0.35. `knee_varus` is unchanged.
+- The evaluator gains one piece of state across reps: an accumulator may give `standReading`,
+  read on every frame outside a rep with keypoints, kept for 0.5 s by frame time, its medians
+  merged into the next rep's stats at `rep_started`. Only the squat uses it. The seam is unchanged;
+  `rep_stats` gains `knee_toe_line_stand` and `knee_toe_shift`.
+- Fitted on the 2026-11-14 workout; the agreed live check is in `docs/DECISIONS.md`.
+
 ## Amended 2026-11-03: the pose model is loaded once per visit
 
 - The live screen loads the landmarker for the chosen model when its preflight screen opens and lends it to every set's `LiveSession` (`landmarker` option), which no longer loads or closes it. Before, each set loaded the wasm and the model again and closed them at its end. The screen closes them when the visit ends. Each loaded model stays until then, so switching between full and lite keeps both in memory.

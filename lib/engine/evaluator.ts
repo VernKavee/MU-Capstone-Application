@@ -14,6 +14,15 @@ type BoundRule = { rule: Rule; message: string; check: (typeof CHECKS)[string] }
 // A gap longer than this between two frames seen here starts every frame rule's run over
 // (FRAME_RULE_MAX_GAP_S): one dropped frame at 13 fps is 154 ms and keeps the run.
 const FRAME_RULE_MAX_GAP_MS = 300;
+// A rep's stand readings are the medians over the idle frames this close before it starts
+// (STAND_WINDOW_S): seconds, as frame rates run 12 to 35 fps.
+const STAND_WINDOW_MS = 500;
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
 
 const byPriority = (rules: BoundRule[]) => [...rules].sort((a, b) => a.rule.priority - b.rule.priority);
 
@@ -29,6 +38,7 @@ export class FormEvaluator {
   last: BoundRule[] = [];
   streaks = new Map<string, number>(); // the start ms of each frame rule's violated run
   lastMs: number | null = null; // the last frame seen here
+  stand: { t: number; reading: Stats }[] = []; // stand readings on the idle frames since the last rep
 
   constructor(rules: Rule[], acc: Accumulator) {
     this.rules = rules.map((rule) => {
@@ -50,6 +60,7 @@ export class FormEvaluator {
     this.last = [];
     this.streaks = new Map();
     this.lastMs = null;
+    this.stand = [];
   }
 
   // Returns the show-one message for this frame, zero or one item. nowMs times the
@@ -62,7 +73,8 @@ export class FormEvaluator {
 
     if (event === "rep_started") {
       this.activeSide = activeSide ?? (this.acc.pickActiveSide ? this.acc.pickActiveSide(angles) : null);
-      this.stats = this.acc.init();
+      this.stats = { ...this.acc.init(), ...this.standMedians() };
+      this.stand = [];
       this.current = [];
       this.streaks = new Map();
       this.inRep = true;
@@ -80,6 +92,12 @@ export class FormEvaluator {
       this.activeSide = null;
       this.last = violated;
       return showOne(violated);
+    }
+
+    if (this.acc.standReading && !this.inRep && event === "none" && kp) {
+      const cutoff = nowMs - STAND_WINDOW_MS;
+      this.stand = this.stand.filter((s) => s.t >= cutoff);
+      this.stand.push({ t: nowMs, reading: this.acc.standReading(kp) });
     }
 
     const violated: BoundRule[] = [];
@@ -111,6 +129,16 @@ export class FormEvaluator {
 
     this.last = violated;
     return showOne(violated);
+  }
+
+  // Each stand reading's median over the window; a key with no value is left out.
+  private standMedians(): Stats {
+    const out: Stats = {};
+    for (const key of new Set(this.stand.flatMap((s) => Object.keys(s.reading)))) {
+      const values = this.stand.map((s) => s.reading[key]).filter((v): v is number => typeof v === "number");
+      if (values.length) out[key] = median(values);
+    }
+    return out;
   }
 
   checkRepRules(angles: Angles, kp: Keypoints | null): BoundRule[] {
